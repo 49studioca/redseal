@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Barlow',system-ui,sans-serif;color:#1F2A37;background:#fff}
+  ::selection{background:#D8232A33}
+  a{text-decoration:none;color:inherit}
+  input::placeholder{color:#94A3B8}
+</style>
+</helmet>
+
+<div style="overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column">
+
+  <!-- ===== NAV ===== -->
+  <header style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid #F1ECE3">
+    <div style="max-width:1180px;margin:0 auto;height:70px;display:flex;align-items:center;gap:26px;padding:0 24px">
+      <a href="RedSeal Home.dc.html#top" style="display:flex;align-items:center;gap:11px">
+        <img src="assets/redseal-logo.svg" width="38" height="38" alt="RedSeal seal mark" style="flex:0 0 38px" />
+        <div style="line-height:1">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:21px;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap"><span style="color:#D8232A">RedSeal</span> <span style="color:#1F2A37">AI&nbsp;Prep</span></div>
+          <div style="font-family:'IBM Plex Mono';font-size:10px;color:#94A3B8;letter-spacing:.5px;margin-top:1px">tradesguide.ca</div>
+        </div>
+      </a>
+      <nav style="display:flex;align-items:center;gap:4px;margin-left:14px">
+        <a href="RedSeal Home.dc.html#how" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">How it works</a>
+        <a href="RedSeal Trades.dc.html" style="padding:8px 12px;border-radius:8px;font-weight:700;font-size:14.5px;color:#D8232A;background:#FCEBEC">Trades</a>
+        <a href="RedSeal Home.dc.html#pricing" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">Pricing</a>
+        <a href="RedSeal Home.dc.html#faq" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">FAQ</a>
+      </nav>
+      <div style="flex:1"></div>
+      <a href="RedSeal Dashboard.dc.html" style="padding:9px 14px;border-radius:9px;font-weight:600;font-size:14.5px;color:#1F2A37" style-hover="background:#F3EFE8">Log in</a>
+      <a href="RedSeal Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:10px;background:linear-gradient(150deg,#E12D2A,#C2151B);color:#fff;font-weight:800;font-size:14.5px;box-shadow:0 4px 14px rgba(244,161,26,.4)" style-hover="filter:brightness(1.05)">Start free<span style="font-size:17px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></a>
+    </div>
+  </header>
+
+  <!-- ===== HERO / SEARCH ===== -->
+  <section style="position:relative;background:radial-gradient(1200px 520px at 82% -12%, #E23A30 0%, #D8232A 46%, #B81A20 100%);color:#fff;overflow:hidden">
+    <div style="position:absolute;inset:0;opacity:.13;background-image:radial-gradient(circle at 1px 1px,#fff 1.5px,transparent 0);background-size:26px 26px;mask-image:linear-gradient(180deg,#000,transparent 92%)"></div>
+    <div style="position:absolute;right:-130px;bottom:-140px;width:380px;height:380px;border-radius:50%;border:2px dashed rgba(255,255,255,.22)"></div>
+
+    <div style="position:relative;max-width:1180px;margin:0 auto;padding:56px 24px 40px">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#FCE3E4">All Red Seal trades</div>
+      <h1 style="margin:12px 0 0;font-family:'Barlow Condensed';font-weight:800;font-size:52px;line-height:1;letter-spacing:-.4px;text-wrap:balance">Find your trade, start studying today</h1>
+      <p style="margin:14px 0 0;font-size:17px;color:#FCE3E4;max-width:600px;line-height:1.5">Every one of the 56 designated Red Seal trades, covered with AI-built quizzes and mock exams. Search or filter by sector.</p>
+
+      <div style="margin-top:26px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+        <div style="flex:1;min-width:260px;max-width:440px;display:flex;align-items:center;gap:10px;height:50px;padding:0 16px;border-radius:12px;background:#fff;box-shadow:0 10px 26px rgba(0,0,0,.18)">
+          <span style="color:#94A3B8;font-size:18px;display:grid;place-items:center">{{ ic.Search }}</span>
+          <input value="{{ query }}" onInput="{{ onQuery }}" placeholder="Search trades (e.g. welder, electrician)…" style="border:none;outline:none;flex:1;font-size:15px;color:#1F2A37;font-family:inherit;height:100%" />
+        </div>
+        <div style="font-family:'IBM Plex Mono';font-size:13px;color:#FCE3E4">{{ resultCount }} trade{{ resultSuffix }}</div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:22px">
+        <sc-for list="{{ sectorChips }}" as="s" hint-placeholder-count="8">
+          <button onClick="{{ s.pick }}" style="{{ s.style }}">{{ s.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== GRID ===== -->
+  <section style="flex:1;background:#F6F3EE">
+    <div style="max-width:1180px;margin:0 auto;padding:44px 24px 80px">
+      <sc-if value="{{ hasResults }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">
+          <sc-for list="{{ trades }}" as="t" hint-placeholder-count="12">
+            <a href="{{ t.href }}" style="background:#fff;border:1px solid #E5E0D8;border-radius:14px;padding:18px;display:flex;align-items:center;gap:13px;transition:all .16s ease" style-hover="border-color:#D8232A;box-shadow:0 8px 20px rgba(0,0,0,.06);transform:translateY(-2px)">
+              <span style="width:44px;height:44px;border-radius:11px;background:#FCEBEC;color:#C0271E;display:grid;place-items:center;font-size:22px;flex:0 0 44px">{{ t.iconEl }}</span>
+              <div style="min-width:0">
+                <div style="font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.name }}</div>
+                <div style="font-family:'IBM Plex Mono';font-size:11.5px;color:#9CA3AF;margin-top:2px">{{ t.code }} · {{ t.sector }}</div>
+              </div>
+            </a>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ noResults }}" hint-placeholder-val="{{ false }}">
+        <div style="text-align:center;padding:80px 20px;color:#6B7280">
+          <div style="font-size:32px;color:#D1D5DB;display:grid;place-items:center">{{ ic.SearchX }}</div>
+          <div style="font-weight:700;font-size:17px;color:#374151;margin-top:14px">No trades match "{{ query }}"</div>
+          <p style="margin:6px 0 0;font-size:14.5px">Try a different search term, or browse by sector above.</p>
+        </div>
+      </sc-if>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer style="background:#161E27;color:#9FBBD2">
+    <div style="max-width:1180px;margin:0 auto;padding:48px 24px 30px;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/redseal-logo.svg" width="34" height="34" alt="RedSeal seal mark" style="flex:0 0 34px" />
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:19px;letter-spacing:.3px;text-transform:uppercase;color:#fff">RedSeal AI Prep</div>
+        </div>
+        <p style="margin:14px 0 0;font-size:13.5px;line-height:1.6;max-width:320px">AI-powered Red Seal exam prep for Canadian tradespeople. Built by trades folks who were tired of dusty study binders.</p>
+        <div style="font-family:'IBM Plex Mono';font-size:12px;color:#5F87A6;margin-top:14px">tradesguide.ca</div>
+      </div>
+      <sc-for list="{{ footCols }}" as="col" hint-placeholder-count="3">
+        <div>
+          <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#F4564E">{{ col.head }}</div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-top:13px">
+            <sc-for list="{{ col.links }}" as="l" hint-placeholder-count="4">
+              <a href="RedSeal Home.dc.html#top" style="font-size:14px;color:#9FBBD2" style-hover="color:#fff">{{ l }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.07)">
+      <div style="max-width:1180px;margin:0 auto;padding:18px 24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#5F87A6">
+        <span>© 2026 tradesguide.ca · Unofficial — not affiliated with the Red Seal Program or any provincial authority.</span>
+        <span>Made in Canada 🍁</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = { query:'', sector:'All' };
+  }
+
+  componentDidMount(){
+    if(!(window.lucide && window.lucide.icons)){
+      this._iv = setInterval(()=>{ if(window.lucide && window.lucide.icons){ clearInterval(this._iv); this.forceUpdate(); } }, 40);
+    }
+  }
+  componentWillUnmount(){ if(this._iv) clearInterval(this._iv); }
+
+  makeIcon(name){
+    const L = window.lucide;
+    const empty = React.createElement('span',{style:{display:'inline-block',width:'1em',height:'1em'}});
+    if(!L || !L.icons || !L.icons[name]) return empty;
+    const node = L.icons[name];
+    const kids = node.map((c,i)=> React.createElement(c[0], Object.assign({key:i}, c[1])));
+    return React.createElement('svg',{xmlns:'http://www.w3.org/2000/svg',viewBox:'0 0 24 24',width:'1em',height:'1em',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}}, kids);
+  }
+
+  TRADES(){
+    return [
+      {name:'Construction Electrician', code:'309A', sector:'Electrical', icon:'Zap'},
+      {name:'Industrial Electrician', code:'442A', sector:'Electrical', icon:'PlugZap'},
+      {name:'Powerline Technician', code:'434A', sector:'Electrical', icon:'Cable'},
+      {name:'Instrumentation & Control Technician', code:'447A', sector:'Electrical', icon:'Gauge'},
+      {name:'Electric Motor Systems Technician', code:'426A', sector:'Electrical', icon:'Battery'},
+
+      {name:'Plumber', code:'306A', sector:'Piping', icon:'Droplets'},
+      {name:'Steamfitter/Pipefitter', code:'307A', sector:'Piping', icon:'Thermometer'},
+      {name:'Sprinkler Fitter', code:'420A', sector:'Piping', icon:'ShowerHead'},
+      {name:'Gasfitter', code:'313D', sector:'Piping', icon:'Flame'},
+
+      {name:'Carpenter', code:'403A', sector:'Construction', icon:'Hammer'},
+      {name:'Bricklayer', code:'401A', sector:'Construction', icon:'Blocks'},
+      {name:'Concrete Finisher', code:'404A', sector:'Construction', icon:'Layers'},
+      {name:'Construction Craft Worker', code:'405A', sector:'Construction', icon:'HardHat'},
+      {name:'Drywall Finisher & Plasterer', code:'407A', sector:'Construction', icon:'PaintRoller'},
+      {name:'Floorcovering Installer', code:'408A', sector:'Construction', icon:'Grid2x2'},
+      {name:'Glazier', code:'409A', sector:'Construction', icon:'PanelTop'},
+      {name:'Insulator (Heat & Frost)', code:'410A', sector:'Construction', icon:'ThermometerSnowflake'},
+      {name:'Ironworker (Structural)', code:'420G', sector:'Construction', icon:'Building2'},
+      {name:'Ironworker (Reinforcing)', code:'420R', sector:'Construction', icon:'Grid3x3'},
+      {name:'Painter & Decorator', code:'411A', sector:'Construction', icon:'Paintbrush'},
+      {name:'Roofer', code:'412A', sector:'Construction', icon:'Home'},
+      {name:'Sheet Metal Worker', code:'413A', sector:'Construction', icon:'RectangleHorizontal'},
+      {name:'Tilesetter', code:'414A', sector:'Construction', icon:'LayoutGrid'},
+      {name:'Cabinetmaker', code:'415A', sector:'Construction', icon:'Archive'},
+      {name:'Lather (Interior Systems)', code:'416A', sector:'Construction', icon:'Ruler'},
+
+      {name:'Millwright (Industrial Mechanic)', code:'433A', sector:'Industrial & Mechanical', icon:'Cog'},
+      {name:'Machinist', code:'429A', sector:'Industrial & Mechanical', icon:'Settings2'},
+      {name:'Tool & Die Maker', code:'430A', sector:'Industrial & Mechanical', icon:'Wrench'},
+      {name:'Welder', code:'456A', sector:'Industrial & Mechanical', icon:'Flame'},
+      {name:'Metal Fabricator (Fitter)', code:'431A', sector:'Industrial & Mechanical', icon:'Hammer'},
+      {name:'Industrial Instrument Technician', code:'447B', sector:'Industrial & Mechanical', icon:'Activity'},
+      {name:'Refrigeration & A/C Mechanic', code:'313A', sector:'Industrial & Mechanical', icon:'Snowflake'},
+      {name:'Elevator Constructor', code:'435A', sector:'Industrial & Mechanical', icon:'ArrowUpDown'},
+      {name:'Locksmith', code:'436A', sector:'Industrial & Mechanical', icon:'KeyRound'},
+      {name:'Boilermaker', code:'420B', sector:'Industrial & Mechanical', icon:'Container'},
+
+      {name:'Automotive Service Technician', code:'310S', sector:'Motive Power', icon:'Car'},
+      {name:'Heavy Duty Equipment Technician', code:'421A', sector:'Motive Power', icon:'Truck'},
+      {name:'Truck & Transport Mechanic', code:'310T', sector:'Motive Power', icon:'Bus'},
+      {name:'Motorcycle Technician', code:'422A', sector:'Motive Power', icon:'Bike'},
+      {name:'Motor Vehicle Body Repairer', code:'310B', sector:'Motive Power', icon:'CarFront'},
+      {name:'Automotive Refinishing Technician', code:'310R', sector:'Motive Power', icon:'SprayCan'},
+      {name:'Agricultural Equipment Technician', code:'423A', sector:'Motive Power', icon:'Tractor'},
+      {name:'Recreation Vehicle Technician', code:'424A', sector:'Motive Power', icon:'Caravan'},
+      {name:'Parts Technician', code:'425A', sector:'Motive Power', icon:'Package'},
+
+      {name:'Cook', code:'440A', sector:'Food & Service', icon:'ChefHat'},
+      {name:'Baker', code:'441A', sector:'Food & Service', icon:'Cookie'},
+      {name:'Hairstylist', code:'443A', sector:'Food & Service', icon:'Scissors'},
+
+      {name:'Heavy Equipment Operator (Dozer)', code:'450A', sector:'Heavy Equipment & Crane', icon:'Forklift'},
+      {name:'Mobile Crane Operator', code:'451A', sector:'Heavy Equipment & Crane', icon:'MoveVertical'},
+      {name:'Tower Crane Operator', code:'452A', sector:'Heavy Equipment & Crane', icon:'Radio'},
+
+      {name:'Landscape Horticulturist', code:'460A', sector:'Other', icon:'Sprout'},
+      {name:'Water Well Driller', code:'461A', sector:'Other', icon:'Drill'},
+      {name:'Appliance Service Technician', code:'462A', sector:'Other', icon:'Wrench'},
+      {name:'Concrete Pump Operator', code:'463A', sector:'Other', icon:'CircleGauge'},
+      {name:'Turbine Technician', code:'464A', sector:'Other', icon:'Fan'},
+      {name:'Rig Technician', code:'465A', sector:'Other', icon:'Anchor'},
+    ];
+  }
+
+  renderVals(){
+    const S = this.state;
+    const ic = new Proxy({}, { get:(_,k)=> this.makeIcon(String(k)) });
+    const all = this.TRADES();
+
+    const sectors = ['All', ...Array.from(new Set(all.map(t=>t.sector)))];
+    const q = S.query.trim().toLowerCase();
+
+    const filtered = all.filter(t=>{
+      const matchesSector = S.sector==='All' || t.sector===S.sector;
+      const matchesQuery = !q || t.name.toLowerCase().includes(q) || t.sector.toLowerCase().includes(q) || t.code.toLowerCase().includes(q);
+      return matchesSector && matchesQuery;
+    });
+
+    const trades = filtered.map(t=> Object.assign({}, t, {
+      iconEl: this.makeIcon(t.icon),
+      href: t.name==='Industrial Electrician' ? 'RedSeal Trade Detail.dc.html' : 'RedSeal Dashboard.dc.html'
+    }));
+
+    const sectorChips = sectors.map(s=>{
+      const active = s===S.sector;
+      return {
+        label: s,
+        pick: ()=> this.setState({sector:s}),
+        style: {
+          height:'36px', padding:'0 16px', borderRadius:'999px', border:'1px solid ' + (active?'rgba(255,255,255,.9)':'rgba(255,255,255,.28)'),
+          background: active ? '#fff' : 'rgba(255,255,255,.08)', color: active ? '#C0271E' : '#fff',
+          fontWeight:700, fontSize:'13.5px', cursor:'pointer', fontFamily:'inherit'
+        }
+      };
+    });
+
+    const footCols = [
+      {head:'Product', links:['Features','Trades','Pricing','Mock exams','Mobile app']},
+      {head:'Company', links:['About','Blog','Careers','Contact']},
+      {head:'Legal', links:['Privacy','Terms','Disclaimer','Refunds']},
+    ];
+
+    return {
+      ic, query:S.query, onQuery:(e)=> this.setState({query:e.target.value}),
+      sectorChips, trades,
+      resultCount: trades.length, resultSuffix: trades.length===1?'':'s',
+      hasResults: trades.length>0, noResults: trades.length===0,
+      footCols
+    };
+  }
+}
+
+</script>
+</body>
+</html>

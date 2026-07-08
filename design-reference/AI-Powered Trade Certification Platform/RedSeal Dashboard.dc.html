@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Barlow',system-ui,sans-serif;color:#1F2A37;background:#F1ECE3}
+  ::selection{background:#D8232A33}
+  .scrl::-webkit-scrollbar{width:10px;height:10px}
+  .scrl::-webkit-scrollbar-thumb{background:#CBD5E1;border-radius:8px;border:3px solid #F1ECE3}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes slideup{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+  @keyframes pop{0%{transform:scale(.96);opacity:0}100%{transform:scale(1);opacity:1}}
+</style>
+</helmet>
+
+<div style="min-height:100vh;display:flex;flex-direction:column">
+
+  <!-- ===== TOP NAV ===== -->
+  <header style="position:sticky;top:0;z-index:40;height:68px;flex:0 0 68px;background:#1F2A37;display:flex;align-items:center;gap:20px;padding:0 24px;box-shadow:0 1px 0 rgba(255,255,255,.06)">
+    <div style="display:flex;align-items:center;gap:11px;min-width:0">
+      <img src="assets/redseal-logo.svg" width="38" height="38" alt="RedSeal seal mark" style="flex:0 0 38px" />
+      <div style="line-height:1">
+        <div style="font-family:'Barlow Condensed';font-weight:700;font-size:21px;letter-spacing:.3px;color:#fff;text-transform:uppercase">RedSeal AI Prep</div>
+        <div style="font-family:'IBM Plex Mono';font-size:10px;color:#7DA0BD;letter-spacing:.5px;margin-top:1px">tradesguide.ca</div>
+      </div>
+    </div>
+
+    <div style="flex:1"></div>
+
+    <!-- current trade (fixed — one exam per account) -->
+    <div style="display:flex;align-items:center;gap:10px;height:42px;padding:0 14px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#fff">
+      <span style="display:grid;place-items:center;width:24px;height:24px;border-radius:6px;background:#C0271E;font-size:14px;color:#F7CFCF">{{ trade.iconEl }}</span>
+      <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.1">
+        <span style="font-size:10px;font-weight:600;color:#7DA0BD;letter-spacing:.6px;text-transform:uppercase">Your trade</span>
+        <span style="font-size:14px;font-weight:700">{{ trade.short }}</span>
+      </span>
+      <span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:600;color:#34D399;margin-left:2px">{{ trade.readiness }}%</span>
+    </div>
+
+    <button onClick="{{ generateQuiz }}" style="display:flex;align-items:center;gap:9px;height:42px;padding:0 18px;border-radius:10px;border:none;background:linear-gradient(150deg,#E12D2A,#C2151B);color:#fff;font-family:Barlow;font-weight:800;font-size:14px;letter-spacing:.2px;cursor:pointer;box-shadow:0 4px 14px rgba(244,161,26,.4)" style-hover="filter:brightness(1.05)">
+      <span style="font-size:18px;display:grid;place-items:center;{{ quizSpin }}">{{ quizIcon }}</span>
+      {{ quizLabel }}
+    </button>
+
+    <button style="position:relative;width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#CFE0EE;font-size:19px;display:grid;place-items:center;cursor:pointer" style-hover="background:rgba(255,255,255,.12)">
+      {{ ic.Bell }}
+      <span style="position:absolute;top:9px;right:9px;width:8px;height:8px;border-radius:50%;background:#F87171;border:2px solid #1F2A37"></span>
+    </button>
+
+    <div style="display:flex;align-items:center;gap:10px;padding-left:6px">
+      <div style="width:38px;height:38px;border-radius:50%;background:linear-gradient(150deg,#D8232A,#A81A1F);display:grid;place-items:center;color:#fff;font-weight:700;font-size:14px;font-family:'Barlow Semi Condensed';border:2px solid rgba(255,255,255,.18)">MR</div>
+    </div>
+  </header>
+
+  <!-- ===== BODY ===== -->
+  <div style="flex:1;display:flex;min-height:0">
+
+    <!-- SIDEBAR -->
+    <aside class="scrl" style="width:262px;flex:0 0 262px;background:#fff;border-right:1px solid #E5E0D8;padding:20px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:6px">
+      <!-- single trade identity -->
+      <div style="background:linear-gradient(150deg,#D8232A,#B01A1F);border-radius:13px;padding:15px 15px 16px;color:#fff;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-20px;top:-20px;width:78px;height:78px;border-radius:50%;background:rgba(255,255,255,.10)"></div>
+        <div style="display:flex;align-items:center;gap:11px;position:relative">
+          <span style="width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.16);display:grid;place-items:center;font-size:20px;flex:0 0 38px">{{ trade.iconEl }}</span>
+          <div style="line-height:1.15;min-width:0">
+            <div style="font-weight:700;font-size:15px;font-family:'Barlow Semi Condensed';white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ trade.name }}</div>
+            <div style="font-family:'IBM Plex Mono';font-size:10.5px;color:#FBD9DB;margin-top:2px">Red Seal · {{ trade.code }}</div>
+          </div>
+        </div>
+        <div style="position:relative;display:flex;align-items:center;justify-content:space-between;margin-top:14px;font-size:11px;font-weight:600;color:#FCE3E4"><span>Exam readiness</span><span style="font-family:'IBM Plex Mono';color:#fff;font-weight:700">{{ trade.readiness }}%</span></div>
+        <div style="position:relative;height:6px;border-radius:4px;background:rgba(255,255,255,.20);overflow:hidden;margin-top:6px"><div style="height:100%;border-radius:4px;background:#fff;width:{{ readyWidth }};transition:width .9s cubic-bezier(.22,1,.36,1)"></div></div>
+      </div>
+
+      <div style="height:1px;background:#ECE6DC;margin:16px 6px 6px"></div>
+
+      <sc-for list="{{ navItems }}" as="n" hint-placeholder-count="5">
+        <div style="{{ n.style }}">
+          <span style="font-size:17px;display:grid;place-items:center;width:20px">{{ n.iconEl }}</span>
+          <span style="font-weight:600;font-size:13.5px">{{ n.label }}</span>
+        </div>
+      </sc-for>
+
+      <div style="flex:1"></div>
+
+      <div style="background:#1F2A37;border-radius:13px;padding:15px;margin-top:14px;color:#fff;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-18px;top:-18px;width:80px;height:80px;border-radius:50%;background:rgba(244,161,26,.16)"></div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:#F4A11A;letter-spacing:.5px;text-transform:uppercase"><span style="font-size:15px;display:grid;place-items:center">{{ ic.CalendarCheck }}</span>Exam booked</div>
+        <div style="font-family:'Barlow Condensed';font-size:23px;font-weight:700;margin-top:7px;line-height:1">{{ trade.examDate }}</div>
+        <div style="font-size:12.5px;color:#9FBBD2;margin-top:3px"><b style="color:#fff;font-family:'IBM Plex Mono'">{{ trade.daysToExam }}</b> days to prepare</div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main class="scrl" style="flex:1;min-width:0;overflow-y:auto;padding:26px 30px 40px">
+      <div style="max-width:1180px;margin:0 auto">
+
+        <!-- welcome row -->
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px">
+          <div>
+            <div style="font-family:'Barlow Condensed';font-size:13px;font-weight:600;color:#64748B;letter-spacing:.8px;text-transform:uppercase">Sunday · June 29</div>
+            <h1 style="margin:3px 0 0;font-family:'Barlow Semi Condensed';font-size:30px;font-weight:700;letter-spacing:-.3px">Welcome back, Marcus</h1>
+            <p style="margin:5px 0 0;color:#64748B;font-size:15px">Here's where you stand on the <b style="color:#1F2A37">{{ trade.name }}</b> Red Seal exam.</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid #E5E0D8;border-radius:11px;padding:9px 14px">
+            <span style="font-size:18px;color:#E8820E;display:grid;place-items:center">{{ ic.Flame }}</span>
+            <div style="line-height:1.05"><div style="font-family:'IBM Plex Mono';font-weight:600;font-size:18px">{{ trade.streak }}</div><div style="font-size:11px;color:#94A3B8;font-weight:600">day streak</div></div>
+          </div>
+        </div>
+
+        <!-- readiness hero -->
+        <section style="background:#fff;border:1px solid #E5E0D8;border-radius:16px;padding:24px 26px;display:flex;gap:30px;align-items:center;flex-wrap:wrap;box-shadow:0 1px 2px rgba(16,24,40,.04)">
+          <div style="flex:1;min-width:300px">
+            <div style="display:flex;align-items:center;gap:9px;font-size:12px;font-weight:700;color:#C0271E;letter-spacing:.5px;text-transform:uppercase"><span style="font-size:15px;display:grid;place-items:center">{{ ic.Gauge }}</span>Overall exam readiness</div>
+            <div style="display:flex;align-items:baseline;gap:12px;margin-top:8px">
+              <span style="font-family:'Barlow Condensed';font-size:52px;font-weight:700;line-height:.9;color:#1F2A37">{{ trade.readiness }}%</span>
+              <span style="font-size:16px;color:#475569;font-weight:500">ready for the<br><b style="color:#1F2A37">{{ trade.short }}</b> exam</span>
+              <span style="margin-left:auto;display:flex;align-items:center;gap:5px;background:#ECFDF5;color:#047857;font-weight:700;font-size:13px;padding:5px 10px;border-radius:8px"><span style="font-size:15px;display:grid;place-items:center">{{ ic.TrendingUp }}</span>+{{ trade.weekGain }}% this week</span>
+            </div>
+
+            <!-- progress bar -->
+            <div style="margin-top:18px;position:relative">
+              <div style="height:16px;border-radius:9px;background:#ECE6DC;overflow:hidden">
+                <div style="height:100%;border-radius:9px;background:{{ trade.readyBar }};width:{{ readyWidth }};transition:width .9s cubic-bezier(.22,1,.36,1)"></div>
+              </div>
+              <!-- pass marker -->
+              <div style="position:absolute;top:-4px;left:70%;height:24px;width:2px;background:#1F2A37;border-radius:2px"></div>
+              <div style="position:absolute;top:-24px;left:70%;transform:translateX(-50%);font-family:'IBM Plex Mono';font-size:10px;font-weight:600;color:#1F2A37;white-space:nowrap">PASS · 70%</div>
+              <div style="display:flex;justify-content:space-between;margin-top:7px;font-family:'IBM Plex Mono';font-size:11px;color:#94A3B8"><span>0</span><span style="color:{{ trade.readyColor }};font-weight:600">{{ trade.readyVerdict }}</span><span>100</span></div>
+            </div>
+          </div>
+
+          <!-- ring -->
+          <div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+            <div style="width:132px;height:132px;border-radius:50%;background: {{ trade.ringBg }};display:grid;place-items:center">
+              <div style="width:100px;height:100px;border-radius:50%;background:#fff;display:grid;place-items:center;box-shadow:inset 0 0 0 1px #ECE6DC">
+                <div style="text-align:center;line-height:1"><div style="font-family:'Barlow Condensed';font-size:34px;font-weight:700;color:#1F2A37">{{ trade.readiness }}</div><div style="font-size:10px;font-weight:700;color:#94A3B8;letter-spacing:.5px">READY</div></div>
+              </div>
+            </div>
+            <span style="font-size:12px;color:#64748B;font-weight:600">Est. pass likelihood</span>
+          </div>
+        </section>
+
+        <!-- stat strip -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:16px">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div style="background:#fff;border:1px solid #E5E0D8;border-radius:13px;padding:15px 16px">
+              <div style="display:flex;align-items:center;gap:8px;color:{{ s.color }}"><span style="width:30px;height:30px;border-radius:8px;background:{{ s.bg }};display:grid;place-items:center;font-size:16px">{{ s.iconEl }}</span><span style="font-size:12px;font-weight:600;color:#64748B">{{ s.label }}</span></div>
+              <div style="font-family:'Barlow Condensed';font-size:30px;font-weight:700;margin-top:8px;line-height:1">{{ s.value }}<span style="font-size:14px;color:#94A3B8;font-weight:600;font-family:Barlow">{{ s.unit }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- AI study modules -->
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:30px 0 14px">
+          <div>
+            <h2 style="margin:0;font-family:'Barlow Semi Condensed';font-size:22px;font-weight:700;display:flex;align-items:center;gap:9px"><span style="color:#C0271E;font-size:21px;display:grid;place-items:center">{{ ic.BookOpen }}</span>AI Study Modules</h2>
+            <p style="margin:3px 0 0;color:#64748B;font-size:14px">Adaptive units rebuilt from your quiz history — weak spots get more reps.</p>
+          </div>
+          <button onClick="{{ generateCourse }}" style="display:flex;align-items:center;gap:9px;height:42px;padding:0 16px;border-radius:10px;border:1.5px solid #C0271E;background:#fff;color:#C0271E;font-family:Barlow;font-weight:700;font-size:14px;cursor:pointer" style-hover="background:#FCEBEC">
+            <span style="font-size:17px;display:grid;place-items:center;{{ courseSpin }}">{{ courseIcon }}</span>
+            {{ courseLabel }}
+          </button>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+          <sc-for list="{{ modules }}" as="m" hint-placeholder-count="6">
+            <div style="{{ m.cardStyle }}" style-hover="border-color:#C0271E;box-shadow:0 8px 22px rgba(31,42,55,.10);transform:translateY(-2px)">
+              <sc-if value="{{ m.isNew }}" hint-placeholder-val="{{ false }}">
+                <div style="position:absolute;top:0;right:0;background:linear-gradient(150deg,#F4A11A,#E8820E);color:#1F2A37;font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 10px;border-bottom-left-radius:10px;text-transform:uppercase">AI generated</div>
+              </sc-if>
+              <div style="display:flex;align-items:center;justify-content:space-between">
+                <span style="width:42px;height:42px;border-radius:11px;background:{{ m.chipBg }};color:{{ m.chipColor }};display:grid;place-items:center;font-size:21px">{{ m.iconEl }}</span>
+                <span style="font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;padding:4px 9px;border-radius:7px;background:{{ m.tagBg }};color:{{ m.tagColor }};display:flex;align-items:center;gap:4px">{{ m.statusLabel }}</span>
+              </div>
+              <h3 style="margin:13px 0 0;font-family:'Barlow Semi Condensed';font-size:17.5px;font-weight:600;line-height:1.15;min-height:40px">{{ m.name }}</h3>
+              <div style="font-family:'IBM Plex Mono';font-size:11.5px;color:#94A3B8;margin-top:4px">{{ m.meta }}</div>
+              <div style="height:8px;border-radius:5px;background:#ECE6DC;overflow:hidden;margin-top:13px"><div style="height:100%;border-radius:5px;background:{{ m.barColor }};width:{{ m.barW }};transition:width .9s cubic-bezier(.22,1,.36,1)"></div></div>
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-top:11px">
+                <span style="font-family:'IBM Plex Mono';font-size:13px;font-weight:600;color:{{ m.barColor }}">{{ m.progress }}% mastered</span>
+                <span style="display:flex;align-items:center;gap:5px;font-size:13.5px;font-weight:700;color:#C0271E;cursor:pointer">{{ m.cta }}<span style="font-size:15px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></span>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+
+        <!-- practice exam preview -->
+        <div style="margin:30px 0 14px">
+          <h2 style="margin:0;font-family:'Barlow Semi Condensed';font-size:22px;font-weight:700;display:flex;align-items:center;gap:9px"><span style="color:#C0271E;font-size:21px;display:grid;place-items:center">{{ ic.ClipboardCheck }}</span>Practice &amp; Mock Exams</h2>
+        </div>
+
+        <section style="background:linear-gradient(135deg,#E0392F,#C2151B);border-radius:16px;padding:26px;display:flex;gap:28px;align-items:center;flex-wrap:wrap;color:#fff;position:relative;overflow:hidden">
+          <div style="position:absolute;right:-70px;bottom:-80px;width:240px;height:240px;border-radius:50%;border:2px dashed rgba(255,255,255,.22)"></div>
+          <div style="position:absolute;right:54px;top:-44px;width:120px;height:120px;border-radius:50%;background:rgba(0,0,0,.10)"></div>
+
+          <!-- last mock score -->
+          <div style="display:flex;align-items:center;gap:20px;flex:0 0 auto;position:relative;z-index:1">
+            <div style="width:108px;height:108px;border-radius:50%;background: {{ trade.mockRingBg }};display:grid;place-items:center">
+              <div style="width:82px;height:82px;border-radius:50%;background:#1F2A37;display:grid;place-items:center"><div style="text-align:center;line-height:1"><div style="font-family:'Barlow Condensed';font-size:30px;font-weight:700">{{ trade.mockScore }}</div><div style="font-size:9.5px;font-weight:700;color:#7DA0BD;letter-spacing:.5px">/ 100</div></div></div>
+            </div>
+            <div>
+              <div style="font-size:11px;font-weight:700;color:#FCE3E4;letter-spacing:.6px;text-transform:uppercase">Last mock exam</div>
+              <div style="font-family:'Barlow Semi Condensed';font-size:22px;font-weight:600;margin-top:3px">{{ trade.mockVerdict }}</div>
+              <div style="display:flex;align-items:center;gap:7px;margin-top:6px;font-size:13px;color:#FCE3E4"><span style="display:flex;align-items:center;gap:4px;color:#BBF7D0;font-weight:700"><span style="font-size:14px;display:grid;place-items:center">{{ ic.TrendingUp }}</span>+{{ trade.mockGain }}</span>vs. previous · {{ trade.mockDate }}</div>
+            </div>
+          </div>
+
+          <div style="width:1px;align-self:stretch;background:rgba(255,255,255,.10)"></div>
+
+          <div style="flex:1;min-width:240px;position:relative;z-index:1">
+            <div style="font-size:14.5px;color:#FCE3E4;line-height:1.5">Full mock mirrors the real <b style="color:#fff">Red Seal interprovincial</b> format — {{ trade.mockQ }} multiple-choice questions, {{ trade.mockTime }}-hour limit, closed-book.</div>
+            <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap">
+              <button onClick="{{ toggleExam }}" style="display:flex;align-items:center;gap:8px;height:46px;padding:0 22px;border-radius:11px;border:none;background:#fff;color:#D8232A;font-family:Barlow;font-weight:800;font-size:15px;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.20)" style-hover="filter:brightness(1.05)"><span style="font-size:18px;display:grid;place-items:center">{{ ic.Play }}</span>Start Full Mock Exam</button>
+              <button style="display:flex;align-items:center;gap:8px;height:46px;padding:0 18px;border-radius:11px;border:1.5px solid rgba(255,255,255,.25);background:transparent;color:#fff;font-family:Barlow;font-weight:700;font-size:15px;cursor:pointer" style-hover="background:rgba(255,255,255,.08)"><span style="font-size:17px;display:grid;place-items:center">{{ ic.Timer }}</span>Quick 20-Q drill</button>
+            </div>
+
+            <sc-if value="{{ examOpen }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:14px 16px;display:flex;gap:22px;flex-wrap:wrap;align-items:center;animation:slideup .2s ease">
+                <div><div style="font-family:'IBM Plex Mono';font-size:20px;font-weight:600">{{ trade.mockQ }}</div><div style="font-size:11px;color:#9FBBD2;font-weight:600">questions</div></div>
+                <div><div style="font-family:'IBM Plex Mono';font-size:20px;font-weight:600">{{ trade.mockTime }}:00</div><div style="font-size:11px;color:#9FBBD2;font-weight:600">hour limit</div></div>
+                <div><div style="font-family:'IBM Plex Mono';font-size:20px;font-weight:600">{{ trade.blocks }}</div><div style="font-size:11px;color:#9FBBD2;font-weight:600">code blocks</div></div>
+                <button style="margin-left:auto;height:40px;padding:0 20px;border-radius:10px;border:none;background:#fff;color:#1F2A37;font-weight:800;font-size:14px;cursor:pointer;display:flex;align-items:center;gap:7px">Begin exam<span style="font-size:15px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></button>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+
+        <p style="text-align:center;color:#94A3B8;font-size:12px;margin:26px 0 0;line-height:1.6">Unofficial study aid · not affiliated with the Red Seal Program or any provincial apprenticeship authority.<br>AI-generated content should be verified against current code. © 2026 <b style="color:#64748B">tradesguide.ca</b></p>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- toast -->
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:24px;right:24px;z-index:80;background:#1F2A37;color:#fff;border-radius:13px;padding:15px 18px;display:flex;align-items:center;gap:13px;box-shadow:0 16px 40px rgba(31,42,55,.4);max-width:360px;animation:slideup .25s ease;border:1px solid rgba(255,255,255,.08)">
+      <span style="width:38px;height:38px;border-radius:10px;background:linear-gradient(150deg,#E12D2A,#C2151B);color:#fff;display:grid;place-items:center;font-size:20px;flex:0 0 38px">{{ toastIcon }}</span>
+      <div style="line-height:1.3"><div style="font-weight:700;font-size:14.5px">{{ toast.title }}</div><div style="font-size:13px;color:#9FBBD2;margin-top:2px">{{ toast.body }}</div></div>
+      <button onClick="{{ closeToast }}" style="background:none;border:none;color:#7DA0BD;font-size:18px;cursor:pointer;display:grid;place-items:center;padding:2px">{{ ic.X }}</button>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = { tradeId:'electrician', tradeMenuOpen:false, examOpen:false,
+      generatingQuiz:false, generatingCourse:false, generatedFor:null, toast:null, animBars:false };
+  }
+
+  componentDidMount(){
+    if(!(window.lucide && window.lucide.icons)){
+      this._iv = setInterval(()=>{ if(window.lucide && window.lucide.icons){ clearInterval(this._iv); this.forceUpdate(); } }, 40);
+    }
+    requestAnimationFrame(()=> setTimeout(()=> this.setState({animBars:true}), 60));
+  }
+  componentWillUnmount(){ clearInterval(this._iv); if(this._t1)clearTimeout(this._t1); if(this._t2)clearTimeout(this._t2); if(this._t3)clearTimeout(this._t3); }
+
+  makeIcon(name){
+    const L = window.lucide;
+    const empty = React.createElement('span',{style:{display:'inline-block',width:'1em',height:'1em'}});
+    if(!L || !L.icons || !L.icons[name]) return empty;
+    const node = L.icons[name];
+    const kids = node.map((c,i)=> React.createElement(c[0], Object.assign({key:i}, c[1])));
+    return React.createElement('svg',{xmlns:'http://www.w3.org/2000/svg',viewBox:'0 0 24 24',width:'1em',height:'1em',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}}, kids);
+  }
+
+  readyColor(p){ return p>=70 ? '#059669' : p>=50 ? '#E8820E' : '#EA580C'; }
+  readyBar(p){ return 'linear-gradient(90deg,#E12D2A,#C2151B)'; }
+  verdict(p){ return p>=80?'Exam ready':p>=70?'On the cusp':p>=50?'Closing the gap':'Foundation phase'; }
+
+  TRADES(){
+    return [
+      { id:'electrician', name:'Construction Electrician', short:'Electrician', icon:'Zap',
+        readiness:75, weekGain:6, streak:12, questions:994, daysToExam:23, examDate:'Jul 22, 2026',
+        mockScore:68, mockGain:6, mockDate:'Jun 21', mockQ:100, mockTime:4, blocks:9,
+        modules:[
+          {name:'Canadian Electrical Code & Safety', icon:'ShieldCheck', progress:82, q:340, days:1},
+          {name:'Wiring & Distribution Systems', icon:'Cable', progress:64, q:210, days:3},
+          {name:'Blueprint & Schematic Reading', icon:'Ruler', progress:47, q:96, days:8},
+          {name:'Motors, Controls & Transformers', icon:'Gauge', progress:71, q:154, days:2},
+          {name:'Conductors, Conduit & Boxes', icon:'Wrench', progress:55, q:130, days:5},
+          {name:'Metering & Service Equipment', icon:'Activity', progress:38, q:64, days:12} ] },
+      { id:'plumber', name:'Plumber', short:'Plumber', icon:'Droplets',
+        readiness:42, weekGain:4, streak:5, questions:540, daysToExam:41, examDate:'Aug 9, 2026',
+        mockScore:49, mockGain:5, mockDate:'Jun 18', mockQ:100, mockTime:4, blocks:8,
+        modules:[
+          {name:'National Plumbing Code', icon:'ShieldCheck', progress:70, q:188, days:2},
+          {name:'Drainage, Waste & Venting', icon:'Droplets', progress:52, q:120, days:4},
+          {name:'Water Supply & Distribution', icon:'Droplets', progress:61, q:96, days:3},
+          {name:'Cross-Connection Control', icon:'Wrench', progress:33, q:48, days:11},
+          {name:'Blueprint & Isometric Reading', icon:'Ruler', progress:45, q:72, days:7},
+          {name:'Fixtures, Traps & Appliances', icon:'Wrench', progress:58, q:84, days:5} ] },
+      { id:'carpenter', name:'Carpenter', short:'Carpenter', icon:'Hammer',
+        readiness:58, weekGain:5, streak:8, questions:712, daysToExam:30, examDate:'Jul 29, 2026',
+        mockScore:61, mockGain:4, mockDate:'Jun 24', mockQ:100, mockTime:4, blocks:7,
+        modules:[
+          {name:'Building Codes & Site Safety', icon:'ShieldCheck', progress:66, q:160, days:2},
+          {name:'Site Layout & Footings', icon:'Ruler', progress:49, q:88, days:6},
+          {name:'Wall & Floor Framing', icon:'Hammer', progress:72, q:174, days:1},
+          {name:'Stair & Roof Construction', icon:'Hammer', progress:40, q:70, days:9},
+          {name:'Concrete & Formwork', icon:'Wrench', progress:55, q:104, days:4},
+          {name:'Blueprint Reading & Estimating', icon:'Ruler', progress:60, q:116, days:3} ] },
+      { id:'welder', name:'Welder', short:'Welder', icon:'Flame',
+        readiness:81, weekGain:3, streak:21, questions:1320, daysToExam:14, examDate:'Jul 13, 2026',
+        mockScore:84, mockGain:4, mockDate:'Jun 26', mockQ:100, mockTime:4, blocks:6,
+        modules:[
+          {name:'Welding Safety & WHMIS', icon:'ShieldCheck', progress:88, q:240, days:1},
+          {name:'SMAW (Stick) Processes', icon:'Flame', progress:84, q:300, days:1},
+          {name:'GMAW & FCAW Processes', icon:'Flame', progress:79, q:210, days:2},
+          {name:'Metallurgy & Distortion', icon:'Gauge', progress:72, q:140, days:3},
+          {name:'Weld Symbols & Blueprints', icon:'Ruler', progress:75, q:160, days:2},
+          {name:'Inspection & Testing', icon:'ClipboardCheck', progress:80, q:130, days:4} ] },
+      { id:'hvac', name:'HVAC/R Technician', short:'HVAC/R', icon:'Wind',
+        readiness:30, weekGain:7, streak:2, questions:188, daysToExam:55, examDate:'Aug 23, 2026',
+        mockScore:34, mockGain:5, mockDate:'Jun 15', mockQ:100, mockTime:4, blocks:8,
+        modules:[
+          {name:'Codes, Safety & Regulations', icon:'ShieldCheck', progress:40, q:60, days:3},
+          {name:'Refrigeration Cycle Basics', icon:'Wind', progress:28, q:36, days:6},
+          {name:'Heating Systems & Combustion', icon:'Flame', progress:35, q:44, days:5},
+          {name:'Electrical for HVAC', icon:'Zap', progress:30, q:40, days:7},
+          {name:'Controls & Thermostats', icon:'Gauge', progress:25, q:28, days:9},
+          {name:'Ductwork & Airflow', icon:'Wind', progress:33, q:34, days:4} ] },
+      { id:'auto', name:'Automotive Service Technician', short:'Auto Service', icon:'Car',
+        readiness:64, weekGain:5, streak:9, questions:803, daysToExam:27, examDate:'Jul 26, 2026',
+        mockScore:66, mockGain:5, mockDate:'Jun 23', mockQ:100, mockTime:4, blocks:8,
+        modules:[
+          {name:'Shop Safety & Tools', icon:'ShieldCheck', progress:72, q:150, days:2},
+          {name:'Engine Systems & Repair', icon:'Gauge', progress:60, q:130, days:3},
+          {name:'Brakes & Suspension', icon:'Wrench', progress:68, q:140, days:2},
+          {name:'Electrical & Electronics', icon:'Zap', progress:55, q:100, days:5},
+          {name:'Drivetrain & Transmission', icon:'Gauge', progress:70, q:120, days:3},
+          {name:'Diagnostics & Scan Tools', icon:'ClipboardCheck', progress:58, q:90, days:4} ] } ];
+  }
+
+  current(){ return this.TRADES().find(t=> t.id===this.state.tradeId); }
+
+  statusOf(p){
+    if(p>=78) return {label:'Strong', tagBg:'#ECFDF5', tagColor:'#047857', chipBg:'#ECFDF5', chipColor:'#059669', barColor:'#10B981', cta:'Review'};
+    if(p>=50) return {label:'On track', tagBg:'#FCEBEC', tagColor:'#B6291F', chipBg:'#FCEBEC', chipColor:'#C0271E', barColor:'#D8232A', cta:'Continue'};
+    return {label:'Needs work', tagBg:'#FFF7ED', tagColor:'#C2410C', chipBg:'#FFF7ED', chipColor:'#EA580C', barColor:'#F97316', cta:'Focus drill'};
+  }
+
+  renderVals(){
+    const S = this.state;
+    const ic = new Proxy({}, { get:(_,k)=> this.makeIcon(String(k)) });
+    const trade = this.current();
+    const all = this.TRADES();
+
+    // trade enriched (header + ring)
+    const rc = this.readyColor(trade.readiness);
+    const tradeCodes = {electrician:'309A', plumber:'306A', carpenter:'403A', welder:'456A', hvac:'313A', auto:'310S'};
+    const tradeView = Object.assign({}, trade, {
+      iconEl: this.makeIcon(trade.icon),
+      code: tradeCodes[trade.id] || '—',
+      readyColor: rc,
+      readyBar: this.readyBar(trade.readiness),
+      readyVerdict: this.verdict(trade.readiness),
+      ringBg: 'conic-gradient(#D8232A 0% '+trade.readiness+'%, #ECE6DC '+trade.readiness+'% 100%)',
+      mockRingBg: 'conic-gradient(#fff 0% '+trade.mockScore+'%, rgba(255,255,255,.25) '+trade.mockScore+'% 100%)',
+      mockVerdict: trade.mockScore>=70?'Passing pace':trade.mockScore>=55?'Almost at the line':'Below pass line',
+    });
+    const readyWidth = (S.animBars ? trade.readiness : 0) + '%';
+
+    // trade list (sidebar + dropdown menu)
+    const tradeMenu = all.map(t=>{
+      const sel = t.id===S.tradeId;
+      const col = this.readyColor(t.readiness);
+      return {
+        id:t.id, name:t.name, short:t.short, readiness:t.readiness, readyColor:col,
+        iconEl:this.makeIcon(t.icon),
+        barW:(S.animBars?t.readiness:0)+'%',
+        select:()=> this.setState({tradeId:t.id, tradeMenuOpen:false, examOpen:false, generatedFor:null}),
+        sideIconBg: sel?'#1F2A37':'#FCEBEC', sideIconColor: sel?'#F4A11A':'#C0271E',
+        sideTextColor: sel?'#1F2A37':'#334155',
+        sideRowStyle:{display:'flex',alignItems:'center',gap:11,width:'100%',padding:'9px 8px',borderRadius:10,border:'none',cursor:'pointer',
+          background: sel?'#FCEBEC':'transparent', boxShadow: sel?'inset 3px 0 0 #C0271E':'none'},
+        menuRowStyle:{display:'flex',alignItems:'center',gap:10,width:'100%',padding:'8px 10px',borderRadius:9,border:'none',cursor:'pointer',
+          background: sel?'#F3EFE8':'transparent'},
+      };
+    });
+
+    // nav
+    const navItems = [
+      {label:'Dashboard', icon:'LayoutDashboard', active:true},
+      {label:'Mock Exams', icon:'ClipboardList', active:false},
+      {label:'Study Library', icon:'Library', active:false},
+      {label:'Progress', icon:'ChartLine', active:false},
+      {label:'Settings', icon:'Settings', active:false},
+    ].map(n=>({ label:n.label, iconEl:this.makeIcon(n.icon),
+      style:{display:'flex',alignItems:'center',gap:11,padding:'9px 10px',borderRadius:10,cursor:'pointer',
+        color:n.active?'#1F2A37':'#64748B', background:n.active?'#F3EFE8':'transparent', fontWeight:n.active?700:600} }));
+
+    // stats
+    const stats = [
+      {label:'Study streak', value:trade.streak, unit:' d', icon:'Flame', color:'#EA580C', bg:'#FFF7ED'},
+      {label:'Questions done', value:trade.questions.toLocaleString(), unit:'', icon:'CircleHelp', color:'#C0271E', bg:'#FCEBEC'},
+      {label:'Mock average', value:trade.mockScore, unit:'%', icon:'Target', color:'#1F2A37', bg:'#F6F3EE'},
+      {label:'Days to exam', value:trade.daysToExam, unit:'', icon:'CalendarDays', color:'#059669', bg:'#ECFDF5'},
+    ].map(s=> Object.assign({}, s, {iconEl:this.makeIcon(s.icon)}));
+
+    // modules (+ optional AI generated, prepended)
+    let mods = trade.modules.slice();
+    if(S.generatedFor===trade.id){
+      const weakest = trade.modules.reduce((a,b)=> b.progress<a.progress?b:a);
+      mods = [{ name:'AI Focus Sprint: '+weakest.name, icon:'Sparkles', progress:0, q:0, days:0, isNew:true, target:weakest.name }].concat(mods);
+    }
+    const modules = mods.map((m,i)=>{
+      const st = this.statusOf(m.progress);
+      const meta = m.isNew ? '14 lessons · built from your '+m.target+' misses'
+                           : m.q.toLocaleString()+' questions · last studied '+m.days+'d ago';
+      return {
+        name:m.name, progress:m.progress, isNew:!!m.isNew, iconEl:this.makeIcon(m.icon), meta,
+        statusLabel: m.isNew?'New':st.label,
+        tagBg: m.isNew?'#FEF3C7':st.tagBg, tagColor: m.isNew?'#92400E':st.tagColor,
+        chipBg: m.isNew?'#FEF3C7':st.chipBg, chipColor: m.isNew?'#B45309':st.chipColor,
+        barColor: m.isNew?'#E8820E':st.barColor,
+        cta: m.isNew?'Start course':st.cta,
+        barW:(S.animBars? m.progress:0)+'%',
+        cardStyle:{position:'relative',background:'#fff',borderRadius:14,padding:'18px',cursor:'pointer',
+          transition:'all .18s ease', overflow:'hidden',
+          border: m.isNew?'1.5px solid #E8820E':'1px solid #E5E0D8',
+          boxShadow: m.isNew?'0 8px 24px rgba(244,161,26,.18)':'0 1px 2px rgba(16,24,40,.04)'},
+      };
+    });
+
+    // generate quiz button state
+    const quizSpin = S.generatingQuiz ? 'animation:spin .8s linear infinite' : '';
+    const quizIcon = S.generatingQuiz ? this.makeIcon('LoaderCircle') : this.makeIcon('Sparkles');
+    const quizLabel = S.generatingQuiz ? 'Generating…' : 'Generate New Quiz';
+
+    const courseSpin = S.generatingCourse ? 'animation:spin .8s linear infinite' : '';
+    const courseIcon = S.generatingCourse ? this.makeIcon('LoaderCircle') : this.makeIcon('Wand');
+    const courseLabel = S.generatingCourse ? 'Building…' : 'Generate Custom Course';
+
+    return {
+      ic, trade:tradeView, readyWidth, tradeMenu, navItems, stats, modules,
+      tradeCount: all.length, tradeMenuOpen:S.tradeMenuOpen, examOpen:S.examOpen,
+      toast:S.toast, toastIcon: this.makeIcon(S.toast?S.toast.icon:'Check'),
+      quizSpin, quizIcon, quizLabel, courseSpin, courseIcon, courseLabel,
+      toggleTradeMenu:()=> this.setState(s=>({tradeMenuOpen:!s.tradeMenuOpen})),
+      toggleExam:()=> this.setState(s=>({examOpen:!s.examOpen})),
+      closeToast:()=> this.setState({toast:null}),
+      generateQuiz:()=>{
+        if(this.state.generatingQuiz) return;
+        const t = this.current();
+        const weakest = t.modules.reduce((a,b)=> b.progress<a.progress?b:a);
+        this.setState({generatingQuiz:true});
+        this._t1 = setTimeout(()=> this.setState({generatingQuiz:false, toast:{icon:'Sparkles',
+          title:'20-question quiz is ready', body:'Targeting '+weakest.name+' — your weakest area at '+weakest.progress+'%.'}}), 1500);
+      },
+      generateCourse:()=>{
+        if(this.state.generatingCourse) return;
+        this.setState({generatingCourse:true});
+        this._t2 = setTimeout(()=>{
+          const t = this.current();
+          const weakest = t.modules.reduce((a,b)=> b.progress<a.progress?b:a);
+          this.setState({generatingCourse:false, generatedFor:t.id, toast:{icon:'CircleCheck',
+            title:'Custom course generated', body:'A focus sprint on '+weakest.name+' was added to your modules.'}});
+        }, 1700);
+      },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;scroll-behavior:smooth}
+  body{font-family:'Barlow',system-ui,sans-serif;color:#1F2A37;background:#fff}
+  ::selection{background:#D8232A33}
+  a{text-decoration:none;color:inherit}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  @keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+</style>
+</helmet>
+
+<div style="overflow-x:hidden">
+
+  <!-- ===== NAV ===== -->
+  <header style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid #F1ECE3">
+    <div style="max-width:1180px;margin:0 auto;height:70px;display:flex;align-items:center;gap:26px;padding:0 24px">
+      <a href="#top" style="display:flex;align-items:center;gap:11px">
+        <img src="assets/redseal-logo.svg" width="38" height="38" alt="RedSeal seal mark" style="flex:0 0 38px" />
+        <div style="line-height:1">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:21px;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap"><span style="color:#D8232A">RedSeal</span> <span style="color:#1F2A37">AI&nbsp;Prep</span></div>
+          <div style="font-family:'IBM Plex Mono';font-size:10px;color:#94A3B8;letter-spacing:.5px;margin-top:1px">tradesguide.ca</div>
+        </div>
+      </a>
+      <nav style="display:flex;align-items:center;gap:4px;margin-left:14px">
+        <a href="#how" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">How it works</a>
+        <a href="#trades" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">Trades</a>
+        <a href="#pricing" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">Pricing</a>
+        <a href="#faq" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">FAQ</a>
+      </nav>
+      <div style="flex:1"></div>
+      <a href="RedSeal Dashboard.dc.html" style="padding:9px 14px;border-radius:9px;font-weight:600;font-size:14.5px;color:#1F2A37" style-hover="background:#F3EFE8">Log in</a>
+      <a href="RedSeal Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:10px;background:linear-gradient(150deg,#E12D2A,#C2151B);color:#fff;font-weight:800;font-size:14.5px;box-shadow:0 4px 14px rgba(244,161,26,.4)" style-hover="filter:brightness(1.05)">Start free<span style="font-size:17px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></a>
+    </div>
+  </header>
+
+  <!-- ===== HERO ===== -->
+  <section id="top" style="position:relative;background:radial-gradient(1200px 640px at 82% -12%, #E23A30 0%, #D8232A 46%, #B81A20 100%);color:#fff;overflow:hidden">
+    <div style="position:absolute;inset:0;opacity:.13;background-image:radial-gradient(circle at 1px 1px,#fff 1.5px,transparent 0);background-size:26px 26px;mask-image:linear-gradient(180deg,#000,transparent 92%)"></div>
+    <div style="position:absolute;right:-130px;bottom:-120px;width:420px;height:420px;border-radius:50%;border:2px dashed rgba(255,255,255,.22)"></div>
+    <div style="position:absolute;right:-170px;top:-110px;width:340px;height:340px;border-radius:50%;background:rgba(0,0,0,.10)"></div>
+
+    <div style="position:relative;max-width:1180px;margin:0 auto;padding:64px 24px 76px;display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center">
+      <div>
+        <div style="display:inline-flex;align-items:center;gap:9px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 13px 6px 8px;font-size:12.5px;font-weight:600;color:#CFE0EE">
+          <span style="display:inline-flex;align-items:center;gap:5px;background:#F4A11A;color:#1F2A37;border-radius:999px;padding:3px 8px;font-weight:800;font-size:11px"><span style="font-size:13px;display:grid;place-items:center">{{ ic.Sparkles }}</span>AI-built</span>
+          Unofficial Red Seal prep, rebuilt for 2026
+        </div>
+
+        <h1 style="margin:20px 0 0;font-family:'Barlow Condensed';font-weight:700;font-size:64px;line-height:.96;letter-spacing:-.5px;text-wrap:balance">Pass your Red Seal<br>the <span style="color:#fff;text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);text-underline-offset:6px;text-decoration-thickness:3px">first time.</span></h1>
+
+        <p style="margin:18px 0 0;font-size:18px;line-height:1.5;color:#FCE3E4;max-width:440px">AI builds your study plan around <b style="color:#fff">your</b> weak spots. Pick a trade and go.</p>
+
+        <div style="display:flex;gap:12px;margin-top:28px;flex-wrap:wrap">
+          <a href="RedSeal Dashboard.dc.html" style="display:flex;align-items:center;gap:9px;height:52px;padding:0 24px;border-radius:12px;background:#fff;color:#D8232A;font-weight:800;font-size:16.5px;box-shadow:0 10px 24px rgba(0,0,0,.20)" style-hover="filter:brightness(.97)"><span style="font-size:20px;display:grid;place-items:center">{{ ic.Zap }}</span>Start free — no card</a>
+          <a href="#how" style="display:flex;align-items:center;gap:9px;height:52px;padding:0 22px;border-radius:12px;border:1.5px solid rgba(255,255,255,.5);color:#fff;font-weight:700;font-size:16.5px" style-hover="background:rgba(255,255,255,.12)"><span style="font-size:18px;display:grid;place-items:center">{{ ic.PlayCircle }}</span>See how it works</a>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:18px;margin-top:26px;flex-wrap:wrap;color:#FCE3E4;font-size:13.5px;font-weight:600">
+          <span style="display:flex;align-items:center;gap:7px"><span style="color:#fff;font-size:16px;display:grid;place-items:center">{{ ic.CircleCheck }}</span>All 56 Red Seal trades</span>
+          <span style="display:flex;align-items:center;gap:7px"><span style="color:#fff;font-size:16px;display:grid;place-items:center">{{ ic.CircleCheck }}</span>Every province &amp; territory</span>
+          <span style="display:flex;align-items:center;gap:7px"><span style="color:#fff;font-size:16px;display:grid;place-items:center">{{ ic.CircleCheck }}</span>Maple-leaf code, not US</span>
+        </div>
+      </div>
+
+      <!-- hero: live sample question -->
+      <div style="position:relative">
+        <div style="position:absolute;inset:14px -10px -14px 14px;background:rgba(0,0,0,.28);border-radius:22px;filter:blur(3px);opacity:.55"></div>
+        <div style="position:relative;background:#fff;border-radius:18px;box-shadow:0 30px 60px rgba(0,0,0,.4);color:#1F2A37;overflow:hidden">
+
+          <!-- card header -->
+          <div style="display:flex;align-items:center;gap:9px;padding:15px 18px;background:#1F2A37;color:#fff">
+            <span style="width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,.08);color:#F4564E;display:grid;place-items:center;font-size:16px">{{ heroTrade.iconEl }}</span>
+            <div style="line-height:1.1">
+              <div style="font-weight:700;font-size:14px;font-family:'Barlow Semi Condensed'">{{ heroTrade.name }}</div>
+              <div style="font-family:'IBM Plex Mono';font-size:10.5px;color:#7DA0BD">{{ quiz.block }}</div>
+            </div>
+            <span style="margin-left:auto;display:flex;align-items:center;gap:6px;background:rgba(251,191,36,.16);color:#F4A11A;font-weight:700;font-size:11px;padding:5px 9px;border-radius:7px"><span style="font-size:13px;display:grid;place-items:center">{{ ic.Sparkles }}</span>Live sample</span>
+          </div>
+
+          <div style="padding:20px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <span style="font-family:'IBM Plex Mono';font-size:11px;font-weight:600;color:#94A3B8">QUESTION 1 OF 20</span>
+              <span style="display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono';font-size:12px;font-weight:600;color:#C0271E"><span style="font-size:14px;display:grid;place-items:center">{{ ic.Timer }}</span>{{ quiz.timer }}</span>
+            </div>
+
+            <h3 style="margin:11px 0 0;font-family:'Barlow Semi Condensed';font-size:18.5px;font-weight:600;line-height:1.32;min-height:74px">{{ quiz.q }}</h3>
+
+            <div style="display:flex;flex-direction:column;gap:9px;margin-top:6px">
+              <sc-for list="{{ quiz.options }}" as="o" hint-placeholder-count="4">
+                <button onClick="{{ o.pick }}" style="{{ o.style }}" style-hover="{{ o.hover }}">
+                  <span style="{{ o.keyStyle }}">{{ o.key }}</span>
+                  <span style="flex:1;text-align:left">{{ o.text }}</span>
+                  <sc-if value="{{ o.showMark }}" hint-placeholder-val="{{ false }}"><span style="font-size:17px;display:grid;place-items:center;color:{{ o.markColor }}">{{ o.markEl }}</span></sc-if>
+                </button>
+              </sc-for>
+            </div>
+
+            <sc-if value="{{ quiz.answered }}" hint-placeholder-val="{{ false }}">
+              <div style="margin-top:13px;display:flex;gap:10px;background:{{ quiz.fbBg }};border:1px solid {{ quiz.fbBorder }};border-radius:11px;padding:12px 13px">
+                <span style="color:{{ quiz.fbColor }};font-size:18px;display:grid;place-items:center;flex:0 0 auto;margin-top:1px">{{ quiz.fbIconEl }}</span>
+                <div>
+                  <div style="font-weight:700;font-size:13.5px;color:{{ quiz.fbColor }}">{{ quiz.fbTitle }}</div>
+                  <div style="font-size:13px;color:#475569;line-height:1.45;margin-top:2px">{{ quiz.explain }}</div>
+                </div>
+              </div>
+              <button onClick="{{ quiz.reset }}" style="width:100%;margin-top:11px;height:44px;border-radius:11px;border:none;background:linear-gradient(150deg,#E12D2A,#C2151B);color:#fff;font-weight:800;font-size:14.5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">Get my full quiz<span style="font-size:16px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></button>
+            </sc-if>
+            <sc-if value="{{ quiz.unanswered }}" hint-placeholder-val="{{ true }}">
+              <div style="margin-top:13px;text-align:center;font-size:12.5px;color:#94A3B8;font-weight:600">👆 Tap an answer — see how it works</div>
+            </sc-if>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- trade switch chips -->
+    <div style="position:relative;max-width:1180px;margin:0 auto;padding:0 24px 40px">
+      <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#FCE3E4;margin-bottom:11px">Try it with your trade</div>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
+          <button onClick="{{ c.pick }}" style="{{ c.style }}" style-hover="border-color:rgba(255,255,255,.4)">
+            <span style="font-size:16px;display:grid;place-items:center">{{ c.iconEl }}</span>{{ c.short }}
+          </button>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== STAT BAR ===== -->
+  <section style="background:#C2151B">
+    <div style="max-width:1180px;margin:0 auto;padding:26px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px">
+      <sc-for list="{{ bigStats }}" as="s" hint-placeholder-count="4">
+        <div style="text-align:center">
+          <div style="font-family:'Barlow Condensed';font-size:38px;font-weight:700;color:#fff;line-height:1">{{ s.value }}</div>
+          <div style="font-size:13px;color:#FCE3E4;font-weight:600;margin-top:2px">{{ s.label }}</div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== HOW IT WORKS ===== -->
+  <section id="how" style="max-width:1180px;margin:0 auto;padding:84px 24px 30px">
+    <div style="text-align:center;max-width:640px;margin:0 auto">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#D8232A">How it works</div>
+      <h2 style="margin:10px 0 0;font-family:'Barlow Condensed';font-size:46px;font-weight:700;letter-spacing:-.4px;line-height:1">Three steps to exam-ready</h2>
+    </div>
+    <div style="display:flex;align-items:stretch;gap:6px;margin-top:48px;flex-wrap:wrap;justify-content:center">
+      <sc-for list="{{ steps }}" as="st" hint-placeholder-count="3">
+        <div style="flex:1;min-width:210px;display:flex;align-items:center;gap:6px">
+          <div style="flex:1;background:#fff;border:1px solid #E5E0D8;border-radius:16px;padding:26px 22px;position:relative;text-align:center">
+            <div style="position:absolute;top:14px;right:16px;font-family:'Barlow Condensed';font-size:34px;font-weight:700;color:#F1ECE3;line-height:1">{{ st.no }}</div>
+            <div style="width:64px;height:64px;border-radius:18px;background:{{ st.bg }};color:{{ st.color }};display:grid;place-items:center;font-size:30px;margin:0 auto">{{ st.iconEl }}</div>
+            <h3 style="margin:16px 0 0;font-family:'Barlow Semi Condensed';font-size:20px;font-weight:600">{{ st.title }}</h3>
+            <p style="margin:5px 0 0;font-size:14.5px;color:#64748B;line-height:1.45">{{ st.body }}</p>
+          </div>
+          <sc-if value="{{ st.arrow }}" hint-placeholder-val="{{ true }}">
+            <span style="color:#CBD5E1;font-size:22px;display:grid;place-items:center;flex:0 0 auto">{{ stepArrow }}</span>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== FEATURES ===== -->
+  <section style="max-width:1180px;margin:0 auto;padding:54px 24px 30px">
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:18px">
+      <!-- big feature -->
+      <div style="background:linear-gradient(145deg,#E0392F,#C2151B);color:#fff;border-radius:18px;padding:32px;position:relative;overflow:hidden">
+        <div style="position:absolute;right:-30px;bottom:-40px;width:200px;height:200px;border-radius:50%;background:rgba(0,0,0,.12)"></div>
+        <div style="display:flex;align-items:center;gap:10px;color:#FCE3E4;font-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase"><span style="font-size:18px;display:grid;place-items:center">{{ ic.Target }}</span>Weak-spot targeting</div>
+        <h3 style="margin:14px 0 0;font-family:'Barlow Condensed';font-size:34px;font-weight:700;line-height:1.02;max-width:440px">Every wrong answer makes your next quiz smarter</h3>
+        <p style="margin:12px 0 0;font-size:15.5px;color:#FCE3E4;line-height:1.55;max-width:440px">We rebuild your modules around the blocks that trip you up — no wasted reps.</p>
+        <div style="display:flex;gap:10px;margin-top:22px;flex-wrap:wrap">
+          <span style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600">Adaptive difficulty</span>
+          <span style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600">Spaced repetition</span>
+          <span style="background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:9px;padding:8px 12px;font-size:13px;font-weight:600">Per-block analytics</span>
+        </div>
+      </div>
+      <!-- stacked features -->
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <sc-for list="{{ miniFeatures }}" as="f" hint-placeholder-count="2">
+          <div style="flex:1;background:#fff;border:1px solid #E5E0D8;border-radius:16px;padding:22px;display:flex;gap:15px;align-items:flex-start">
+            <div style="width:46px;height:46px;border-radius:12px;background:{{ f.bg }};color:{{ f.color }};display:grid;place-items:center;font-size:22px;flex:0 0 46px">{{ f.iconEl }}</div>
+            <div><h3 style="margin:0;font-family:'Barlow Semi Condensed';font-size:18.5px;font-weight:600">{{ f.title }}</h3><p style="margin:5px 0 0;font-size:14.5px;color:#64748B;line-height:1.5">{{ f.body }}</p></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:18px">
+      <sc-for list="{{ rowFeatures }}" as="f" hint-placeholder-count="3">
+        <div style="background:#fff;border:1px solid #E5E0D8;border-radius:16px;padding:22px;display:flex;gap:14px;align-items:flex-start">
+          <div style="width:44px;height:44px;border-radius:11px;background:{{ f.bg }};color:{{ f.color }};display:grid;place-items:center;font-size:21px;flex:0 0 44px">{{ f.iconEl }}</div>
+          <div><h3 style="margin:0;font-family:'Barlow Semi Condensed';font-size:18px;font-weight:600">{{ f.title }}</h3><p style="margin:5px 0 0;font-size:14px;color:#64748B;line-height:1.5">{{ f.body }}</p></div>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== TRADES ===== -->
+  <section id="trades" style="background:#F6F3EE;border-top:1px solid #E5E0D8;border-bottom:1px solid #E5E0D8;margin-top:40px">
+    <div style="max-width:1180px;margin:0 auto;padding:72px 24px">
+      <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#D8232A">Supported trades</div>
+          <h2 style="margin:10px 0 0;font-family:'Barlow Condensed';font-size:46px;font-weight:700;letter-spacing:-.4px;line-height:1">From wire to weld, we've got your ticket</h2>
+        </div>
+        <a href="RedSeal Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;font-weight:700;color:#C0271E;font-size:15px">See all 56 trades<span style="font-size:16px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></a>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px">
+        <sc-for list="{{ tradeCards }}" as="t" hint-placeholder-count="8">
+          <a href="RedSeal Dashboard.dc.html" style="background:#fff;border:1px solid #E5E0D8;border-radius:14px;padding:18px;display:flex;align-items:center;gap:13px;transition:all .16s ease" style-hover="border-color:#C0271E;box-shadow:0 8px 20px rgba(31,42,55,.10);transform:translateY(-2px)">
+            <span style="width:44px;height:44px;border-radius:11px;background:{{ t.bg }};color:{{ t.color }};display:grid;place-items:center;font-size:22px;flex:0 0 44px">{{ t.iconEl }}</span>
+            <span><span style="display:block;font-family:'Barlow Semi Condensed';font-weight:600;font-size:16px;color:#1F2A37">{{ t.name }}</span><span style="display:block;font-family:'IBM Plex Mono';font-size:11px;color:#94A3B8;margin-top:1px">{{ t.code }}</span></span>
+          </a>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== TESTIMONIAL ===== -->
+  <section style="max-width:1180px;margin:0 auto;padding:78px 24px">
+    <div style="background:linear-gradient(145deg,#E0392F,#C2151B);border-radius:20px;padding:48px 44px;color:#fff;position:relative;overflow:hidden">
+      <div style="position:absolute;right:30px;top:24px;font-family:'Barlow Condensed';font-size:160px;line-height:1;color:rgba(255,255,255,.16);font-weight:700">&rdquo;</div>
+      <div style="position:relative;max-width:760px">
+        <div style="display:flex;gap:3px;color:#fff;font-size:18px">{{ stars }}</div>
+        <p style="margin:18px 0 0;font-family:'Barlow Semi Condensed';font-size:30px;font-weight:500;line-height:1.32;letter-spacing:-.2px">"Failed the electrician exam by 4 points. Six weeks on here, passed the retake with an <span style="color:#fff;font-weight:700;text-decoration:underline;text-decoration-color:rgba(255,255,255,.5);text-underline-offset:3px">84</span>."</p>
+        <div style="display:flex;align-items:center;gap:13px;margin-top:24px">
+          <div style="width:48px;height:48px;border-radius:50%;background:#1F2A37;display:grid;place-items:center;font-weight:700;font-family:'Barlow Semi Condensed';font-size:16px;border:2px solid rgba(255,255,255,.25)">DK</div>
+          <div><div style="font-weight:700;font-size:16px">Dylan K.</div><div style="font-size:13.5px;color:#FCE3E4">Construction Electrician · Hamilton, ON</div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== PRICING ===== -->
+  <section id="pricing" style="background:#F6F3EE;border-top:1px solid #E5E0D8;border-bottom:1px solid #E5E0D8">
+    <div style="max-width:1180px;margin:0 auto;padding:78px 24px">
+      <div style="text-align:center;max-width:600px;margin:0 auto">
+        <div style="font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#D8232A">Pricing</div>
+        <h2 style="margin:10px 0 0;font-family:'Barlow Condensed';font-size:46px;font-weight:700;letter-spacing:-.4px;line-height:1">Cheaper than rewriting the exam</h2>
+        <p style="margin:12px 0 0;font-size:17px;color:#64748B">A re-test costs hundreds and weeks of your time. Try any plan for your first week, then keep going — or cancel.</p>
+        <div style="display:inline-flex;align-items:center;gap:8px;background:#FCEBEC;color:#B6291F;border-radius:999px;padding:7px 15px;margin-top:20px;font-size:13.5px;font-weight:700">
+          <span style="font-size:15px;display:grid;place-items:center">{{ ic.Tag }}</span>Every plan: discounted first week · cancel anytime
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:40px;align-items:stretch">
+        <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+          <div style="{{ p.cardStyle }}">
+            <sc-if value="{{ p.popular }}" hint-placeholder-val="{{ false }}">
+              <div style="position:absolute;top:16px;right:16px;background:#fff;color:#D8232A;font-size:11px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;padding:4px 10px;border-radius:7px">Most popular</div>
+            </sc-if>
+            <div style="font-family:'Barlow Semi Condensed';font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:{{ p.accent }}">{{ p.name }}</div>
+            <div style="display:flex;align-items:baseline;gap:5px;margin-top:14px">
+              <span style="font-family:'Barlow Condensed';font-size:50px;font-weight:700;line-height:.9;color:{{ p.priceColor }}">{{ p.price }}</span>
+              <span style="font-size:15px;color:{{ p.muted }};font-weight:600">{{ p.per }}</span>
+            </div>
+            <div style="font-size:13.5px;color:{{ p.muted }};margin-top:6px">{{ p.sub }}</div>
+            <a href="RedSeal Dashboard.dc.html" style="{{ p.btnStyle }}">{{ p.cta }}</a>
+            <div style="height:1px;background:{{ p.divider }};margin:20px 0"></div>
+            <div style="display:flex;flex-direction:column;gap:11px">
+              <sc-for list="{{ p.features }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex;align-items:flex-start;gap:9px;font-size:14px;color:{{ p.featColor }}"><span style="color:{{ p.check }};font-size:16px;flex:0 0 auto;display:grid;place-items:center;margin-top:1px">{{ f.iconEl }}</span><span>{{ f.text }}</span></div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section id="faq" style="max-width:820px;margin:0 auto;padding:78px 24px">
+    <div style="text-align:center">
+      <div style="font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#D8232A">FAQ</div>
+      <h2 style="margin:10px 0 0;font-family:'Barlow Condensed';font-size:46px;font-weight:700;letter-spacing:-.4px;line-height:1">Straight answers</h2>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:11px;margin-top:34px">
+      <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="5">
+        <div style="background:#fff;border:1px solid #E5E0D8;border-radius:13px;overflow:hidden">
+          <button onClick="{{ q.toggle }}" style="width:100%;display:flex;align-items:center;gap:14px;padding:18px 20px;background:none;border:none;cursor:pointer;text-align:left">
+            <span style="flex:1;font-family:'Barlow Semi Condensed';font-size:18px;font-weight:600;color:#1F2A37">{{ q.q }}</span>
+            <span style="font-size:20px;color:#94A3B8;display:grid;place-items:center;transition:transform .2s ease;{{ q.rot }}">{{ ic.ChevronDown }}</span>
+          </button>
+          <sc-if value="{{ q.open }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 20px 20px;font-size:15px;color:#64748B;line-height:1.6">{{ q.a }}</div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </section>
+
+  <!-- ===== CTA BAND ===== -->
+  <section style="position:relative;background:radial-gradient(1000px 520px at 50% 115%, #E0392F 0%, #D8232A 45%, #B81A20 100%);color:#fff;overflow:hidden">
+    <div style="position:absolute;inset:0;opacity:.14;background-image:radial-gradient(circle at 1px 1px,#fff 1.5px,transparent 0);background-size:26px 26px;mask-image:radial-gradient(720px 380px at 50% 30%,#000,transparent)"></div>
+    <div style="position:relative;max-width:760px;margin:0 auto;padding:80px 24px;text-align:center">
+      <div style="width:60px;height:60px;border-radius:15px;background:#fff;display:grid;place-items:center;color:#D8232A;font-size:30px;margin:0 auto;box-shadow:0 10px 26px rgba(0,0,0,.20)">{{ ic.HardHat }}</div>
+      <h2 style="margin:22px 0 0;font-family:'Barlow Condensed';font-size:52px;font-weight:700;line-height:1;letter-spacing:-.4px;text-wrap:balance">Your ticket is waiting.<br>Go earn it.</h2>
+      <p style="margin:14px 0 0;font-size:18px;color:#FCE3E4">Start free today — build your first AI quiz in under two minutes.</p>
+      <a href="RedSeal Dashboard.dc.html" style="display:inline-flex;align-items:center;gap:10px;height:56px;padding:0 30px;border-radius:13px;background:#fff;color:#D8232A;font-weight:800;font-size:17.5px;margin-top:26px;box-shadow:0 10px 28px rgba(0,0,0,.22)" style-hover="filter:brightness(1.05)"><span style="font-size:22px;display:grid;place-items:center">{{ ic.Zap }}</span>Start free</a>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer style="background:#161E27;color:#9FBBD2">
+    <div style="max-width:1180px;margin:0 auto;padding:48px 24px 30px;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/redseal-logo.svg" width="34" height="34" alt="RedSeal seal mark" style="flex:0 0 34px" />
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:19px;letter-spacing:.3px;text-transform:uppercase;color:#fff">RedSeal AI Prep</div>
+        </div>
+        <p style="margin:14px 0 0;font-size:13.5px;line-height:1.6;max-width:320px">AI-powered Red Seal exam prep for Canadian tradespeople. Built by trades folks who were tired of dusty study binders.</p>
+        <div style="font-family:'IBM Plex Mono';font-size:12px;color:#5F87A6;margin-top:14px">tradesguide.ca</div>
+      </div>
+      <sc-for list="{{ footCols }}" as="col" hint-placeholder-count="3">
+        <div>
+          <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#F4564E">{{ col.head }}</div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-top:13px">
+            <sc-for list="{{ col.links }}" as="l" hint-placeholder-count="4">
+              <a href="#top" style="font-size:14px;color:#9FBBD2" style-hover="color:#fff">{{ l }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.07)">
+      <div style="max-width:1180px;margin:0 auto;padding:18px 24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#5F87A6">
+        <span>© 2026 tradesguide.ca · Unofficial — not affiliated with the Red Seal Program or any provincial authority.</span>
+        <span>Made in Canada 🍁</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  constructor(props){
+    super(props);
+    this.state = { heroId:'electrician', openFaq:0, picked:null };
+  }
+  componentDidMount(){
+    if(!(window.lucide && window.lucide.icons)){
+      this._iv = setInterval(()=>{ if(window.lucide && window.lucide.icons){ clearInterval(this._iv); this.forceUpdate(); } }, 40);
+    }
+  }
+  componentWillUnmount(){ clearInterval(this._iv); }
+
+  QUIZ(){
+    return {
+      electrician:{ block:'CE Code & Safety · Block C', timer:'1:12',
+        q:'What is the maximum allowable voltage drop for a branch circuit feeding a continuous load, per CEC?',
+        options:[{k:'A',t:'2%'},{k:'B',t:'3%',correct:true},{k:'C',t:'5%'},{k:'D',t:'10%'}],
+        explain:'CEC Section 8 caps branch-circuit voltage drop at 3%, with 5% total for feeder plus branch.'},
+      plumber:{ block:'National Plumbing Code · DWV', timer:'1:04',
+        q:'What is the minimum slope for a 3-inch horizontal sanitary drainage pipe?',
+        options:[{k:'A',t:'1:50 (2%)'},{k:'B',t:'1:100 (1%)',correct:true},{k:'C',t:'1:25 (4%)'},{k:'D',t:'No minimum'}],
+        explain:'Pipes 3 in and larger require a minimum slope of 1:100 (1%) for proper drainage flow.'},
+      carpenter:{ block:'Framing Systems · Block B', timer:'0:58',
+        q:'Standard on-centre spacing for wall studs in residential load-bearing framing is:',
+        options:[{k:'A',t:'12" o.c.'},{k:'B',t:'16" o.c.',correct:true},{k:'C',t:'24" o.c.'},{k:'D',t:'19.2" o.c.'}],
+        explain:'16" on-centre is the residential standard, aligning with 4-ft sheet goods and code spans.'},
+      welder:{ block:'Weld Symbols · Block D', timer:'1:20',
+        q:'On a welding symbol, a flag at the junction of the reference line and arrow indicates:',
+        options:[{k:'A',t:'A field weld',correct:true},{k:'B',t:'A weld all-around'},{k:'C',t:'A flush contour'},{k:'D',t:'A backing bar'}],
+        explain:'The flag denotes a field weld — made on site rather than in the shop. A circle means weld-all-around.'},
+      hvac:{ block:'Refrigeration Cycle · Block A', timer:'1:08',
+        q:'In a basic refrigeration cycle, which component lowers refrigerant pressure before the evaporator?',
+        options:[{k:'A',t:'Compressor'},{k:'B',t:'Condenser'},{k:'C',t:'Metering device',correct:true},{k:'D',t:'Accumulator'}],
+        explain:'The metering device (TXV or orifice) drops pressure and temperature right before the evaporator.'},
+      auto:{ block:'Brakes & Suspension · Block C', timer:'1:00',
+        q:'A vehicle pulls to one side under braking. The most likely cause is:',
+        options:[{k:'A',t:'Worn timing belt'},{k:'B',t:'A seized caliper',correct:true},{k:'C',t:'Low coolant'},{k:'D',t:'Faulty O2 sensor'}],
+        explain:'A seized or sticking caliper applies uneven braking force, pulling the vehicle toward one side.'},
+    };
+  }
+
+  makeIcon(name){
+    const L = window.lucide;
+    const empty = React.createElement('span',{style:{display:'inline-block',width:'1em',height:'1em'}});
+    if(!L || !L.icons || !L.icons[name]) return empty;
+    const kids = L.icons[name].map((c,i)=> React.createElement(c[0], Object.assign({key:i}, c[1])));
+    return React.createElement('svg',{xmlns:'http://www.w3.org/2000/svg',viewBox:'0 0 24 24',width:'1em',height:'1em',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}}, kids);
+  }
+
+  TRADES(){
+    return [
+      {id:'electrician', name:'Construction Electrician', short:'Electrician', icon:'Zap', code:'309A', readiness:75, gain:6,
+        mods:[{name:'CE Code & Safety',icon:'ShieldCheck',p:82,color:'#10B981',bg:'#ECFDF5'},{name:'Wiring & Distribution',icon:'Cable',p:64,color:'#D8232A',bg:'#FCEBEC'},{name:'Blueprint Reading',icon:'Ruler',p:47,color:'#C0271E',bg:'#FCEBEC'}]},
+      {id:'plumber', name:'Plumber', short:'Plumber', icon:'Droplets', code:'306A', readiness:42, gain:4,
+        mods:[{name:'Plumbing Code',icon:'ShieldCheck',p:70,color:'#10B981',bg:'#ECFDF5'},{name:'Drainage & Venting',icon:'Droplets',p:52,color:'#D8232A',bg:'#FCEBEC'},{name:'Cross-Connection',icon:'Wrench',p:33,color:'#C0271E',bg:'#FCEBEC'}]},
+      {id:'carpenter', name:'Carpenter', short:'Carpenter', icon:'Hammer', code:'403A', readiness:58, gain:5,
+        mods:[{name:'Framing Systems',icon:'Hammer',p:72,color:'#10B981',bg:'#ECFDF5'},{name:'Concrete & Formwork',icon:'Wrench',p:55,color:'#D8232A',bg:'#FCEBEC'},{name:'Stair & Roof',icon:'Ruler',p:40,color:'#C0271E',bg:'#FCEBEC'}]},
+      {id:'welder', name:'Welder', short:'Welder', icon:'Flame', code:'456A', readiness:81, gain:3,
+        mods:[{name:'Safety & WHMIS',icon:'ShieldCheck',p:88,color:'#10B981',bg:'#ECFDF5'},{name:'SMAW Processes',icon:'Flame',p:84,color:'#10B981',bg:'#ECFDF5'},{name:'Weld Symbols',icon:'Ruler',p:75,color:'#D8232A',bg:'#FCEBEC'}]},
+      {id:'hvac', name:'HVAC/R Technician', short:'HVAC/R', icon:'Wind', code:'313A', readiness:30, gain:7,
+        mods:[{name:'Codes & Safety',icon:'ShieldCheck',p:40,color:'#C0271E',bg:'#FCEBEC'},{name:'Refrigeration Cycle',icon:'Wind',p:28,color:'#C0271E',bg:'#FCEBEC'},{name:'Electrical for HVAC',icon:'Zap',p:30,color:'#C0271E',bg:'#FCEBEC'}]},
+      {id:'auto', name:'Automotive Service', short:'Auto Service', icon:'Car', code:'310S', readiness:64, gain:5,
+        mods:[{name:'Engine Systems',icon:'Gauge',p:60,color:'#D8232A',bg:'#FCEBEC'},{name:'Brakes & Suspension',icon:'Wrench',p:68,color:'#D8232A',bg:'#FCEBEC'},{name:'Diagnostics',icon:'ClipboardCheck',p:58,color:'#D8232A',bg:'#FCEBEC'}]},
+    ];
+  }
+
+  renderVals(){
+    const S = this.state, mk = (n)=> this.makeIcon(n);
+    const ic = new Proxy({}, { get:(_,k)=> this.makeIcon(String(k)) });
+    const trades = this.TRADES();
+    const hero = trades.find(t=>t.id===S.heroId) || trades[0];
+
+    const chips = trades.map(t=>{
+      const sel = t.id===S.heroId;
+      return { short:t.short, iconEl:mk(t.icon), pick:()=> this.setState({heroId:t.id, picked:null}),
+        style:{display:'flex',alignItems:'center',gap:8,height:40,padding:'0 15px',borderRadius:999,cursor:'pointer',
+          fontWeight:600,fontSize:14, color: sel?'#D8232A':'#fff',
+          background: sel?'#fff':'rgba(255,255,255,.10)',
+          border: sel?'1px solid #fff':'1px solid rgba(255,255,255,.30)'} };
+    });
+
+    const heroMods = hero.mods.map(m=>({ name:m.name, iconEl:mk(m.icon), color:m.color, bg:m.bg, w:m.p+'%' }));
+
+    // live sample question
+    const qd = this.QUIZ()[hero.id];
+    const picked = S.picked;
+    const answered = picked!==null;
+    const correctKey = qd.options.find(o=>o.correct).k;
+    const gotIt = picked===correctKey;
+    const optBase = {display:'flex',alignItems:'center',gap:11,width:'100%',padding:'12px 13px',borderRadius:11,cursor: answered?'default':'pointer',fontFamily:'Barlow',fontSize:14.5,fontWeight:600,transition:'all .14s ease',textAlign:'left'};
+    const keyBase = {width:24,height:24,borderRadius:7,display:'grid',placeItems:'center',fontFamily:'IBM Plex Mono',fontSize:12.5,fontWeight:600,flex:'0 0 24px'};
+    const quizOptions = qd.options.map(o=>{
+      const isCorrect = o.correct, isPicked = picked===o.k;
+      let bg='#fff', border='1.5px solid #E5E0D8', color='#334155', keyBg='#F3EFE8', keyColor='#64748B', markEl=null, markColor='', showMark=false;
+      if(answered){
+        if(isCorrect){ bg='#ECFDF5'; border='1.5px solid #6EE7B7'; color='#065F46'; keyBg='#10B981'; keyColor='#fff'; markEl=mk('Check'); markColor='#059669'; showMark=true; }
+        else if(isPicked){ bg='#FEF2F2'; border='1.5px solid #FCA5A5'; color='#991B1B'; keyBg='#EF4444'; keyColor='#fff'; markEl=mk('X'); markColor='#DC2626'; showMark=true; }
+        else { color='#94A3B8'; }
+      }
+      return { key:o.k, text:o.t, showMark, markEl, markColor,
+        style:Object.assign({},optBase,{background:bg,border:border,color:color}),
+        hover: answered?'':'border-color:#C0271E;background:#FAF8F4',
+        keyStyle:Object.assign({},keyBase,{background:keyBg,color:keyColor}),
+        pick:()=>{ if(this.state.picked===null) this.setState({picked:o.k}); } };
+    });
+    const quiz = {
+      block:qd.block, timer:qd.timer, q:qd.q, options:quizOptions,
+      answered, unanswered:!answered,
+      reset:()=> this.setState({picked:null}),
+      fbBg: gotIt?'#ECFDF5':'#FEF2F2', fbBorder: gotIt?'#A7F3D0':'#FECACA',
+      fbColor: gotIt?'#047857':'#B91C1C', fbIconEl: gotIt?mk('CircleCheck'):mk('Lightbulb'),
+      fbTitle: gotIt?'Correct — nice one':'Not quite — here\'s why',
+      explain: qd.explain,
+    };
+
+    const bigStats = [
+      {value:'56', label:'Red Seal trades covered'},
+      {value:'40k+', label:'Practice questions'},
+      {value:'13', label:'Provinces & territories'},
+      {value:'92%', label:'First-try pass rate*'},
+    ];
+
+    const steps = [
+      {no:'01', title:'Pick your trade', body:'All 56 Red Seal trades.', icon:'MousePointerClick', bg:'#FCEBEC', color:'#C0271E'},
+      {no:'02', title:'AI builds your plan', body:'Custom quizzes on your weak blocks.', icon:'Sparkles', bg:'#FCEBEC', color:'#C0271E'},
+      {no:'03', title:'Drill, mock, pass', body:'Climb past 70% readiness.', icon:'GraduationCap', bg:'#ECFDF5', color:'#059669'},
+    ].map((s,i,a)=> Object.assign({}, s, {iconEl:mk(s.icon), arrow: i<a.length-1}));
+
+    const miniFeatures = [
+      {title:'Real mock exams', body:'100 questions, 4 hours, closed-book — just like exam day.', icon:'ClipboardCheck', bg:'#FCEBEC', color:'#C0271E'},
+      {title:'Canadian code, always', body:'Cites the current CE & plumbing codes — never the US ones.', icon:'BookMarked', bg:'#FCEBEC', color:'#C0271E'},
+    ].map(f=> Object.assign({}, f, {iconEl:mk(f.icon)}));
+
+    const rowFeatures = [
+      {title:'Readiness score', body:'One number: are you ready to book?', icon:'Gauge', bg:'#F6F3EE', color:'#1F2A37'},
+      {title:'Study on site', body:'Phone-first, five-minute reps.', icon:'Smartphone', bg:'#F6F3EE', color:'#1F2A37'},
+      {title:'Streaks', body:'Nudges, no gamified nonsense.', icon:'Flame', bg:'#FEF2F2', color:'#DC2626'},
+    ].map(f=> Object.assign({}, f, {iconEl:mk(f.icon)}));
+
+    const tradeCards = [
+      {name:'Electrician', code:'309A', icon:'Zap', bg:'#FCEBEC', color:'#C0271E'},
+      {name:'Plumber', code:'306A', icon:'Droplets', bg:'#FCEBEC', color:'#C0271E'},
+      {name:'Carpenter', code:'403A', icon:'Hammer', bg:'#FCEBEC', color:'#C0271E'},
+      {name:'Welder', code:'456A', icon:'Flame', bg:'#FEF2F2', color:'#DC2626'},
+      {name:'HVAC/R Tech', code:'313A', icon:'Wind', bg:'#F6F3EE', color:'#1F2A37'},
+      {name:'Auto Service', code:'310S', icon:'Car', bg:'#F0FDF4', color:'#16A34A'},
+      {name:'Millwright', code:'433A', icon:'Cog', bg:'#F6F3EE', color:'#1F2A37'},
+      {name:'Ironworker', code:'420A', icon:'Building2', bg:'#F3EFE8', color:'#475569'},
+    ].map(t=> Object.assign({}, t, {iconEl:mk(t.icon)}));
+
+    const stars = [0,1,2,3,4].map(i=> React.createElement('span',{key:i,style:{display:'grid',placeItems:'center'}}, this.makeIcon('Star')));
+
+    // pricing — same features, intro "first week" rate per billing period
+    const feat = (t)=> ({text:t, iconEl:mk('Check')});
+    const sharedFeatures = ['All 56 Red Seal trades','Unlimited AI quizzes','Unlimited mock exams','Weak-spot targeting','Code-referenced answers','Cancel anytime'];
+    const plans = [
+      { name:'Weekly', accent:'#C0271E', price:'$9.99', per:'first week', sub:'then $19.99 / week', popular:false,
+        cta:'Start for $9.99', dark:false, features: sharedFeatures.map(feat) },
+      { name:'Monthly', accent:'#fff', price:'$7.99', per:'first week', sub:'then $59.99 / month', popular:true,
+        cta:'Start for $7.99', dark:true, features: sharedFeatures.map(feat) },
+      { name:'Quarterly', accent:'#C0271E', price:'$5.99', per:'first week', sub:'then $99.99 / quarter', popular:false,
+        cta:'Start for $5.99', dark:false, features: sharedFeatures.map(feat) },
+    ].map(p=>{
+      const dark = p.dark;
+      return Object.assign({}, p, {
+        cardStyle:{position:'relative',borderRadius:18,padding:'28px 24px',display:'flex',flexDirection:'column',
+          background: dark?'linear-gradient(150deg,#E0392F,#C2151B)':'#fff',
+          color: dark?'#fff':'#1F2A37',
+          border: dark?'1.5px solid rgba(255,255,255,.4)':'1px solid #E5E0D8',
+          boxShadow: dark?'0 18px 40px rgba(216,35,42,.32)':'0 1px 2px rgba(16,24,40,.04)'},
+        priceColor: dark?'#fff':'#1F2A37', muted: dark?'#FCE3E4':'#94A3B8',
+        accent: dark?'#fff':p.accent, divider: dark?'rgba(255,255,255,.12)':'#ECE6DC',
+        check: dark?'#fff':'#059669', featColor: dark?'#FCE3E4':'#334155',
+        btnStyle:{display:'flex',alignItems:'center',justifyContent:'center',height:46,borderRadius:11,marginTop:20,fontWeight:800,fontSize:15,
+          background: dark?'#fff':'#1F2A37', color: dark?'#D8232A':'#fff'},
+      });
+    });
+
+    // faq
+    const faqData = [
+      {q:'Is this an official Red Seal tool?', a:'No — it\'s an independent study aid from tradesguide.ca, not affiliated with the Red Seal Program or any provincial authority.'},
+      {q:'Does it cover my province?', a:'Yes — all 13 provinces and territories. Province-specific code amendments are flagged in each module.'},
+      {q:'How does it find my weak spots?', a:'Every question is tagged by Red Seal block. We track your accuracy and drill the blocks you score lowest on.'},
+      {q:'Can I cancel anytime?', a:'Yes, in two clicks from your dashboard — cancel anytime, including during your discounted first week.'},
+      {q:'Does it work on my phone on site?', a:'Built mobile-first. Knock out questions on a break; progress syncs everywhere.'},
+    ];
+    const faqs = faqData.map((f,i)=>({ q:f.q, a:f.a, open:S.openFaq===i,
+      rot: S.openFaq===i ? 'transform:rotate(180deg)' : '',
+      toggle:()=> this.setState(s=>({openFaq: s.openFaq===i? -1 : i})) }));
+
+    const footCols = [
+      {head:'Product', links:['Features','Trades','Pricing','Mock exams','Mobile app']},
+      {head:'Company', links:['About','Blog','Careers','Contact']},
+      {head:'Legal', links:['Privacy','Terms','Disclaimer','Refunds']},
+    ];
+
+    return { ic, quiz, stepArrow:mk('ArrowRight'), heroTrade:Object.assign({},hero,{iconEl:mk(hero.icon)}), heroWidth:hero.readiness+'%', heroMods,
+      chips, bigStats, steps, miniFeatures, rowFeatures, tradeCards, stars,
+      plans, faqs, footCols };
+  }
+}
+</script>
+</body>
+</html>

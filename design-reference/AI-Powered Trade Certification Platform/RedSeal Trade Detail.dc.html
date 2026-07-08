@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800&family=Barlow+Condensed:wght@500;600;700;800&family=Barlow+Semi+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Barlow',system-ui,sans-serif;color:#1F2A37;background:#fff}
+  ::selection{background:#D8232A33}
+  a{text-decoration:none;color:inherit}
+</style>
+</helmet>
+
+<div style="overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;background:#F6F3EE">
+
+  <!-- ===== NAV ===== -->
+  <header style="position:sticky;top:0;z-index:50;background:rgba(255,255,255,.88);backdrop-filter:blur(10px);border-bottom:1px solid #F1ECE3">
+    <div style="max-width:1180px;margin:0 auto;height:70px;display:flex;align-items:center;gap:26px;padding:0 24px">
+      <a href="RedSeal Home.dc.html#top" style="display:flex;align-items:center;gap:11px">
+        <img src="assets/redseal-logo.svg" width="38" height="38" alt="RedSeal seal mark" style="flex:0 0 38px" />
+        <div style="line-height:1">
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:21px;letter-spacing:.3px;text-transform:uppercase;white-space:nowrap"><span style="color:#D8232A">RedSeal</span> <span style="color:#1F2A37">AI&nbsp;Prep</span></div>
+          <div style="font-family:'IBM Plex Mono';font-size:10px;color:#94A3B8;letter-spacing:.5px;margin-top:1px">tradesguide.ca</div>
+        </div>
+      </a>
+      <nav style="display:flex;align-items:center;gap:4px;margin-left:14px">
+        <a href="RedSeal Home.dc.html#how" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">How it works</a>
+        <a href="RedSeal Trades.dc.html" style="padding:8px 12px;border-radius:8px;font-weight:700;font-size:14.5px;color:#D8232A;background:#FCEBEC">Trades</a>
+        <a href="RedSeal Home.dc.html#pricing" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">Pricing</a>
+        <a href="RedSeal Home.dc.html#faq" style="padding:8px 12px;border-radius:8px;font-weight:600;font-size:14.5px;color:#475569" style-hover="background:#F3EFE8">FAQ</a>
+      </nav>
+      <div style="flex:1"></div>
+      <a href="RedSeal Dashboard.dc.html" style="padding:9px 14px;border-radius:9px;font-weight:600;font-size:14.5px;color:#1F2A37" style-hover="background:#F3EFE8">Log in</a>
+      <a href="RedSeal Dashboard.dc.html" style="display:flex;align-items:center;gap:7px;height:42px;padding:0 18px;border-radius:10px;background:linear-gradient(150deg,#E12D2A,#C2151B);color:#fff;font-weight:800;font-size:14.5px;box-shadow:0 4px 14px rgba(244,161,26,.4)" style-hover="filter:brightness(1.05)">Start free<span style="font-size:17px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></a>
+    </div>
+  </header>
+
+  <!-- ===== BREADCRUMB ===== -->
+  <div style="max-width:1180px;margin:0 auto;padding:20px 24px 0;width:100%">
+    <a href="RedSeal Trades.dc.html" style="display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:#6B7280" style-hover="color:#D8232A"><span style="font-size:15px;display:grid;place-items:center">{{ ic.ArrowLeft }}</span>All trades</a>
+  </div>
+
+  <!-- ===== HERO ===== -->
+  <section style="position:relative;max-width:1180px;margin:18px auto 0;width:100%;padding:0 24px">
+    <div style="position:relative;border-radius:20px;overflow:hidden;background:radial-gradient(1100px 480px at 84% -18%, #E23A30 0%, #D8232A 46%, #B81A20 100%);color:#fff;padding:40px 36px">
+      <div style="position:absolute;inset:0;opacity:.13;background-image:radial-gradient(circle at 1px 1px,#fff 1.5px,transparent 0);background-size:26px 26px;mask-image:linear-gradient(180deg,#000,transparent 92%)"></div>
+      <div style="position:absolute;right:-110px;bottom:-120px;width:320px;height:320px;border-radius:50%;border:2px dashed rgba(255,255,255,.22)"></div>
+
+      <div style="position:relative;display:flex;align-items:flex-start;gap:22px;flex-wrap:wrap">
+        <span style="width:68px;height:68px;border-radius:16px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:32px;flex:0 0 68px">{{ ic.PlugZap }}</span>
+        <div style="flex:1;min-width:280px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-family:'IBM Plex Mono';font-size:12.5px;font-weight:600;background:rgba(255,255,255,.14);border-radius:999px;padding:4px 11px">Red Seal · 442A</span>
+            <span style="font-family:'IBM Plex Mono';font-size:12.5px;font-weight:600;background:rgba(255,255,255,.14);border-radius:999px;padding:4px 11px">Electrical</span>
+          </div>
+          <h1 style="margin:14px 0 0;font-family:'Barlow Condensed';font-weight:800;font-size:46px;line-height:1;letter-spacing:-.3px">Industrial Electrician</h1>
+          <p style="margin:14px 0 0;font-size:16.5px;color:#FCE3E4;max-width:620px;line-height:1.55">Installs, maintains and troubleshoots electrical systems, machinery and controls in industrial and manufacturing settings — from motor control centres to PLC-driven production lines.</p>
+
+          <div style="display:flex;gap:26px;flex-wrap:wrap;margin-top:24px">
+            <div><div style="font-family:'Barlow Condensed';font-size:28px;font-weight:800;line-height:1">100</div><div style="font-size:12.5px;color:#FCE3E4;font-weight:600;margin-top:3px">exam questions</div></div>
+            <div><div style="font-family:'Barlow Condensed';font-size:28px;font-weight:800;line-height:1">4 hrs</div><div style="font-size:12.5px;color:#FCE3E4;font-weight:600;margin-top:3px">time limit</div></div>
+            <div><div style="font-family:'Barlow Condensed';font-size:28px;font-weight:800;line-height:1">70%</div><div style="font-size:12.5px;color:#FCE3E4;font-weight:600;margin-top:3px">to pass</div></div>
+            <div><div style="font-family:'Barlow Condensed';font-size:28px;font-weight:800;line-height:1">8</div><div style="font-size:12.5px;color:#FCE3E4;font-weight:600;margin-top:3px">code blocks</div></div>
+          </div>
+
+          <a href="RedSeal Dashboard.dc.html" style="display:inline-flex;align-items:center;gap:9px;height:50px;padding:0 24px;border-radius:12px;background:#fff;color:#D8232A;font-weight:800;font-size:15.5px;margin-top:26px;box-shadow:0 10px 26px rgba(0,0,0,.2)" style-hover="filter:brightness(1.05)"><span style="font-size:19px;display:grid;place-items:center">{{ ic.Sparkles }}</span>Build my AI study plan</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== BODY ===== -->
+  <section style="max-width:1180px;margin:0 auto;padding:40px 24px 80px;display:grid;grid-template-columns:1.5fr 1fr;gap:26px;width:100%">
+
+    <!-- exam blocks -->
+    <div>
+      <h2 style="margin:0;font-family:'Barlow Condensed';font-size:26px;font-weight:700;letter-spacing:-.2px">What's on the exam</h2>
+      <p style="margin:8px 0 0;font-size:14.5px;color:#6B7280;line-height:1.55">The Industrial Electrician Red Seal exam is organized into 8 blocks. Every practice question is tagged to one so your AI plan can target exactly where you're weak.</p>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:22px">
+        <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="8">
+          <div style="background:#fff;border:1px solid #E5E0D8;border-radius:13px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+            <span style="width:38px;height:38px;border-radius:10px;background:#FCEBEC;color:#C0271E;display:grid;place-items:center;font-size:18px;flex:0 0 38px">{{ b.iconEl }}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:15px">{{ b.name }}</div>
+              <div style="font-size:13px;color:#9CA3AF;margin-top:2px">{{ b.weight }}% of exam · {{ b.q }} practice questions</div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- sidebar -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div style="background:#fff;border:1px solid #E5E0D8;border-radius:16px;padding:22px">
+        <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#D8232A">Quick facts</div>
+        <div style="display:flex;flex-direction:column;gap:12px;margin-top:14px">
+          <sc-for list="{{ facts }}" as="f" hint-placeholder-count="4">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:14px">
+              <span style="color:#6B7280">{{ f.label }}</span>
+              <span style="font-weight:700;color:#1F2A37">{{ f.value }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="background:#1F2A37;border-radius:16px;padding:22px;color:#fff">
+        <div style="display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:#F4A11A;letter-spacing:.5px;text-transform:uppercase"><span style="font-size:15px;display:grid;place-items:center">{{ ic.Sparkles }}</span>How AI prep works</div>
+        <p style="margin:12px 0 0;font-size:14px;color:#B7C0CC;line-height:1.6">Answer a short diagnostic, and the AI builds a study plan weighted to the blocks — like Motor Control Circuits or PLCs — where you're scoring lowest.</p>
+        <a href="RedSeal Dashboard.dc.html" style="display:inline-flex;align-items:center;gap:8px;margin-top:16px;font-weight:700;font-size:14px;color:#fff" style-hover="color:#F4A11A">Try it free<span style="font-size:15px;display:grid;place-items:center">{{ ic.ArrowRight }}</span></a>
+      </div>
+
+      <p style="font-size:12px;color:#9CA3AF;line-height:1.6;margin:4px 4px 0">Unofficial study aid · not affiliated with the Red Seal Program or any provincial apprenticeship authority.</p>
+    </div>
+  </section>
+
+  <!-- ===== FOOTER ===== -->
+  <footer style="background:#161E27;color:#9FBBD2">
+    <div style="max-width:1180px;margin:0 auto;padding:48px 24px 30px;display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:30px">
+      <div>
+        <div style="display:flex;align-items:center;gap:10px">
+          <img src="assets/redseal-logo.svg" width="34" height="34" alt="RedSeal seal mark" style="flex:0 0 34px" />
+          <div style="font-family:'Barlow Condensed';font-weight:700;font-size:19px;letter-spacing:.3px;text-transform:uppercase;color:#fff">RedSeal AI Prep</div>
+        </div>
+        <p style="margin:14px 0 0;font-size:13.5px;line-height:1.6;max-width:320px">AI-powered Red Seal exam prep for Canadian tradespeople. Built by trades folks who were tired of dusty study binders.</p>
+        <div style="font-family:'IBM Plex Mono';font-size:12px;color:#5F87A6;margin-top:14px">tradesguide.ca</div>
+      </div>
+      <sc-for list="{{ footCols }}" as="col" hint-placeholder-count="3">
+        <div>
+          <div style="font-size:12px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:#F4564E">{{ col.head }}</div>
+          <div style="display:flex;flex-direction:column;gap:9px;margin-top:13px">
+            <sc-for list="{{ col.links }}" as="l" hint-placeholder-count="4">
+              <a href="RedSeal Home.dc.html#top" style="font-size:14px;color:#9FBBD2" style-hover="color:#fff">{{ l }}</a>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div style="border-top:1px solid rgba(255,255,255,.07)">
+      <div style="max-width:1180px;margin:0 auto;padding:18px 24px;display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#5F87A6">
+        <span>© 2026 tradesguide.ca · Unofficial — not affiliated with the Red Seal Program or any provincial authority.</span>
+        <span>Made in Canada 🍁</span>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  componentDidMount(){
+    if(!(window.lucide && window.lucide.icons)){
+      this._iv = setInterval(()=>{ if(window.lucide && window.lucide.icons){ clearInterval(this._iv); this.forceUpdate(); } }, 40);
+    }
+  }
+  componentWillUnmount(){ if(this._iv) clearInterval(this._iv); }
+
+  makeIcon(name){
+    const L = window.lucide;
+    const empty = React.createElement('span',{style:{display:'inline-block',width:'1em',height:'1em'}});
+    if(!L || !L.icons || !L.icons[name]) return empty;
+    const node = L.icons[name];
+    const kids = node.map((c,i)=> React.createElement(c[0], Object.assign({key:i}, c[1])));
+    return React.createElement('svg',{xmlns:'http://www.w3.org/2000/svg',viewBox:'0 0 24 24',width:'1em',height:'1em',fill:'none',stroke:'currentColor',strokeWidth:2,strokeLinecap:'round',strokeLinejoin:'round',style:{display:'block'}}, kids);
+  }
+
+  BLOCKS(){
+    return [
+      {name:'Canadian Electrical Code & Safety', icon:'ShieldCheck', weight:18, q:280},
+      {name:'Industrial Wiring Methods', icon:'Cable', weight:15, q:230},
+      {name:'Motor Control Circuits', icon:'Gauge', weight:16, q:240},
+      {name:'PLCs & Industrial Automation', icon:'Cpu', weight:14, q:210},
+      {name:'Transformers & Power Distribution', icon:'BatteryCharging', weight:12, q:180},
+      {name:'Instrumentation & Process Control', icon:'Activity', weight:10, q:150},
+      {name:'Blueprint & Schematic Reading', icon:'Ruler', weight:8, q:120},
+      {name:'Troubleshooting & Maintenance', icon:'Wrench', weight:7, q:110},
+    ];
+  }
+
+  renderVals(){
+    const ic = new Proxy({}, { get:(_,k)=> this.makeIcon(String(k)) });
+    const blocks = this.BLOCKS().map(b=> Object.assign({}, b, { iconEl: this.makeIcon(b.icon) }));
+
+    const facts = [
+      {label:'Red Seal code', value:'442A'},
+      {label:'Sector', value:'Electrical'},
+      {label:'Avg. prep time', value:'8–10 weeks'},
+      {label:'Provinces offering', value:'13 of 13'},
+    ];
+
+    const footCols = [
+      {head:'Product', links:['Features','Trades','Pricing','Mock exams','Mobile app']},
+      {head:'Company', links:['About','Blog','Careers','Contact']},
+      {head:'Legal', links:['Privacy','Terms','Disclaimer','Refunds']},
+    ];
+
+    return { ic, blocks, facts, footCols };
+  }
+}
+
+</script>
+</body>
+</html>
