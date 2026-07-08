@@ -5,7 +5,7 @@ import { LessonCheckQuestion } from "@/components/learn/lesson-check-question";
 import { MathBlock } from "@/components/learn/math-block";
 import { LessonVideo } from "@/components/learn/lesson-video";
 import { LessonImage } from "@/components/learn/lesson-image";
-import { TranslatableText } from "@/components/translation/translatable-text";
+import { LessonRichText } from "@/components/learn/lesson-rich-text";
 
 export function LessonContent({
   blocks,
@@ -24,14 +24,17 @@ export function LessonContent({
                 key={i}
                 className="font-[family-name:var(--font-barlow-semi)] text-xl font-semibold"
               >
-                <TranslatableText text={block.content} lessonId={lessonId} />
+                <LessonRichText text={block.content} lessonId={lessonId} />
               </h2>
             );
           case "text":
             return (
-              <p key={i} className="leading-relaxed text-[#475569]">
-                <TranslatableText text={block.content} lessonId={lessonId} />
-              </p>
+              <LessonRichText
+                key={i}
+                text={block.content}
+                lessonId={lessonId}
+                className="leading-relaxed text-[#475569]"
+              />
             );
           case "math":
             return <MathBlock key={i} content={block.content} />;
@@ -65,7 +68,7 @@ export function LessonContent({
                 }`}
               >
                 <p className="text-sm">
-                  <TranslatableText text={block.content} lessonId={lessonId} />
+                  <LessonRichText text={block.content} lessonId={lessonId} />
                 </p>
               </div>
             );

@@ -2,8 +2,13 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { GeneratedLesson, GeneratedQuestion } from "@/lib/ai/generate";
 import type { Question } from "@/types";
 
-export function stableLessonSlug(tradeCode: string, blockCode: string) {
-  return `block-${blockCode.toLowerCase()}-${tradeCode.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+export function stableLessonSlug(
+  tradeCode: string,
+  blockCode: string,
+  province?: string,
+) {
+  const base = `block-${blockCode.toLowerCase()}-${tradeCode.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+  return province ? `${base}-${province.toLowerCase()}` : base;
 }
 
 export async function resolveTradeId(
@@ -50,11 +55,16 @@ export async function upsertApprovedLesson(
     tradeCode: string;
     sortOrder: number;
     codeVersion?: string;
+    province?: string;
     lesson: GeneratedLesson;
   },
 ) {
   const { lesson } = input;
-  const slug = stableLessonSlug(input.tradeCode, input.blockCode);
+  const slug = stableLessonSlug(
+    input.tradeCode,
+    input.blockCode,
+    input.province,
+  );
 
   const { data: existing } = await supabase
     .from("lessons")
@@ -73,6 +83,7 @@ export async function upsertApprovedLesson(
     estimated_minutes: lesson.estimated_minutes,
     sort_order: input.sortOrder,
     code_version: input.codeVersion,
+    province: input.province ?? null,
     review_status: "approved" as const,
   };
 
@@ -102,6 +113,7 @@ export async function appendBlockQuestions(
     tradeId: string;
     blockId: string;
     codeVersion?: string;
+    province?: string;
     questions: Array<{
       generated: GeneratedQuestion;
       questionType: Question["question_type"];
@@ -123,6 +135,7 @@ export async function appendBlockQuestions(
     question_type: q.questionType,
     difficulty: q.difficulty,
     code_version: input.codeVersion,
+    province: input.province ?? null,
     requires_reference: q.generated.requires_reference,
     review_status: "approved" as const,
   }));
@@ -141,6 +154,7 @@ export async function replaceBlockQuestions(
     tradeId: string;
     blockId: string;
     codeVersion?: string;
+    province?: string;
     questions: Array<{
       generated: GeneratedQuestion;
       questionType: Question["question_type"];
@@ -149,11 +163,15 @@ export async function replaceBlockQuestions(
     }>;
   },
 ) {
-  await supabase
+  let deleteQuery = supabase
     .from("questions")
     .delete()
     .eq("trade_id", input.tradeId)
     .eq("block_id", input.blockId);
+  deleteQuery = input.province
+    ? deleteQuery.eq("province", input.province)
+    : deleteQuery.is("province", null);
+  await deleteQuery;
 
   if (input.questions.length === 0) return [];
 
@@ -168,6 +186,7 @@ export async function replaceBlockQuestions(
     question_type: q.questionType,
     difficulty: q.difficulty,
     code_version: input.codeVersion,
+    province: input.province ?? null,
     requires_reference: q.generated.requires_reference,
     review_status: "approved" as const,
   }));
@@ -175,6 +194,78 @@ export async function replaceBlockQuestions(
   const { data, error } = await supabase
     .from("questions")
     .insert(rows)
+    .select("id");
+  if (error) throw error;
+  return data ?? [];
+}
+
+export async function fetchLessonForBlock(
+  supabase: SupabaseClient,
+  tradeId: string,
+  blockId: string,
+  tradeCode: string,
+  blockCode: string,
+  province?: string,
+) {
+  const slug = stableLessonSlug(tradeCode, blockCode, province);
+  const { data: bySlug } = await supabase
+    .from("lessons")
+    .select("*")
+    .eq("trade_id", tradeId)
+    .eq("slug", slug)
+    .maybeSingle();
+  if (bySlug) return bySlug;
+
+  if (province) {
+    const nationalSlug = stableLessonSlug(tradeCode, blockCode);
+    const { data: byNationalSlug } = await supabase
+      .from("lessons")
+      .select("*")
+      .eq("trade_id", tradeId)
+      .eq("slug", nationalSlug)
+      .maybeSingle();
+    if (byNationalSlug) return byNationalSlug;
+  }
+
+  const { data: byBlock } = await supabase
+    .from("lessons")
+    .select("*")
+    .eq("trade_id", tradeId)
+    .eq("block_id", blockId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return byBlock;
+}
+
+export async function replaceLessonFlashcards(
+  supabase: SupabaseClient,
+  input: {
+    tradeId: string;
+    lessonId: string;
+    codeVersion?: string;
+    province?: string;
+    cards: Array<{ front: string; back: string }>;
+    reviewStatus?: "draft" | "approved";
+  },
+) {
+  await supabase.from("flashcards").delete().eq("lesson_id", input.lessonId);
+
+  if (input.cards.length === 0) return [];
+
+  const { data, error } = await supabase
+    .from("flashcards")
+    .insert(
+      input.cards.map((card) => ({
+        trade_id: input.tradeId,
+        lesson_id: input.lessonId,
+        front: card.front,
+        back: card.back,
+        code_version: input.codeVersion,
+        province: input.province ?? null,
+        review_status: input.reviewStatus ?? "approved",
+      })),
+    )
     .select("id");
   if (error) throw error;
   return data ?? [];

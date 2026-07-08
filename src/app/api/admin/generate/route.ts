@@ -18,7 +18,15 @@ import { getTradeGenerationProfile } from "@/lib/data";
 import { saveGeneratedDraft } from "@/lib/admin/draft-queue";
 import { computePracticeQuestionCount } from "@/lib/content/practice-questions";
 import { generateAndPersistBlockContent } from "@/lib/content/generate-block-content";
+import {
+  fetchLessonForBlock,
+  replaceLessonFlashcards,
+  resolveBlockId,
+  resolveTradeId,
+} from "@/lib/content/persist-generated";
 import { createServiceClient } from "@/lib/supabase/server";
+import { isProvinceCode } from "@/lib/provinces";
+import type { ContentBlock } from "@/types";
 
 export async function POST(request: Request) {
   const body = await request.json();
@@ -33,7 +41,13 @@ export async function POST(request: Request) {
     code_version,
     question_count,
     append_questions = false,
+    province: provinceInput,
   } = body;
+
+  const province =
+    typeof provinceInput === "string" && isProvinceCode(provinceInput.toUpperCase())
+      ? provinceInput.toUpperCase()
+      : undefined;
 
   const trade = TRADES.find((t) => t.id === trade_id);
   if (!trade) {
@@ -77,6 +91,7 @@ export async function POST(request: Request) {
         block,
         chapterTasks,
         codeVersion: resolvedCodeVersion,
+        province,
         tradeProfile: profile ?? undefined,
         retrievedChunks: chunks,
         options: {
@@ -92,6 +107,7 @@ export async function POST(request: Request) {
         trade_id,
         block_id: block.id,
         block_code: block.code,
+        province: province ?? null,
         exam_question_count: block.exam_question_count,
         practice_question_count: practiceCount,
         append: append_questions,
@@ -109,6 +125,7 @@ export async function POST(request: Request) {
         questionType: question_type,
         difficulty,
         codeVersion: resolvedCodeVersion,
+        province,
         retrievedChunks: chunks,
         tradeProfile: profile ?? undefined,
       });
@@ -122,37 +139,89 @@ export async function POST(request: Request) {
         chapterTasks,
         retrievedChunks: chunks,
         codeVersion: resolvedCodeVersion,
+        province,
         tradeProfile: profile ?? undefined,
       });
     } else if (job_type === "flashcard") {
-      const lesson = await generateChapterLesson({
-        tradeCode: trade.code,
-        tradeName: trade.name,
-        blockCode: block.code,
-        blockName: resolvedBlockName,
-        blockId: block.id,
-        chapterTasks,
-        retrievedChunks: chunks,
-        codeVersion: resolvedCodeVersion,
-        tradeProfile: profile ?? undefined,
-      });
-      const lessonText = lesson.content_blocks
-        .map((b) => b.content)
+      const supabase = await createServiceClient();
+      const dbTradeId = await resolveTradeId(supabase, trade.code);
+      const dbBlockId = await resolveBlockId(supabase, dbTradeId, block.code);
+
+      const lessonRow = await fetchLessonForBlock(
+        supabase,
+        dbTradeId,
+        dbBlockId,
+        trade.code,
+        block.code,
+        province,
+      );
+
+      if (!lessonRow) {
+        return NextResponse.json(
+          {
+            error: `No lesson found for Block ${block.code}. Generate a chapter lesson first, or run npm run db:generate-content.`,
+          },
+          { status: 400 },
+        );
+      }
+
+      const lessonText = (
+        (lessonRow.content_blocks as ContentBlock[]) ?? []
+      )
+        .map((part) => part.content)
+        .filter(Boolean)
         .join("\n");
-      output = {
-        flashcards: await generateFlashcardsFromLesson(
-          lesson.title,
-          lessonText,
-        ),
-      };
+
+      const flashcards = await generateFlashcardsFromLesson(
+        String(lessonRow.title),
+        lessonText,
+      );
+
+      if (flashcards.length === 0) {
+        return NextResponse.json(
+          { error: "AI returned no flashcards." },
+          { status: 500 },
+        );
+      }
+
+      const saved = await replaceLessonFlashcards(supabase, {
+        tradeId: dbTradeId,
+        lessonId: String(lessonRow.id),
+        codeVersion: resolvedCodeVersion,
+        province,
+        cards: flashcards,
+        reviewStatus: "approved",
+      });
+
+      return NextResponse.json({
+        job_type,
+        trade_id: dbTradeId,
+        block_id: dbBlockId,
+        block_code: block.code,
+        lesson_id: lessonRow.id,
+        lesson_title: lessonRow.title,
+        flashcard_ids: saved.map((row) => row.id as string),
+        flashcard_count: saved.length,
+        review_status: "approved",
+      });
     } else {
       return NextResponse.json({ error: "Unknown job type" }, { status: 400 });
     }
 
+    let saveTradeId = trade_id;
+    let saveBlockId = block.id;
+    try {
+      const supabase = await createServiceClient();
+      saveTradeId = await resolveTradeId(supabase, trade.code);
+      saveBlockId = await resolveBlockId(supabase, saveTradeId, block.code);
+    } catch {
+      // Keep seed IDs for local file-based draft storage.
+    }
+
     const draft = await saveGeneratedDraft({
       content_type: job_type,
-      trade_id,
-      block_id: block.id,
+      trade_id: saveTradeId,
+      block_id: saveBlockId,
       block_code: block.code,
       block_name: resolvedBlockName,
       chapter_tasks: chapterTasks,

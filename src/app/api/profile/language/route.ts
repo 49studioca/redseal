@@ -29,6 +29,9 @@ export async function PATCH(request: Request) {
     .eq("id", user.id);
 
   if (error) {
+    if (error.message.includes("preferred_language")) {
+      return NextResponse.json({ preferred_language: language });
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

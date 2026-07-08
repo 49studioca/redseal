@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { ReferenceChunk } from "@/types";
 import type { QuestionOption } from "@/types";
 import { normalizeContentBlocks } from "@/lib/content/normalize-content-blocks";
+import { formatProvincePromptForTrade } from "@/lib/content/province-content";
 import { formatBlockMediaForPrompt } from "@/data/block-media";
 
 // Chat generation goes through OpenRouter (OpenAI-compatible API).
@@ -27,6 +28,7 @@ export interface GenerateQuestionInput {
   questionType: "recall" | "application" | "critical";
   difficulty: number;
   codeVersion?: string;
+  province?: string;
   retrievedChunks: ReferenceChunk[];
   tradeProfile?: {
     glossary?: Record<string, string>;
@@ -92,13 +94,18 @@ Return valid JSON only with this shape:
   "requires_reference": true/false
 }`;
 
+  const provinceContext = formatProvincePromptForTrade(
+    input.province,
+    input.tradeCode,
+  );
+
   const userPrompt = `Trade: ${input.tradeName} (${input.tradeCode})
 Block: ${input.blockName}
 Subtask: ${input.subtaskName}
 Question type: ${input.questionType}
 Difficulty: ${input.difficulty}/5
 Code version: ${input.codeVersion ?? "current"}
-
+${provinceContext ? `\n${provinceContext}\n` : ""}
 Reference material (cite these in your explanation):
 ${chunkContext || "No reference chunks — use general trade knowledge but note if reference would be needed."}
 
@@ -128,6 +135,7 @@ Write DEEP TEACHING CONTENT — not an exam study guide or RSOS task checklist.
 
 DO:
 - Teach how to DO the work: procedures, calculations, code rules, tooling, safety, troubleshooting
+- Cover every RSOS task in the user prompt — each task area must appear as taught content (group related tasks under topic headings; do not skip any)
 - Organize by TOPIC (e.g. "Fixture Unit Method", "Lockout / Tagout") — not by RSOS task codes
 - Write 10–16 content_blocks with substantive paragraphs (3–5 sentences each)
 - Include at least 2 callouts (meta.variant: "tip" or "warning") with practical jobsite advice
@@ -135,7 +143,10 @@ DO:
 - Include at least 1 "video" block (YouTube ID in content, title in meta) and 1 "image" block (image URL in content, alt/caption in meta) — use entries from the curated media catalog when provided
 - In math JSON strings, escape every LaTeX backslash twice (e.g. \\\\frac, \\\\text, \\\\) so JSON parsing preserves them
 - math "content" must be one LaTeX string only — never a nested JSON object; put example narration in a following "text" block
+- For inline variables in text blocks use \\(L\\) only once — never repeat the plain letter after it (wrong: \\(L\\) L, correct: \\(L\\) is)
+- For display formulas use a dedicated "math" block with LaTeX — not \\[...\\] inside text blocks
 - End with 1–2 "check_question" blocks that test applied understanding (meta.answer required; meta.steps optional for multi-step calcs)
+- check_question meta.answer: use plain English, or LaTeX with \\text{} and \\frac{} then a semicolon and variable definitions (e.g. \\text{Voltage Drop} = \\frac{2LI R}{1000}; L = length in meters)
 - Cite specific code rules/tables from the reference material when provided
 - Use trade-accurate units (metric primary, imperial in parentheses where common on jobsites)
 
@@ -171,6 +182,7 @@ export async function generateChapterLesson(input: {
   chapterTasks: { code: string; name: string; exam_question_count: number }[];
   retrievedChunks: ReferenceChunk[];
   codeVersion?: string;
+  province?: string;
   tradeProfile?: {
     glossary?: Record<string, string>;
     code_standards?: string[];
@@ -185,6 +197,11 @@ export async function generateChapterLesson(input: {
     return mockGenerateChapterLesson(input);
   }
 
+  const provinceContext = formatProvincePromptForTrade(
+    input.province,
+    input.tradeCode,
+  );
+
   const response = await openrouter.chat.completions.create({
     model: CHAT_MODEL,
     messages: [
@@ -197,8 +214,8 @@ export async function generateChapterLesson(input: {
         content: `Trade: ${input.tradeName} (${input.tradeCode})
 RSOS block scope: ${input.blockName}
 Code version: ${input.codeVersion ?? "current"}
-
-Use the RSOS tasks below only to define WHAT topics to teach — do not structure the lesson as a task list:
+${provinceContext ? `\n${provinceContext}\n` : ""}
+RSOS tasks for this block (from the official Red Seal Occupational Standard — teach all of them):
 ${taskScope}
 
 Reference material (cite rule numbers and tables from here):
@@ -234,6 +251,8 @@ export async function generateLesson(input: {
   tradeName: string;
   subtaskName: string;
   blockName: string;
+  tradeCode?: string;
+  province?: string;
   retrievedChunks: ReferenceChunk[];
   codeVersion?: string;
 }): Promise<GeneratedLesson> {
@@ -250,6 +269,11 @@ export async function generateLesson(input: {
     };
   }
 
+  const provinceContext = formatProvincePromptForTrade(
+    input.province,
+    input.tradeCode ?? "",
+  );
+
   const response = await openrouter.chat.completions.create({
     model: CHAT_MODEL,
     messages: [
@@ -262,7 +286,7 @@ export async function generateLesson(input: {
         content: `Trade: ${input.tradeName}
 RSOS block scope: ${input.blockName}
 Subtask focus: ${input.subtaskName}
-
+${provinceContext ? `\n${provinceContext}\n` : ""}
 Reference material:
 ${formatChunksForPrompt(input.retrievedChunks) || "No reference chunks — use accurate Canadian trade knowledge."}`,
       },

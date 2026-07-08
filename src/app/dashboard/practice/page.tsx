@@ -1,18 +1,74 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { Loader2 } from "lucide-react";
 import { QuestionCard } from "@/components/practice/question-card";
 import { ReferenceViewer } from "@/components/practice/reference-viewer";
 import { Button } from "@/components/ui/button";
 import { useDashboardTrade } from "@/components/layout/dashboard-trade-context";
+import { useDashboardPreferences } from "@/components/layout/dashboard-preferences-context";
+import { ProvincialStudyBanner } from "@/components/dashboard/provincial-study-banner";
+import { getProvincialStudyContext } from "@/lib/content/province-content";
+import { validateDiscussionComment } from "@/lib/moderation/comment-content";
 import type { Question, ReferenceChunk, RsosBlock } from "@/types";
+
+type QuestionComment = {
+  id: string;
+  body: string;
+  created_at: string;
+  author: string;
+};
+
+function ModalBackdrop({
+  open,
+  onClose,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
 
 export default function PracticePage() {
   const trade = useDashboardTrade();
+  const { province } = useDashboardPreferences();
+  const provincialContext = getProvincialStudyContext(
+    trade.id,
+    trade.code,
+    province,
+  );
   const searchParams = useSearchParams();
   const [blocks, setBlocks] = useState<RsosBlock[]>([]);
   const initialBlock = searchParams.get("block");
+  const initialQuestion = searchParams.get("question");
   const [blockFilter, setBlockFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -22,8 +78,35 @@ export default function PracticePage() {
   const [refChunks, setRefChunks] = useState<ReferenceChunk[]>([]);
   const [showDiscuss, setShowDiscuss] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [comment, setComment] = useState("");
+  const [discussBody, setDiscussBody] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
   const [reportReason, setReportReason] = useState("");
+  const [comments, setComments] = useState<QuestionComment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [discussSubmitting, setDiscussSubmitting] = useState(false);
+  const [reportSubmitting, setReportSubmitting] = useState(false);
+  const [discussError, setDiscussError] = useState<string | null>(null);
+  const [reportError, setReportError] = useState<string | null>(null);
+  const [discussSuccess, setDiscussSuccess] = useState(false);
+  const [reportSuccess, setReportSuccess] = useState(false);
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(new Set());
+  const [bookmarkingId, setBookmarkingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/bookmarks")
+      .then((r) => r.json())
+      .then((data) => {
+        setBookmarkedIds(new Set((data.question_ids ?? []) as string[]));
+      })
+      .catch(() => setBookmarkedIds(new Set()));
+  }, []);
+
+  useEffect(() => {
+    if (initialQuestion) {
+      setBlockFilter("all");
+      setTypeFilter("all");
+    }
+  }, [initialQuestion]);
 
   useEffect(() => {
     fetch(`/api/content/blocks?tradeId=${trade.id}`)
@@ -32,13 +115,14 @@ export default function PracticePage() {
         const loaded = (data.blocks ?? []) as RsosBlock[];
         setBlocks(loaded);
         if (
+          !initialQuestion &&
           initialBlock &&
           loaded.some((b: RsosBlock) => b.id === initialBlock)
         ) {
           setBlockFilter(initialBlock);
         }
       });
-  }, [trade.id, initialBlock]);
+  }, [trade.id, initialBlock, initialQuestion]);
 
   useEffect(() => {
     setLoading(true);
@@ -48,11 +132,17 @@ export default function PracticePage() {
     fetch(`/api/content/questions?${params}`)
       .then((r) => r.json())
       .then((data) => {
-        setQuestions(data.questions ?? []);
-        setCurrentIndex(0);
+        const loaded = (data.questions ?? []) as Question[];
+        setQuestions(loaded);
+        if (initialQuestion) {
+          const idx = loaded.findIndex((q) => q.id === initialQuestion);
+          setCurrentIndex(idx >= 0 ? idx : 0);
+        } else {
+          setCurrentIndex(0);
+        }
       })
       .finally(() => setLoading(false));
-  }, [blockFilter, typeFilter, trade.id]);
+  }, [blockFilter, typeFilter, trade.id, initialQuestion, province]);
 
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -66,34 +156,156 @@ export default function PracticePage() {
     setRefChunks(data.chunks ?? []);
   }, []);
 
-  const handleReport = async () => {
+  const loadComments = useCallback(async (questionId: string) => {
+    setCommentsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/comments?question_id=${encodeURIComponent(questionId)}`,
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not load comments");
+      setComments(data.comments ?? []);
+    } catch {
+      setComments([]);
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, []);
+
+  const closeDiscuss = useCallback(() => {
+    setShowDiscuss(false);
+    setDiscussBody("");
+    setDiscussError(null);
+    setDiscussSuccess(false);
+    setComments([]);
+  }, []);
+
+  const closeReport = useCallback(() => {
+    setShowReport(false);
+    setReportDetails("");
+    setReportReason("");
+    setReportError(null);
+    setReportSuccess(false);
+  }, []);
+
+  const openDiscuss = useCallback(() => {
     const q = questions[currentIndex];
     if (!q) return;
-    await fetch("/api/reports", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        question_id: q.id,
-        reason: reportReason,
-        details: comment,
-      }),
-    });
-    setShowReport(false);
+    setDiscussBody("");
+    setDiscussError(null);
+    setDiscussSuccess(false);
+    setShowDiscuss(true);
+    void loadComments(q.id);
+  }, [currentIndex, loadComments, questions]);
+
+  const openReport = useCallback(() => {
+    setReportDetails("");
     setReportReason("");
-    setComment("");
+    setReportError(null);
+    setReportSuccess(false);
+    setShowReport(true);
+  }, []);
+
+  const handleReport = async () => {
+    const q = questions[currentIndex];
+    if (!q || !reportReason) return;
+    setReportSubmitting(true);
+    setReportError(null);
+    try {
+      const res = await fetch("/api/reports", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question_id: q.id,
+          reason: reportReason,
+          details: reportDetails.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not submit report");
+      setReportSuccess(true);
+      setReportDetails("");
+      setReportReason("");
+    } catch (err) {
+      setReportError((err as Error).message);
+    } finally {
+      setReportSubmitting(false);
+    }
   };
 
   const handleComment = async () => {
     const q = questions[currentIndex];
-    if (!q || !comment.trim()) return;
-    await fetch("/api/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question_id: q.id, body: comment }),
-    });
-    setShowDiscuss(false);
-    setComment("");
+    if (!q || !discussBody.trim()) return;
+
+    const moderation = validateDiscussionComment(discussBody);
+    if (!moderation.ok) {
+      setDiscussError(moderation.message);
+      return;
+    }
+
+    setDiscussSubmitting(true);
+    setDiscussError(null);
+    try {
+      const res = await fetch("/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question_id: q.id, body: discussBody.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not post comment");
+      setDiscussBody("");
+      setDiscussSuccess(true);
+      await loadComments(q.id);
+    } catch (err) {
+      setDiscussError((err as Error).message);
+    } finally {
+      setDiscussSubmitting(false);
+    }
   };
+
+  const handleAnswer = useCallback(
+    (_option: string, isCorrect: boolean) => {
+      const q = questions[currentIndex];
+      if (!q?.block_id) return;
+      void fetch("/api/progress/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          trade_id: trade.id,
+          block_id: q.block_id,
+          is_correct: isCorrect,
+        }),
+      });
+    },
+    [currentIndex, questions, trade.id],
+  );
+
+  const handleBookmarkToggle = useCallback(async () => {
+    const q = questions[currentIndex];
+    if (!q || bookmarkingId === q.id) return;
+
+    setBookmarkingId(q.id);
+    try {
+      const res = await fetch("/api/bookmarks", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question_id: q.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Could not save bookmark");
+
+      setBookmarkedIds((prev) => {
+        const next = new Set(prev);
+        if (data.bookmarked) next.add(q.id);
+        else next.delete(q.id);
+        return next;
+      });
+    } catch {
+      // Keep UI unchanged on failure
+    } finally {
+      setBookmarkingId(null);
+    }
+  }, [bookmarkingId, currentIndex, questions]);
 
   const currentQuestion = questions[currentIndex];
 
@@ -104,12 +316,20 @@ export default function PracticePage() {
           Practice Mode
         </h1>
         <p className="mt-1 text-sm text-[#64748B]">
-          Full practice bank for each block — not limited to exam question
-          counts. Mock exams sample the official {trade.exam_question_count}
+          Full practice bank for each block — tailored to{" "}
+          {provincialContext.provinceName}. Mock exams sample the official{" "}
+          {trade.exam_question_count}
           -question blueprint.
         </p>
 
-        <div className="mt-4 flex flex-wrap gap--2">
+        <div className="mt-4">
+          <ProvincialStudyBanner
+            context={provincialContext}
+            tradeSlug={trade.slug}
+          />
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
           <select
             value={blockFilter}
             onChange={(e) => setBlockFilter(e.target.value)}
@@ -144,8 +364,16 @@ export default function PracticePage() {
                 totalQuestions={questions.length}
                 showReference={trade.is_open_book}
                 onOpenReference={() => setRefOpen(true)}
-                onDiscuss={() => setShowDiscuss(true)}
-                onReport={() => setShowReport(true)}
+                onDiscuss={openDiscuss}
+                onReport={openReport}
+                onBookmarkToggle={() => void handleBookmarkToggle()}
+                bookmarked={
+                  currentQuestion
+                    ? bookmarkedIds.has(currentQuestion.id)
+                    : false
+                }
+                bookmarking={bookmarkingId === currentQuestion.id}
+                onAnswer={handleAnswer}
               />
             </div>
             <div className="mt-4 flex justify-between">
@@ -176,60 +404,114 @@ export default function PracticePage() {
           </p>
         )}
 
-        {showDiscuss && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-6">
-              <h3 className="font-semibold">Discuss this question</h3>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-3 text-sm"
-                rows={4}
-                placeholder="Share your mnemonic or interpretation..."
-              />
-              <div className="mt-4 flex gap-2">
-                <Button onClick={handleComment}>Post</Button>
-                <Button variant="ghost" onClick={() => setShowDiscuss(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ModalBackdrop open={showDiscuss} onClose={closeDiscuss}>
+          <h3 className="font-semibold">Discuss this question</h3>
+          <p className="mt-1 text-sm text-[#64748B]">
+            Share a mnemonic or study tip for this question only. Do not post
+            contact info, links, social handles, or inappropriate language.
+          </p>
 
-        {showReport && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-            <div className="w-full max-w-md rounded-2xl bg-white p-6">
-              <h3 className="font-semibold">Report an error</h3>
-              <select
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-2 text-sm"
-              >
-                <option value="">Select reason...</option>
-                <option value="wrong_answer">Wrong answer key</option>
-                <option value="outdated_code">Outdated code reference</option>
-                <option value="unclear">Unclear question</option>
-                <option value="other">Other</option>
-              </select>
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-3 text-sm"
-                rows={3}
-                placeholder="Details..."
-              />
-              <div className="mt-4 flex gap-2">
-                <Button onClick={handleReport} disabled={!reportReason}>
-                  Submit report
-                </Button>
-                <Button variant="ghost" onClick={() => setShowReport(false)}>
-                  Cancel
-                </Button>
-              </div>
+          {commentsLoading ? (
+            <div className="mt-4 flex items-center gap-2 text-sm text-[#64748B]">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading discussion…
             </div>
+          ) : comments.length > 0 ? (
+            <ul className="mt-4 max-h-40 space-y-2 overflow-y-auto rounded-lg border border-[#E5E0D8] bg-[#F6F3EE] p-3">
+              {comments.map((comment) => (
+                <li key={comment.id} className="text-sm">
+                  <span className="font-semibold text-[#475569]">
+                    {comment.author}
+                  </span>
+                  <p className="mt-0.5 text-[#334155]">{comment.body}</p>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+
+          <textarea
+            value={discussBody}
+            onChange={(e) => {
+              setDiscussBody(e.target.value);
+              if (discussError) setDiscussError(null);
+            }}
+            maxLength={500}
+            className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-3 text-sm outline-none focus:border-[#C0271E] focus:ring-1 focus:ring-[#C0271E]/30"
+            rows={4}
+            placeholder="Share your mnemonic or interpretation..."
+          />
+          {discussError && (
+            <p className="mt-2 text-sm text-[#C0271E]">{discussError}</p>
+          )}
+          {discussSuccess && (
+            <p className="mt-2 text-sm text-[#047857]">
+              Comment posted — thanks for helping other apprentices.
+            </p>
+          )}
+          <div className="mt-4 flex gap-2">
+            <Button
+              onClick={() => void handleComment()}
+              disabled={discussSubmitting || !discussBody.trim()}
+            >
+              {discussSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Post"
+              )}
+            </Button>
+            <Button variant="ghost" onClick={closeDiscuss}>
+              {discussSuccess ? "Done" : "Cancel"}
+            </Button>
           </div>
-        )}
+        </ModalBackdrop>
+
+        <ModalBackdrop open={showReport} onClose={closeReport}>
+          <h3 className="font-semibold">Report an error</h3>
+          <p className="mt-1 text-sm text-[#64748B]">
+            Flag a wrong answer, outdated code reference, or unclear wording.
+          </p>
+          <select
+            value={reportReason}
+            onChange={(e) => setReportReason(e.target.value)}
+            className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E] focus:ring-1 focus:ring-[#C0271E]/30"
+          >
+            <option value="">Select reason...</option>
+            <option value="wrong_answer">Wrong answer key</option>
+            <option value="outdated_code">Outdated code reference</option>
+            <option value="unclear">Unclear question</option>
+            <option value="other">Other</option>
+          </select>
+          <textarea
+            value={reportDetails}
+            onChange={(e) => setReportDetails(e.target.value)}
+            className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-3 text-sm outline-none focus:border-[#C0271E] focus:ring-1 focus:ring-[#C0271E]/30"
+            rows={3}
+            placeholder="Details (optional)..."
+          />
+          {reportError && (
+            <p className="mt-2 text-sm text-[#C0271E]">{reportError}</p>
+          )}
+          {reportSuccess && (
+            <p className="mt-2 text-sm text-[#047857]">
+              Report submitted — our team will review this question.
+            </p>
+          )}
+          <div className="mt-4 flex gap-2">
+            <Button
+              onClick={() => void handleReport()}
+              disabled={reportSubmitting || !reportReason}
+            >
+              {reportSubmitting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Submit report"
+              )}
+            </Button>
+            <Button variant="ghost" onClick={closeReport}>
+              {reportSuccess ? "Done" : "Cancel"}
+            </Button>
+          </div>
+        </ModalBackdrop>
       </div>
 
       {trade.is_open_book && (

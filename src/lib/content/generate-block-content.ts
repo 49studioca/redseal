@@ -10,8 +10,10 @@ import {
   resolveTradeId,
   resolveBlockId,
   upsertApprovedLesson,
-  replaceBlockQuestions,
   appendBlockQuestions,
+  replaceBlockQuestions,
+  replaceLessonFlashcards,
+  fetchLessonForBlock,
 } from "./persist-generated";
 import { computePracticeQuestionCount } from "./practice-questions";
 import { shuffleQuestionOptions } from "@/lib/practice/shuffle-options";
@@ -28,6 +30,7 @@ export interface GenerateBlockContentInput {
   block: RsosBlock;
   chapterTasks: RsosChapterTask[];
   codeVersion: string;
+  province?: string;
   tradeProfile?: {
     glossary?: Record<string, string>;
     code_standards?: string[];
@@ -106,6 +109,7 @@ export async function generateAndPersistBlockContent(
       chapterTasks: input.chapterTasks,
       retrievedChunks: input.retrievedChunks,
       codeVersion: input.codeVersion,
+      province: input.province,
       tradeProfile: input.tradeProfile,
     });
 
@@ -116,6 +120,7 @@ export async function generateAndPersistBlockContent(
       tradeCode: input.trade.code,
       sortOrder: input.block.sort_order,
       codeVersion: input.codeVersion,
+      province: input.province,
       lesson,
     });
     result.lessonId = saved.id as string;
@@ -150,6 +155,7 @@ export async function generateAndPersistBlockContent(
           questionType,
           difficulty,
           codeVersion: input.codeVersion,
+          province: input.province,
           retrievedChunks: input.retrievedChunks,
           tradeProfile: input.tradeProfile,
         });
@@ -166,6 +172,7 @@ export async function generateAndPersistBlockContent(
             question_type: questionType,
             difficulty,
             code_version: input.codeVersion,
+            province: input.province,
             requires_reference: gq.requires_reference,
             review_status: "approved",
           }),
@@ -185,6 +192,7 @@ export async function generateAndPersistBlockContent(
       tradeId,
       blockId,
       codeVersion: input.codeVersion,
+      province: input.province,
       questions: generated.map((q) => ({
         generated: {
           stem: q.generated.stem,
@@ -202,30 +210,43 @@ export async function generateAndPersistBlockContent(
     result.questionIds = saved.map((r) => r.id as string);
   }
 
-  if (!input.options?.skipFlashcards && lessonText) {
-    const cards = await generateFlashcardsFromLesson(
-      `${input.block.name}`,
-      lessonText,
-    );
-    await input.supabase
-      .from("flashcards")
-      .delete()
-      .eq("trade_id", tradeId)
-      .ilike("front", `%${input.block.code}%`);
+  if (!input.options?.skipFlashcards) {
+    let lessonId = result.lessonId;
+    if (!lessonText) {
+      const existing = await fetchLessonForBlock(
+        input.supabase,
+        tradeId,
+        blockId,
+        input.trade.code,
+        input.block.code,
+        input.province,
+      );
+      if (existing) {
+        lessonId = String(existing.id);
+        lessonText = (
+          (existing.content_blocks as { content: string }[]) ?? []
+        )
+          .map((part) => part.content)
+          .filter(Boolean)
+          .join("\n");
+      }
+    }
 
-    const { data } = await input.supabase
-      .from("flashcards")
-      .insert(
-        cards.map((c) => ({
-          trade_id: tradeId,
-          front: c.front,
-          back: c.back,
-          code_version: input.codeVersion,
-          review_status: "approved",
-        })),
-      )
-      .select("id");
-    result.flashcardIds = (data ?? []).map((r) => r.id as string);
+    if (lessonText && lessonId) {
+      const cards = await generateFlashcardsFromLesson(
+        input.block.name,
+        lessonText,
+      );
+      const saved = await replaceLessonFlashcards(input.supabase, {
+        tradeId,
+        lessonId,
+        codeVersion: input.codeVersion,
+        province: input.province,
+        cards,
+        reviewStatus: "approved",
+      });
+      result.flashcardIds = saved.map((r) => r.id as string);
+    }
   }
 
   return result;

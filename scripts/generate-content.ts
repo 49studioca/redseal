@@ -2,7 +2,7 @@
  * AI content generation — lessons, questions, and flashcards per RSOS block.
  * Usage: npm run db:generate-content
  * Options: --trade=447A --block=A --lessons-only --questions-only
- *          --questions=25 --append-questions
+ *          --questions=25 --append-questions --province=ON
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -41,6 +41,7 @@ function parseArgs() {
   const trade = args.find((a) => a.startsWith("--trade="))?.split("=")[1];
   const block = args.find((a) => a.startsWith("--block="))?.split("=")[1];
   const questionsArg = args.find((a) => a.startsWith("--questions="))?.split("=")[1];
+  const provinceArg = args.find((a) => a.startsWith("--province="))?.split("=")[1];
   return {
     tradeCode: trade?.toUpperCase(),
     blockCode: block?.toUpperCase(),
@@ -48,6 +49,7 @@ function parseArgs() {
     questionsOnly: args.includes("--questions-only"),
     questionCount: questionsArg ? Number.parseInt(questionsArg, 10) : undefined,
     appendQuestions: args.includes("--append-questions"),
+    province: provinceArg?.toUpperCase(),
   };
 }
 
@@ -87,6 +89,7 @@ async function main() {
     questionsOnly,
     questionCount,
     appendQuestions,
+    province,
   } = parseArgs();
   const supabase = createClient(url, key);
 
@@ -104,6 +107,7 @@ async function main() {
   }
 
   console.log(`Generating content for ${blocks.length} block(s)...`);
+  if (province) console.log(`Province context: ${province}`);
   console.log("(Requires npm run db:seed beforehand)\n");
 
   for (const block of blocks) {
@@ -136,6 +140,7 @@ async function main() {
         block,
         chapterTasks,
         codeVersion,
+        province,
         tradeProfile: profile,
         retrievedChunks: chunks,
         options: {

@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "db:seed": "tsx scripts/seed-db.ts",
-    "db:generate-content": "tsx scripts/generate-content.ts"
+    "db:generate-rsos-seed": "node scripts/generate-rsos-seed.mjs",
+    "db:generate-content": "tsx scripts/generate-content.ts",
+    "db:sync-lesson-images": "tsx scripts/sync-lesson-images.ts"
   },
   "dependencies": {
     "@stripe/stripe-js": "^9.9.0",

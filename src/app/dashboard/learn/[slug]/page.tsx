@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { fetchLessons, fetchBlocks } from "@/lib/data";
 import { LessonContent } from "@/components/learn/lesson-content";
 import { getDashboardSession } from "@/lib/dashboard-session";
-import { normalizeContentBlocks } from "@/lib/content/normalize-content-blocks";
-import { injectBlockMedia } from "@/lib/content/inject-block-media";
+import {
+  blockCodeFromLessonSlug,
+  prepareLessonBlocks,
+} from "@/lib/content/parse-content-blocks";
 import type { Lesson, RsosBlock } from "@/types";
 
 function lessonForBlock(lessons: Lesson[], blockId: string) {
@@ -47,9 +49,9 @@ export default async function LessonPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { trade } = await getDashboardSession();
+  const { trade, province } = await getDashboardSession();
   const [lessons, blocks] = await Promise.all([
-    fetchLessons(trade.id),
+    fetchLessons(trade.id, province),
     fetchBlocks(trade.id),
   ]);
   const lesson = lessons.find((l) => l.slug === slug);
@@ -57,30 +59,35 @@ export default async function LessonPage({
     ? blocks.find((b) => b.id === lesson.block_id)
     : undefined;
   const { prev, next } = adjacentBlockLessons(blocks, lessons, block?.id);
+  const blockIndex = block ? blocks.findIndex((b) => b.id === block.id) : -1;
+  const isLastBlock = blockIndex >= 0 && blockIndex === blocks.length - 1;
 
   if (!slug || !lesson) {
     notFound();
   }
 
+  const blockCode = block?.code ?? blockCodeFromLessonSlug(lesson.slug);
+
   return (
     <div className="mx-auto max-w-3xl">
-      <Link
-        href="/dashboard/learn"
-        className="inline-flex items-center gap-1 text-sm font-semibold text-[#C0271E]"
-      >
-        <ArrowLeft className="h-4 w-4" /> Back to learning path
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/dashboard/learn">
+          <Button variant="secondary" size="sm">
+            <ArrowLeft className="h-4 w-4" /> Back to learning path
+          </Button>
+        </Link>
 
-      {block && (
-        <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-3 py-1">
-          <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
-            Block {block.code}
-          </span>
-          <span className="text-xs text-[#64748B]">
-            {block.exam_question_count} exam Qs · {block.exam_percentage}%
-          </span>
-        </div>
-      )}
+        {block && (
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-3 py-1">
+            <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
+              Block {block.code}
+            </span>
+            <span className="text-xs text-[#64748B]">
+              {block.exam_question_count} exam Qs · {block.exam_percentage}%
+            </span>
+          </div>
+        )}
+      </div>
 
       <h1 className="mt-4 font-[family-name:var(--font-barlow-semi)] text-3xl font-bold">
         {lesson.title}
@@ -104,10 +111,10 @@ export default async function LessonPage({
 
       <div className="mt-8">
         <LessonContent
-          blocks={injectBlockMedia(
-            normalizeContentBlocks(lesson.content_blocks),
+          blocks={prepareLessonBlocks(
+            lesson.content_blocks,
             trade.code,
-            block?.code,
+            blockCode,
           )}
           lessonId={lesson.id}
         />
@@ -129,34 +136,44 @@ export default async function LessonPage({
           </Link>
         )}
 
-        {next?.lesson ? (
-          <Link href={`/dashboard/learn/${next.lesson.slug}`}>
-            <Button size="sm">
-              Block {next.block.code}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        ) : next?.block ? (
-          <Link href="/dashboard/learn">
-            <Button variant="secondary" size="sm">
-              Block {next.block.code}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        ) : block ? (
-          <Link href={`/dashboard/practice?block=${block.id}`}>
-            <Button size="sm">
-              Practice Block {block.code}
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        ) : (
-          <Link href="/dashboard/learn">
-            <Button size="sm">
-              Learning path <ArrowRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          {block && (
+            <Link href={`/dashboard/practice?block=${block.id}`}>
+              <Button variant="secondary" size="sm">
+                Practice Block {block.code}
+              </Button>
+            </Link>
+          )}
+
+          {next?.lesson ? (
+            <Link href={`/dashboard/learn/${next.lesson.slug}`}>
+              <Button size="sm">
+                Block {next.block.code}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : next?.block ? (
+            <Link href="/dashboard/learn">
+              <Button variant="secondary" size="sm">
+                Block {next.block.code}
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : isLastBlock ? (
+            <Link href="/dashboard/mock-exam">
+              <Button size="sm">
+                Start mock exam
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : (
+            <Link href="/dashboard/learn">
+              <Button size="sm">
+                Learning path <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
+        </div>
       </nav>
     </div>
   );

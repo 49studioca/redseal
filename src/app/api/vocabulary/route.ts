@@ -1,11 +1,29 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { usesSupabaseData } from "@/lib/supabase/config";
+import {
+  deleteDemoVocabularyWord,
+  readDemoVocabulary,
+  upsertDemoVocabularyWord,
+} from "@/lib/demo-vocabulary";
 import { contextKeyFromSnippet, normalizeWord } from "@/lib/translation/context-key";
 
+function isUuid(value: string | null): value is string {
+  return Boolean(
+    value &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        value,
+      ),
+  );
+}
+
 export async function GET() {
+  const cookieStore = await cookies();
+  const demoWords = readDemoVocabulary(cookieStore);
+
   if (!usesSupabaseData()) {
-    return NextResponse.json({ words: [] });
+    return NextResponse.json({ words: demoWords });
   }
 
   const supabase = await createClient();
@@ -13,7 +31,7 @@ export async function GET() {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ words: demoWords });
   }
 
   const { data, error } = await supabase
@@ -23,7 +41,7 @@ export async function GET() {
     .order("created_at", { ascending: false });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ words: demoWords });
   }
 
   return NextResponse.json({ words: data ?? [] });
@@ -39,7 +57,9 @@ export async function POST(request: Request) {
   const contextExplanation = body.context_explanation
     ? String(body.context_explanation)
     : null;
-  const lessonId = body.lesson_id ? String(body.lesson_id) : null;
+  const lessonId = isUuid(body.lesson_id ? String(body.lesson_id) : null)
+    ? String(body.lesson_id)
+    : null;
 
   if (!word) {
     return NextResponse.json({ error: "word is required" }, { status: 400 });
@@ -47,48 +67,52 @@ export async function POST(request: Request) {
 
   const normalized = normalizeWord(word);
   const contextKey = contextKeyFromSnippet(contextSnippet);
+  const cookieStore = await cookies();
 
-  if (!usesSupabaseData()) {
-    return NextResponse.json({
-      id: crypto.randomUUID(),
-      word: normalized,
-      saved: true,
-    });
+  if (usesSupabaseData()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { data, error } = await supabase
+        .from("saved_words")
+        .upsert(
+          {
+            user_id: user.id,
+            word: normalized,
+            source_language: "en",
+            target_language: targetLanguage,
+            context_key: contextKey,
+            translation,
+            definition,
+            context_explanation: contextExplanation,
+            context_snippet: contextSnippet || null,
+            lesson_id: lessonId,
+          },
+          { onConflict: "user_id,word,target_language,context_key" },
+        )
+        .select("id")
+        .single();
+
+      if (!error && data) {
+        return NextResponse.json({ id: data.id, word: normalized, saved: true });
+      }
+    }
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const saved = upsertDemoVocabularyWord(cookieStore, {
+    word: normalized,
+    target_language: targetLanguage,
+    context_key: contextKey,
+    translation,
+    definition,
+    context_explanation: contextExplanation,
+    context_snippet: contextSnippet || null,
+  });
 
-  const { data, error } = await supabase
-    .from("saved_words")
-    .upsert(
-      {
-        user_id: user.id,
-        word: normalized,
-        source_language: "en",
-        target_language: targetLanguage,
-        context_key: contextKey,
-        translation,
-        definition,
-        context_explanation: contextExplanation,
-        context_snippet: contextSnippet || null,
-        lesson_id: lessonId,
-      },
-      { onConflict: "user_id,word,target_language,context_key" },
-    )
-    .select("id")
-    .single();
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
-
-  return NextResponse.json({ id: data.id, word: normalized, saved: true });
+  return NextResponse.json({ id: saved.id, word: normalized, saved: true });
 }
 
 export async function DELETE(request: Request) {
@@ -99,26 +123,29 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "id is required" }, { status: 400 });
   }
 
-  if (!usesSupabaseData()) {
-    return NextResponse.json({ deleted: true });
+  const cookieStore = await cookies();
+
+  if (usesSupabaseData()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const { error } = await supabase
+        .from("saved_words")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+
+      if (!error) {
+        return NextResponse.json({ deleted: true });
+      }
+    }
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { error } = await supabase
-    .from("saved_words")
-    .delete()
-    .eq("id", id)
-    .eq("user_id", user.id);
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  if (!deleteDemoVocabularyWord(cookieStore, id)) {
+    return NextResponse.json({ error: "Word not found" }, { status: 404 });
   }
 
   return NextResponse.json({ deleted: true });

@@ -83,6 +83,7 @@ export interface Question {
   question_type: QuestionType;
   difficulty: number;
   code_version?: string;
+  province?: string;
   requires_reference: boolean;
   review_status: ReviewStatus;
 }
@@ -99,6 +100,7 @@ export interface Lesson {
   audio_url?: string;
   sort_order: number;
   code_version?: string;
+  province?: string;
   review_status: ReviewStatus;
   estimated_minutes: number;
 }
@@ -115,6 +117,7 @@ export interface Flashcard {
   subtask_id?: string;
   front: string;
   back: string;
+  province?: string;
   review_status: ReviewStatus;
 }
 

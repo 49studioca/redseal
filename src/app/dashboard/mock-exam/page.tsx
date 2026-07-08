@@ -1,22 +1,26 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { QuestionCard } from "@/components/practice/question-card";
 import { ReferenceViewer } from "@/components/practice/reference-viewer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useDashboardTrade } from "@/components/layout/dashboard-trade-context";
+import { useDashboardPreferences } from "@/components/layout/dashboard-preferences-context";
 import {
   buildBlueprint,
   sampleQuestionsForMockExam,
   calculateExamScore,
 } from "@/lib/mock-exam/engine";
+import { cn } from "@/lib/utils";
 import type { Question, ReferenceChunk, RsosBlock } from "@/types";
 
 type Phase = "intro" | "exam" | "results";
 
 export default function MockExamPage() {
   const trade = useDashboardTrade();
+  const { province } = useDashboardPreferences();
   const [blocks, setBlocks] = useState<RsosBlock[]>([]);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [phase, setPhase] = useState<Phase>("intro");
@@ -29,6 +33,11 @@ export default function MockExamPage() {
   const [results, setResults] = useState<ReturnType<
     typeof calculateExamScore
   > | null>(null);
+  const [reviewing, setReviewing] = useState(false);
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [reviewFilter, setReviewFilter] = useState<"all" | "wrong" | "skipped">(
+    "all",
+  );
 
   useEffect(() => {
     Promise.all([
@@ -38,7 +47,7 @@ export default function MockExamPage() {
       setBlocks(blockData.blocks ?? []);
       setAllQuestions(questionData.questions ?? []);
     });
-  }, [trade.id]);
+  }, [trade.id, province]);
 
   useEffect(() => {
     if (phase !== "exam") return;
@@ -61,15 +70,57 @@ export default function MockExamPage() {
     setQuestions(sampled);
     setAnswers({});
     setCurrentIndex(0);
+    setReviewing(false);
+    setReviewIndex(0);
+    setReviewFilter("all");
     setTimeLeft(trade.exam_time_minutes * 60);
     setPhase("exam");
   };
+
+  const reviewStats = useMemo(() => {
+    let correct = 0;
+    let wrong = 0;
+    let skipped = 0;
+
+    for (const question of questions) {
+      const answer = answers[question.id];
+      if (!answer) skipped += 1;
+      else if (answer === question.correct_option) correct += 1;
+      else wrong += 1;
+    }
+
+    return { correct, wrong, skipped };
+  }, [questions, answers]);
+
+  const filteredReviewQuestions = useMemo(() => {
+    if (reviewFilter === "all") return questions;
+
+    return questions.filter((question) => {
+      const answer = answers[question.id];
+      if (reviewFilter === "skipped") return !answer;
+      return Boolean(answer && answer !== question.correct_option);
+    });
+  }, [questions, answers, reviewFilter]);
+
+  useEffect(() => {
+    if (reviewIndex >= filteredReviewQuestions.length) {
+      setReviewIndex(Math.max(0, filteredReviewQuestions.length - 1));
+    }
+  }, [filteredReviewQuestions.length, reviewIndex]);
 
   const finishExam = useCallback(() => {
     const res = calculateExamScore(questions, answers);
     setResults(res);
     setPhase("results");
-  }, [questions, answers]);
+    void fetch("/api/progress/mock-exam", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        trade_id: trade.id,
+        block_scores: res.blockScores,
+      }),
+    });
+  }, [questions, answers, trade.id]);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -126,6 +177,99 @@ export default function MockExamPage() {
   }
 
   if (phase === "results" && results) {
+    const reviewQuestion = filteredReviewQuestions[reviewIndex];
+
+    if (reviewing) {
+      return (
+        <div className="mx-auto max-w-[1180px]">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h1 className="font-[family-name:var(--font-barlow-semi)] text-2xl font-bold">
+                Review answers
+              </h1>
+              <p className="mt-1 text-sm text-[#64748B]">
+                {reviewStats.correct} correct · {reviewStats.wrong} wrong ·{" "}
+                {reviewStats.skipped} skipped
+              </p>
+            </div>
+            <Button variant="secondary" onClick={() => setReviewing(false)}>
+              Back to summary
+            </Button>
+          </div>
+
+          <div className="mb-4 flex flex-wrap gap-2">
+            {(
+              [
+                ["all", "All"],
+                ["wrong", "Wrong"],
+                ["skipped", "Skipped"],
+              ] as const
+            ).map(([key, label]) => (
+              <Button
+                key={key}
+                size="sm"
+                variant={reviewFilter === key ? "primary" : "secondary"}
+                onClick={() => {
+                  setReviewFilter(key);
+                  setReviewIndex(0);
+                }}
+              >
+                {label}
+              </Button>
+            ))}
+          </div>
+
+          {reviewQuestion ? (
+            <>
+              <QuestionCard
+                question={reviewQuestion}
+                questionNumber={
+                  questions.findIndex((q) => q.id === reviewQuestion.id) + 1
+                }
+                totalQuestions={questions.length}
+                showReference={trade.is_open_book}
+                onOpenReference={() => setRefOpen(true)}
+                initialSelected={answers[reviewQuestion.id] ?? null}
+                readOnly
+                revealAnswer
+              />
+              <div className="mt-4 flex items-center justify-between">
+                <Button
+                  variant="secondary"
+                  disabled={reviewIndex === 0}
+                  onClick={() => setReviewIndex((i) => i - 1)}
+                >
+                  Previous
+                </Button>
+                <span className="font-[family-name:var(--font-ibm-mono)] text-sm text-[#64748B]">
+                  {reviewIndex + 1} of {filteredReviewQuestions.length}
+                </span>
+                <Button
+                  disabled={reviewIndex >= filteredReviewQuestions.length - 1}
+                  onClick={() => setReviewIndex((i) => i + 1)}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Card className="p-8 text-center text-sm text-[#64748B]">
+              No questions match this filter.
+            </Card>
+          )}
+
+          {trade.is_open_book && (
+            <ReferenceViewer
+              open={refOpen}
+              onClose={() => setRefOpen(false)}
+              chunks={refChunks}
+              onSearch={handleSearch}
+            />
+          )}
+        </div>
+      );
+    }
+
     return (
       <div className="mx-auto max-w-2xl">
         <Card
@@ -140,6 +284,19 @@ export default function MockExamPage() {
             {results.passed ? "PASS" : "FAIL"} — {trade.pass_percentage}%
             required
           </div>
+
+          <div className="mt-6 flex flex-wrap justify-center gap-2">
+            <Badge className="bg-[#ECFDF5] text-[#047857]">
+              {reviewStats.correct} correct
+            </Badge>
+            <Badge className="bg-[#FEF2F2] text-[#B91C1C]">
+              {reviewStats.wrong} wrong
+            </Badge>
+            <Badge className="bg-[#F1F5F9] text-[#64748B]">
+              {reviewStats.skipped} skipped
+            </Badge>
+          </div>
+
           <h3 className="mt-8 text-left font-semibold">Score by block</h3>
           <div className="mt-3 space-y-2">
             {Object.entries(results.blockScores).map(([blockId, scores]) => {
@@ -162,10 +319,70 @@ export default function MockExamPage() {
               );
             })}
           </div>
-          <Button className="mt-8" onClick={() => setPhase("intro")}>
-            Take another exam
-          </Button>
+
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button
+              onClick={() => {
+                setReviewFilter("all");
+                setReviewIndex(0);
+                setReviewing(true);
+              }}
+            >
+              Review all questions
+            </Button>
+            {reviewStats.wrong > 0 && (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setReviewFilter("wrong");
+                  setReviewIndex(0);
+                  setReviewing(true);
+                }}
+              >
+                Review wrong answers
+              </Button>
+            )}
+            <Button variant="secondary" onClick={() => setPhase("intro")}>
+              Take another exam
+            </Button>
+          </div>
         </Card>
+
+        <div className="mt-6">
+          <h3 className="font-[family-name:var(--font-barlow-semi)] text-lg font-bold">
+            Question breakdown
+          </h3>
+          <div className="mt-3 grid grid-cols-8 gap-2 sm:grid-cols-10 md:grid-cols-12">
+            {questions.map((question, index) => {
+              const answer = answers[question.id];
+              const status = !answer
+                ? "skipped"
+                : answer === question.correct_option
+                  ? "correct"
+                  : "wrong";
+
+              return (
+                <button
+                  key={question.id}
+                  type="button"
+                  onClick={() => {
+                    setReviewFilter("all");
+                    setReviewIndex(index);
+                    setReviewing(true);
+                  }}
+                  className={cn(
+                    "flex h-9 items-center justify-center rounded-md font-[family-name:var(--font-ibm-mono)] text-xs font-bold transition hover:ring-2 hover:ring-[#C0271E]/30",
+                    status === "correct" && "bg-[#ECFDF5] text-[#047857]",
+                    status === "wrong" && "bg-[#FEF2F2] text-[#B91C1C]",
+                    status === "skipped" && "bg-[#F1F5F9] text-[#64748B]",
+                  )}
+                >
+                  {index + 1}
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
     );
   }
@@ -194,6 +411,7 @@ export default function MockExamPage() {
           showReference={trade.is_open_book}
           onOpenReference={() => setRefOpen(true)}
           initialSelected={answers[q.id] ?? null}
+          hideResults
           onAnswer={(option) => setAnswers((a) => ({ ...a, [q.id]: option }))}
         />
         <div className="mt-4 flex justify-between">

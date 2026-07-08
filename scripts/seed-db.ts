@@ -33,6 +33,7 @@ import {
   TRADE_GENERATION_PROFILES,
   REFERENCE_CHUNKS,
   CHAPTER_TASKS,
+  getExamQuestionCountForTrade,
 } from "../src/data/seed";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -57,7 +58,7 @@ async function seed() {
           name: trade.name,
           short_name: trade.short_name,
           icon: trade.icon,
-          exam_question_count: trade.exam_question_count,
+          exam_question_count: getExamQuestionCountForTrade(trade.id, trade.exam_question_count),
           exam_time_minutes: trade.exam_time_minutes,
           pass_percentage: trade.pass_percentage,
           is_open_book: trade.is_open_book,

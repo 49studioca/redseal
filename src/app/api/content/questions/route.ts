@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { fetchQuestions, fetchLessons, fetchBlocks } from "@/lib/data";
+import { fetchQuestions } from "@/lib/data";
+import { resolveUserProvince } from "@/lib/dashboard-session";
+import { TRADES } from "@/data/seed";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,9 +13,18 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "tradeId required" }, { status: 400 });
   }
 
+  const province = await resolveUserProvince();
+  const tradeCode =
+    TRADES.find((trade) => trade.id === tradeId)?.code ??
+    searchParams.get("tradeCode") ??
+    undefined;
+
   const questions = await fetchQuestions(tradeId, {
     blockId: blockId ?? undefined,
     type: type ?? undefined,
+    province,
+    tradeCode,
   });
-  return NextResponse.json({ questions });
+
+  return NextResponse.json({ questions, province });
 }

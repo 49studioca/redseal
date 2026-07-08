@@ -5,12 +5,15 @@ import {
   MessageSquare,
   Flag,
   Bookmark,
+  BookmarkCheck,
   BookOpen,
   CheckCircle2,
   XCircle,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { TranslatableText } from "@/components/translation/translatable-text";
 import { cn } from "@/lib/utils";
 import type { Question } from "@/types";
 
@@ -22,9 +25,18 @@ interface QuestionCardProps {
   onOpenReference?: () => void;
   onDiscuss?: () => void;
   onReport?: () => void;
+  onBookmarkToggle?: () => void;
+  bookmarked?: boolean;
+  bookmarking?: boolean;
   onAnswer?: (option: string, isCorrect: boolean) => void;
   /** Restore a previous selection when navigating back (mock exam / diagnostic). */
   initialSelected?: string | null;
+  /** Hide correct/incorrect feedback until review (mock exam). */
+  hideResults?: boolean;
+  /** Lock options and show scored state (mock exam review). */
+  readOnly?: boolean;
+  /** Reveal correct answers and explanations (mock exam review). */
+  revealAnswer?: boolean;
 }
 
 export function QuestionCard({
@@ -35,19 +47,28 @@ export function QuestionCard({
   onOpenReference,
   onDiscuss,
   onReport,
+  onBookmarkToggle,
+  bookmarked = false,
+  bookmarking = false,
   onAnswer,
   initialSelected = null,
+  hideResults = false,
+  readOnly = false,
+  revealAnswer = false,
 }: QuestionCardProps) {
   const [selected, setSelected] = useState<string | null>(initialSelected);
 
   useEffect(() => {
     setSelected(initialSelected ?? null);
   }, [question.id, initialSelected]);
-  const answered = selected !== null;
+
+  const inReview = revealAnswer && readOnly;
+  const wasSkipped = inReview && selected === null;
+  const answered = inReview || (!hideResults && selected !== null);
   const isCorrect = selected === question.correct_option;
 
   const handleSelect = (key: string) => {
-    if (answered) return;
+    if (answered || readOnly) return;
     setSelected(key);
     onAnswer?.(key, key === question.correct_option);
   };
@@ -82,7 +103,7 @@ export function QuestionCard({
 
       <div className="p-5">
         <h3 className="font-[family-name:var(--font-barlow-semi)] text-lg font-semibold leading-snug">
-          {question.stem}
+          <TranslatableText text={question.stem} />
         </h3>
 
         <div className="mt-4 flex flex-col gap-2">
@@ -103,11 +124,11 @@ export function QuestionCard({
               <button
                 key={option.key}
                 onClick={() => handleSelect(option.key)}
-                disabled={answered}
+                disabled={answered || readOnly}
                 className={cn(
                   "flex items-center gap-3 rounded-[11px] border p-3 text-left transition-all",
                   style,
-                  !answered && "cursor-pointer",
+                  !answered && !readOnly && "cursor-pointer",
                 )}
               >
                 <span
@@ -117,12 +138,16 @@ export function QuestionCard({
                       ? "bg-[#10B981] text-white"
                       : answered && isSelected
                         ? "bg-[#EF4444] text-white"
-                        : "bg-[#F1ECE3] text-[#64748B]",
+                        : isSelected
+                          ? "bg-[#C0271E] text-white"
+                          : "bg-[#F1ECE3] text-[#64748B]",
                   )}
                 >
                   {option.key}
                 </span>
-                <span className="flex-1 text-sm">{option.text}</span>
+                <span className="flex-1 text-sm">
+                  <TranslatableText text={option.text} />
+                </span>
                 {answered && isCorrectOption && (
                   <CheckCircle2 className="h-5 w-5 text-[#10B981]" />
                 )}
@@ -155,15 +180,31 @@ export function QuestionCard({
                   isCorrect ? "text-[#047857]" : "text-[#B91C1C]",
                 )}
               >
-                {isCorrect ? "Correct!" : "Not quite"}
+                {isCorrect
+                  ? "Correct!"
+                  : wasSkipped
+                    ? "Not answered"
+                    : "Not quite"}
               </div>
+              {wasSkipped && (
+                <p className="mt-1 text-sm text-[#475569]">
+                  The correct answer is{" "}
+                  <b className="font-[family-name:var(--font-ibm-mono)]">
+                    {question.correct_option}
+                  </b>
+                  .
+                </p>
+              )}
               {wrongRationale && (
                 <p className="mt-1 text-sm text-[#475569]">
-                  It looks like you may have: <em>{wrongRationale}</em>
+                  It looks like you may have:{" "}
+                  <em>
+                    <TranslatableText text={wrongRationale} />
+                  </em>
                 </p>
               )}
               <p className="mt-2 text-sm leading-relaxed text-[#475569]">
-                {question.explanation}
+                <TranslatableText text={question.explanation} />
               </p>
               {question.code_citations.length > 0 && (
                 <div className="mt-2 space-y-1">
@@ -172,7 +213,13 @@ export function QuestionCard({
                       key={i}
                       className="font-[family-name:var(--font-ibm-mono)] text-xs text-[#C0271E]"
                     >
-                      {c.rule_number} — {c.section_title}
+                      {c.rule_number}
+                      {c.section_title ? (
+                        <>
+                          {" — "}
+                          <TranslatableText text={c.section_title} />
+                        </>
+                      ) : null}
                     </div>
                   ))}
                 </div>
@@ -182,15 +229,36 @@ export function QuestionCard({
         )}
 
         <div className="mt-4 flex gap-2 border-t border-[#E5E0D8] pt-4">
-          <Button variant="ghost" size="sm" onClick={onDiscuss}>
-            <MessageSquare className="h-4 w-4" /> Discuss
-          </Button>
-          <Button variant="ghost" size="sm" onClick={onReport}>
-            <Flag className="h-4 w-4" /> Report Error
-          </Button>
-          <Button variant="ghost" size="sm" className="ml-auto">
-            <Bookmark className="h-4 w-4" />
-          </Button>
+          {onDiscuss && (
+            <Button variant="ghost" size="sm" type="button" onClick={onDiscuss}>
+              <MessageSquare className="h-4 w-4" /> Discuss
+            </Button>
+          )}
+          {onReport && (
+            <Button variant="ghost" size="sm" type="button" onClick={onReport}>
+              <Flag className="h-4 w-4" /> Report Error
+            </Button>
+          )}
+          {onBookmarkToggle && (
+            <Button
+              variant="ghost"
+              size="sm"
+              type="button"
+              className={cn("ml-auto", bookmarked && "text-[#C0271E]")}
+              disabled={bookmarking}
+              onClick={onBookmarkToggle}
+              aria-label={bookmarked ? "Remove bookmark" : "Bookmark question"}
+              title={bookmarked ? "Saved — click to remove" : "Save question"}
+            >
+              {bookmarking ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : bookmarked ? (
+                <BookmarkCheck className="h-4 w-4" />
+              ) : (
+                <Bookmark className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>

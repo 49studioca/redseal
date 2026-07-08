@@ -5,12 +5,8 @@ function hasMediaType(blocks: ContentBlock[], type: "video" | "image") {
   return blocks.some((b) => b.type === type);
 }
 
-function isWikimediaUrl(url: string) {
-  return url.includes("upload.wikimedia.org");
-}
-
-/** Swap AI-hallucinated Commons URLs for verified curated images. */
-function replaceWikimediaImages(
+/** Swap lesson image blocks for verified curated images when available. */
+function replaceImagesWithCurated(
   blocks: ContentBlock[],
   images: NonNullable<ReturnType<typeof getBlockMedia>>["images"],
 ): ContentBlock[] {
@@ -20,16 +16,38 @@ function replaceWikimediaImages(
   let replaced = false;
 
   const updated = blocks.map((block) => {
-    if (block.type !== "image" || !isWikimediaUrl(block.content)) return block;
+    if (block.type !== "image") return block;
 
     const curated = images[imageIndex] ?? images[images.length - 1];
     imageIndex += 1;
     replaced = true;
 
     return {
-      ...block,
+      type: "image" as const,
       content: curated.src,
       meta: { alt: curated.alt, caption: curated.caption },
+    };
+  });
+
+  return replaced ? updated : blocks;
+}
+
+/** Swap AI-hallucinated or broken YouTube IDs for verified curated videos. */
+function replaceVideoWithCurated(
+  blocks: ContentBlock[],
+  video: NonNullable<ReturnType<typeof getBlockMedia>>["video"],
+): ContentBlock[] {
+  if (!video) return blocks;
+
+  let replaced = false;
+  const updated = blocks.map((block) => {
+    if (block.type !== "video") return block;
+
+    replaced = true;
+    return {
+      type: "video" as const,
+      content: video.youtubeId,
+      meta: { title: video.title },
     };
   });
 
@@ -49,8 +67,14 @@ export function injectBlockMedia(
 
   let result = blocks;
 
+  if (media.video) {
+    if (hasMediaType(result, "video")) {
+      result = replaceVideoWithCurated(result, media.video);
+    }
+  }
+
   if (media.images && hasMediaType(result, "image")) {
-    result = replaceWikimediaImages(result, media.images);
+    result = replaceImagesWithCurated(result, media.images);
   }
 
   const inserts: ContentBlock[] = [];

@@ -29,9 +29,9 @@ function trade(
   };
 }
 
-/** All 56 Red Seal trades — 3 live, 53 coming soon. */
+/** All 56 Red Seal trades — RSOS exam blocks seeded for all; 5 with live AI content. */
 export const ALL_TRADES: Trade[] = [
-  // ── Live trades (full content in seed.ts) ──────────────────────────
+  // ── Live trades (RSOS blocks + generated content) ────────────────────
   trade(
     "309A",
     "construction-electrician",
@@ -42,7 +42,7 @@ export const ALL_TRADES: Trade[] = [
     "live",
     {
       id: "trade-309a",
-      exam_question_count: 120,
+      exam_question_count: 100,
       is_open_book: true,
       reference_doc_types: ["CEC", "WHMIS"],
     },
@@ -74,8 +74,6 @@ export const ALL_TRADES: Trade[] = [
       reference_doc_types: ["CSA-W59", "WHMIS"],
     },
   ),
-
-  // ── Electrical ─────────────────────────────────────────────────────
   trade(
     "442A",
     "industrial-electrician",
@@ -83,7 +81,27 @@ export const ALL_TRADES: Trade[] = [
     "442A Industrial Electrician",
     "🔌",
     "Install, maintain, and repair electrical systems in industrial plants, mills, and processing facilities.",
+    "live",
+    {
+      id: "trade-442a",
+      exam_question_count: 100,
+      reference_doc_types: ["CEC", "WHMIS"],
+    },
   ),
+  trade(
+    "403A",
+    "carpenter",
+    "Carpenter",
+    "403A Carpenter",
+    "🔨",
+    "Construct, renovate, and repair wood and metal frame structures, formwork, and finish carpentry.",
+    "live",
+    {
+      exam_question_count: 100,
+    },
+  ),
+
+  // ── Electrical ─────────────────────────────────────────────────────
   trade(
     "434A",
     "powerline-technician",
@@ -138,14 +156,6 @@ export const ALL_TRADES: Trade[] = [
   ),
 
   // ── Construction ───────────────────────────────────────────────────
-  trade(
-    "403A",
-    "carpenter",
-    "Carpenter",
-    "403A Carpenter",
-    "🔨",
-    "Construct, renovate, and repair wood and metal frame structures, formwork, and finish carpentry.",
-  ),
   trade(
     "401A",
     "bricklayer",

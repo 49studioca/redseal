@@ -161,6 +161,12 @@ export default function AdminGeneratePage() {
                   Lesson will include a section for each task above.
                 </p>
               )}
+              {jobType === "flashcard" && (
+                <p className="mt-3 text-xs text-[#64748B]">
+                  Requires an existing lesson for this block. Generate the
+                  chapter lesson first, then create flashcards from it.
+                </p>
+              )}
             </div>
           )}
 
@@ -238,7 +244,9 @@ export default function AdminGeneratePage() {
                   ? appendQuestions
                     ? "Add practice questions"
                     : "Generate practice bank"
-                  : "Generate content"}
+                  : jobType === "flashcard"
+                    ? "Generate flashcards from lesson"
+                    : "Generate content"}
           </Button>
         </Card>
 
@@ -256,6 +264,21 @@ export default function AdminGeneratePage() {
                 </Link>
               </p>
             )}
+            {"flashcard_ids" in result &&
+              Array.isArray(result.flashcard_ids) && (
+                <p className="mt-2 text-sm text-[#10B981]">
+                  Published {result.flashcard_ids.length} flashcards from{" "}
+                  {String(result.lesson_title ?? "the chapter lesson")}. View
+                  them in{" "}
+                  <Link
+                    href="/dashboard/flashcards"
+                    className="font-semibold text-[#C0271E]"
+                  >
+                    Flashcards
+                  </Link>
+                  .
+                </p>
+              )}
             {"question_ids" in result && Array.isArray(result.question_ids) && (
               <p className="mt-2 text-sm text-[#10B981]">
                 Published {result.question_ids.length} practice questions to the

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { getTradeById, TRADES } from "@/data/seed";
 import { readDemoPreferences } from "@/lib/demo-preferences";
+import { DEFAULT_PROVINCE, normalizeProvinceCode } from "@/lib/provinces";
 import type { Trade } from "@/types";
 
 export type DashboardSession = {
@@ -11,6 +12,8 @@ export type DashboardSession = {
   userName: string;
   isAdmin: boolean;
   preferredLanguage: string;
+  translationEnabled: boolean;
+  province: string;
 };
 
 async function resolveTrade(tradeId: string): Promise<Trade> {
@@ -39,11 +42,39 @@ async function resolveTrade(tradeId: string): Promise<Trade> {
   return TRADES[0];
 }
 
+export async function resolveUserProvince(): Promise<string> {
+  const cookieStore = await cookies();
+  const demoPrefs = readDemoPreferences(cookieStore);
+
+  if (usesSupabaseData()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("province")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (profile?.province) {
+        return normalizeProvinceCode(profile.province);
+      }
+    }
+  }
+
+  return normalizeProvinceCode(demoPrefs.province ?? DEFAULT_PROVINCE);
+}
+
 export async function getDashboardSession(): Promise<DashboardSession> {
   let tradeId = "trade-309a";
   let userName = "Demo User";
   let isAdmin = true;
-  let preferredLanguage = "en";
+  const cookieStore = await cookies();
+  const demoPrefs = readDemoPreferences(cookieStore);
+  let preferredLanguage = demoPrefs.preferredLanguage;
+  let translationEnabled = demoPrefs.translationEnabled;
+  let province = normalizeProvinceCode(demoPrefs.province ?? DEFAULT_PROVINCE);
 
   if (usesSupabaseData()) {
     const supabase = await createClient();
@@ -61,16 +92,21 @@ export async function getDashboardSession(): Promise<DashboardSession> {
         tradeId = profile.selected_trade_id ?? tradeId;
         userName = profile.full_name ?? user.email ?? "User";
         isAdmin = profile.is_admin ?? false;
-        preferredLanguage = profile.preferred_language ?? "en";
+        province = normalizeProvinceCode(profile.province ?? province);
       }
     }
   } else {
-    const demo = readDemoPreferences(await cookies());
-    if (!demo.onboardingCompleted) redirect("/onboarding");
-    tradeId = demo.tradeId ?? tradeId;
-    preferredLanguage = demo.preferredLanguage;
+    if (!demoPrefs.onboardingCompleted) redirect("/onboarding");
+    tradeId = demoPrefs.tradeId ?? tradeId;
   }
 
   const trade = await resolveTrade(tradeId);
-  return { trade, userName, isAdmin, preferredLanguage };
+  return {
+    trade,
+    userName,
+    isAdmin,
+    preferredLanguage,
+    translationEnabled,
+    province,
+  };
 }

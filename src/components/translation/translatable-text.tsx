@@ -30,7 +30,7 @@ export function TranslatableText({
   lessonId,
   className,
 }: TranslatableTextProps) {
-  const { preferredLanguage } = useDashboardPreferences();
+  const { preferredLanguage, translationEnabled } = useDashboardPreferences();
   const trade = useDashboardTrade();
   const tokens = tokenizeText(text);
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
@@ -40,14 +40,13 @@ export function TranslatableText({
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [saving, setSaving] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const containerRef = useRef<HTMLSpanElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const contextRef = useRef("");
 
   useEffect(() => {
     setMounted(true);
     return () => {
-      if (hoverTimer.current) clearTimeout(hoverTimer.current);
       abortRef.current?.abort();
     };
   }, []);
@@ -59,6 +58,26 @@ export function TranslatableText({
     setLoading(false);
     abortRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    if (!translationEnabled) closePopup();
+  }, [translationEnabled, closePopup]);
+
+  useEffect(() => {
+    if (activeWordIndex === null) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node;
+      if (containerRef.current?.contains(target)) return;
+      if (document.getElementById("word-translation-popup")?.contains(target)) {
+        return;
+      }
+      closePopup();
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [activeWordIndex, closePopup]);
 
   const lookupWord = useCallback(
     async (word: string, wordIndex: number, rect: DOMRect) => {
@@ -102,20 +121,20 @@ export function TranslatableText({
     [preferredLanguage, text, trade.name],
   );
 
-  const handleWordEnter = (
+  const handleWordClick = (
     e: MouseEvent<HTMLSpanElement>,
     word: string,
     wordIndex: number,
   ) => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
-    hoverTimer.current = setTimeout(() => {
-      setActiveWordIndex(wordIndex);
-      void lookupWord(word, wordIndex, e.currentTarget.getBoundingClientRect());
-    }, 350);
-  };
+    e.stopPropagation();
+    if (activeWordIndex === wordIndex) {
+      closePopup();
+      return;
+    }
 
-  const handleWordLeave = () => {
-    if (hoverTimer.current) clearTimeout(hoverTimer.current);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setActiveWordIndex(wordIndex);
+    void lookupWord(word, wordIndex, rect);
   };
 
   const handleSave = async () => {
@@ -135,7 +154,10 @@ export function TranslatableText({
           lesson_id: lessonId,
         }),
       });
-      if (!res.ok) throw new Error("Could not save word");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? "Could not save word");
+      }
       const body = await res.json();
       setPopupData((prev) =>
         prev ? { ...prev, saved: true, saved_id: body.id } : prev,
@@ -166,11 +188,15 @@ export function TranslatableText({
     }
   };
 
+  if (!translationEnabled) {
+    return <span className={className}>{text}</span>;
+  }
+
   let wordIndex = 0;
 
   return (
     <>
-      <span className={className}>
+      <span ref={containerRef} className={className}>
         {tokens.map((token, i) => {
           if (!token.isWord) {
             return <span key={i}>{token.word}</span>;
@@ -182,11 +208,10 @@ export function TranslatableText({
               key={i}
               className={
                 isActive
-                  ? "cursor-help rounded bg-[#FCEBEC] px-0.5 text-[#C0271E] underline decoration-[#C0271E]/40 underline-offset-2"
-                  : "cursor-help rounded px-0.5 transition-colors hover:bg-[#FCEBEC]/70 hover:text-[#C0271E]"
+                  ? "cursor-pointer rounded bg-[#FCEBEC] px-0.5 text-[#C0271E] underline decoration-[#C0271E]/40 underline-offset-2"
+                  : "cursor-pointer rounded px-0.5 transition-colors hover:bg-[#FCEBEC]/70 hover:text-[#C0271E]"
               }
-              onMouseEnter={(e) => handleWordEnter(e, token.word, index)}
-              onMouseLeave={handleWordLeave}
+              onClick={(e) => handleWordClick(e, token.word, index)}
             >
               {token.word}
             </span>
@@ -202,6 +227,7 @@ export function TranslatableText({
             loading={loading}
             error={error}
             position={position}
+            targetLanguage={preferredLanguage}
             onClose={closePopup}
             onSave={() => void handleSave()}
             onUnsave={() => void handleUnsave()}

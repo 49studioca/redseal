@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LessonRichText } from "@/components/learn/lesson-rich-text";
 
 interface LessonCheckQuestionProps {
   label?: string;
@@ -21,7 +22,7 @@ export function LessonCheckQuestion({
     <div className="rounded-xl border border-[#E5E0D8] bg-white">
       <div className="flex items-center justify-between gap-4 p-4">
         <p className="text-sm font-semibold text-[#1F2A37]">
-          {label ?? "Check your work"}
+          <LessonRichText text={label ?? "Check your work"} />
         </p>
         <Button
           variant="secondary"
@@ -47,18 +48,21 @@ export function LessonCheckQuestion({
                 line.trim() === "" ? (
                   <div key={i} className="h-2" />
                 ) : (
-                  <p
+                  <div
                     key={i}
-                    className="font-mono text-sm leading-relaxed text-[#475569]"
+                    className="text-sm leading-relaxed text-[#475569]"
                   >
-                    {line}
-                  </p>
+                    <LessonRichText text={line} />
+                  </div>
                 ),
               )}
             </div>
           )}
           <div className="rounded-lg border border-[#10B981]/30 bg-[#ECFDF5] p-3">
-            <p className="text-sm font-semibold text-[#065F46]">{answer}</p>
+            <LessonRichText
+              text={answer}
+              className="text-sm font-semibold text-[#065F46]"
+            />
           </div>
         </div>
       )}

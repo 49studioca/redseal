@@ -1,4 +1,5 @@
 import { getDashboardSession } from "@/lib/dashboard-session";
+import { getExamReadinessSummaryForTrade } from "@/lib/progress/exam-readiness";
 import {
   DashboardHeader,
   DashboardSidebar,
@@ -11,16 +12,37 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { trade, userName, isAdmin, preferredLanguage } =
-    await getDashboardSession();
+  const {
+    trade,
+    userName,
+    isAdmin,
+    preferredLanguage,
+    translationEnabled,
+    province,
+  } = await getDashboardSession();
+  const readinessSummary = await getExamReadinessSummaryForTrade(
+    trade.id,
+    trade.pass_percentage,
+  );
 
   return (
     <DashboardTradeProvider trade={trade}>
-      <DashboardPreferencesProvider preferredLanguage={preferredLanguage}>
-        <div className="flex min-h-screen flex-col bg-[#F1ECE3]">
-          <DashboardHeader trade={trade} userName={userName} />
-          <div className="flex min-h-0 flex-1">
-            <DashboardSidebar trade={trade} readiness={62} isAdmin={isAdmin} />
+      <DashboardPreferencesProvider
+        preferredLanguage={preferredLanguage}
+        translationEnabled={translationEnabled}
+        province={province}
+      >
+        <div className="flex h-screen flex-col overflow-hidden bg-[#F1ECE3]">
+          <DashboardHeader
+            trade={trade}
+            userName={userName}
+            isAdmin={isAdmin}
+          />
+          <div className="flex min-h-0 flex-1 overflow-hidden">
+            <DashboardSidebar
+              trade={trade}
+              readinessSummary={readinessSummary}
+            />
             <main className="scrl min-w-0 flex-1 overflow-y-auto p-6 md:p-8">
               {children}
             </main>

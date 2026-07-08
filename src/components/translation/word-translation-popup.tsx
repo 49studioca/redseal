@@ -2,6 +2,8 @@
 
 import { Bookmark, BookmarkCheck, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { isRtlLanguage } from "@/lib/translation/languages";
+import { cn } from "@/lib/utils";
 
 export type WordTranslationData = {
   word: string;
@@ -18,6 +20,7 @@ interface WordTranslationPopupProps {
   loading: boolean;
   error: string | null;
   position: { top: number; left: number };
+  targetLanguage: string;
   onClose: () => void;
   onSave: () => void;
   onUnsave: () => void;
@@ -29,19 +32,26 @@ export function WordTranslationPopup({
   loading,
   error,
   position,
+  targetLanguage,
   onClose,
   onSave,
   onUnsave,
   saving,
 }: WordTranslationPopupProps) {
+  const rtl = isRtlLanguage(targetLanguage);
+  const translatedTextClass = cn(
+    "text-sm leading-relaxed",
+    rtl && "text-right [unicode-bidi:plaintext]",
+  );
+
   return (
     <div
+      id="word-translation-popup"
       className="fixed z-50 w-[min(320px,calc(100vw-24px))] rounded-xl border border-[#E5E0D8] bg-white p-4 shadow-xl"
       style={{
         top: position.top,
         left: position.left,
       }}
-      onMouseLeave={onClose}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -57,7 +67,13 @@ export function WordTranslationPopup({
               <div className="font-[family-name:var(--font-barlow-semi)] text-lg font-bold capitalize text-[#1F2A37]">
                 {data.word}
               </div>
-              <div className="mt-1 text-[15px] font-semibold text-[#C0271E]">
+              <div
+                dir={rtl ? "rtl" : "ltr"}
+                className={cn(
+                  "mt-1 text-[15px] font-semibold text-[#C0271E]",
+                  rtl && "text-right",
+                )}
+              >
                 {data.translation}
               </div>
             </>
@@ -75,7 +91,13 @@ export function WordTranslationPopup({
 
       {data && !loading && !error && (
         <>
-          <p className="mt-3 text-sm leading-relaxed text-[#475569]">
+          <p
+            dir={rtl ? "rtl" : "ltr"}
+            className={cn(
+              "mt-3 text-sm leading-relaxed text-[#475569]",
+              rtl && "text-right",
+            )}
+          >
             {data.definition}
           </p>
           {data.context_explanation && (
@@ -83,7 +105,10 @@ export function WordTranslationPopup({
               <div className="text-[10px] font-bold uppercase tracking-wide text-[#64748B]">
                 In this context
               </div>
-              <p className="mt-1 text-sm leading-relaxed text-[#334155]">
+              <p
+                dir={rtl ? "rtl" : "ltr"}
+                className={cn(translatedTextClass, "mt-1 text-[#334155]")}
+              >
                 {data.context_explanation}
               </p>
             </div>

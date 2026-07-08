@@ -1,3 +1,5 @@
+import { lessonImageSrc } from "@/lib/storage/lesson-images";
+
 export type BlockMediaVideo = {
   youtubeId: string;
   title: string;
@@ -14,34 +16,23 @@ export type BlockMediaBundle = {
   images?: BlockMediaImage[];
 };
 
-/** Verified Wikimedia Commons URLs (resolved via Commons API). */
+/** Curated lesson images — served from Supabase Storage `images` bucket. */
 const IMG = {
-  copperPipes:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Copper_water_pipes.jpg/960px-Copper_water_pipes.jpg",
-  pvcPipe:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/PVC_Pipe.jpg/960px-PVC_Pipe.jpg",
-  copperSolder:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Propane_torch_soldering_copper_pipe.jpg/960px-Propane_torch_soldering_copper_pipe.jpg",
-  copperPress:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Copper-press-fitting.JPG/960px-Copper-press-fitting.JPG",
-  pvcDrain:
-    "https://upload.wikimedia.org/wikipedia/commons/2/29/White_pipe_to_temporarily_drain_water_into_large_bucket.jpg",
-  wrench:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Wrench.jpg/960px-Wrench.jpg",
-  electricalPanel:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Electrical_panel.jpg/960px-Electrical_panel.jpg",
-  outdoorWiring:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Outdoor_wiring.JPG/960px-Outdoor_wiring.JPG",
-  wetRoomWiring:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Wiring_in_wet_rooms.JPG/960px-Wiring_in_wet_rooms.JPG",
-  motorStarter:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/d/df/Motor_starter.jpg/960px-Motor_starter.jpg",
-  smokeDetector:
-    "https://upload.wikimedia.org/wikipedia/commons/6/63/Smoke_detector.jpg",
-  solarPanel:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Solar_panel.jpg/960px-Solar_panel.jpg",
-  welding:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Welding.jpg/960px-Welding.jpg",
+  copperPipes: lessonImageSrc("copper-pipes"),
+  pvcPipe: lessonImageSrc("pvc-pipe"),
+  copperSolder: lessonImageSrc("copper-solder"),
+  copperPress: lessonImageSrc("copper-press"),
+  pvcDrain: lessonImageSrc("pvc-drain"),
+  wrench: lessonImageSrc("wrench"),
+  electricalPanel: lessonImageSrc("electrical-panel"),
+  outdoorWiring: lessonImageSrc("outdoor-wiring"),
+  wetRoomWiring: lessonImageSrc("wet-room-wiring"),
+  motorStarter: lessonImageSrc("motor-starter"),
+  smokeDetector: lessonImageSrc("smoke-detector"),
+  solarPanel: lessonImageSrc("solar-panel"),
+  welding: lessonImageSrc("welding"),
+  woodFraming: lessonImageSrc("wood-framing"),
+  tapeMeasure: lessonImageSrc("tape-measure"),
 } as const;
 
 /** Curated visuals per RSOS block — key: `{tradeCode}-{blockCode}` e.g. `447A-B` */
@@ -145,8 +136,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
 
   "309A-A": {
     video: {
-      youtubeId: "XK6LtU5E7_c",
-      title: "Lockout/tagout for electrical safety",
+      youtubeId: "o5CWnUFsevo",
+      title: "Lockout/tagout — controlling hazardous energy",
     },
     images: [
       {
@@ -158,8 +149,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "309A-B": {
     video: {
-      youtubeId: "k2y5VTW1j8o",
-      title: "Residential branch circuit wiring",
+      youtubeId: "hKtedrJKyQs",
+      title: "Basic residential wiring",
     },
     images: [
       {
@@ -171,8 +162,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "309A-C": {
     video: {
-      youtubeId: "G4vQ8sTvz2Y",
-      title: "Panel bonding and grounding",
+      youtubeId: "vAD3r_nF6L4",
+      title: "Grounding and bonding an electrical panel",
     },
     images: [
       {
@@ -184,8 +175,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "309A-D": {
     video: {
-      youtubeId: "0Hk9v2E8b0Q",
-      title: "Motor starter and control wiring",
+      youtubeId: "YRrE3fYArr8",
+      title: "How a direct online (DOL) motor starter works",
     },
     images: [
       {
@@ -197,8 +188,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "309A-E": {
     video: {
-      youtubeId: "nW8n3gP5x0Y",
-      title: "Fire alarm device layout",
+      youtubeId: "cVjyDgFrb2g",
+      title: "What is a fire alarm system?",
     },
     images: [
       {
@@ -210,8 +201,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "309A-F": {
     video: {
-      youtubeId: "Vw7c9V6b0nY",
-      title: "Solar PV DC wiring basics",
+      youtubeId: "QAwEtVPkwL0",
+      title: "How a PV solar cell works",
     },
     images: [
       {
@@ -224,8 +215,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
 
   "276A-A": {
     video: {
-      youtubeId: "yQ3v9w2n0kE",
-      title: "Welding PPE and shop safety",
+      youtubeId: "dgtslF3v0yc",
+      title: "Before you strike an arc — welding safety orientation",
     },
     images: [
       {
@@ -237,8 +228,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "276A-B": {
     video: {
-      youtubeId: "0j3O8f8n0kE",
-      title: "Joint prep and fit-up",
+      youtubeId: "pMtqDWUpJds",
+      title: "Stick welding basics — equipment and joint setup",
     },
     images: [
       {
@@ -250,8 +241,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "276A-C": {
     video: {
-      youtubeId: "5x8Yv2n0kE",
-      title: "SMAW (stick) welding technique",
+      youtubeId: "4MKuUICV6-c",
+      title: "Stick welding 101 — getting started with SMAW",
     },
     images: [
       {
@@ -263,8 +254,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "276A-D": {
     video: {
-      youtubeId: "7x9Yv2n0kE",
-      title: "Thermal cutting fundamentals",
+      youtubeId: "rhE1rIAxeps",
+      title: "How to use a plasma cutter",
     },
     images: [
       {
@@ -276,8 +267,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "276A-E": {
     video: {
-      youtubeId: "3x7Yv2n0kE",
-      title: "Visual weld inspection",
+      youtubeId: "Z13fLeTrdXM",
+      title: "Visual weld inspection tools every welder should know",
     },
     images: [
       {
@@ -289,8 +280,8 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
   "276A-F": {
     video: {
-      youtubeId: "8x5Yv2n0kE",
-      title: "Pipe welding positions",
+      youtubeId: "XwetxAWPzhA",
+      title: "6011 & 6013 stick welding — uphill techniques",
     },
     images: [
       {
@@ -300,10 +291,181 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+
+  "442A-A": {
+    video: {
+      youtubeId: "o5CWnUFsevo",
+      title: "Lockout/tagout — controlling hazardous energy",
+    },
+    images: [
+      {
+        src: IMG.electricalPanel,
+        alt: "Industrial electrical panel",
+        caption: "Verify de-energization and lockout before commissioning or maintenance.",
+      },
+    ],
+  },
+  "442A-B": {
+    video: {
+      youtubeId: "vAD3r_nF6L4",
+      title: "Grounding and bonding an electrical panel",
+    },
+    images: [
+      {
+        src: IMG.electricalPanel,
+        alt: "Distribution and service equipment",
+        caption: "Industrial service systems include transformers, protection, and bonding.",
+      },
+    ],
+  },
+  "442A-C": {
+    video: {
+      youtubeId: "hKtedrJKyQs",
+      title: "Industrial wiring and raceway installation",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Industrial conduit and cable tray",
+        caption: "Raceways, conductors, and enclosures in plant environments.",
+      },
+    ],
+  },
+  "442A-D": {
+    video: {
+      youtubeId: "YRrE3fYArr8",
+      title: "How a direct online (DOL) motor starter works",
+    },
+    images: [
+      {
+        src: IMG.motorStarter,
+        alt: "Motor control centre starter",
+        caption: "Motor starters, drives, and control circuits are core exam topics.",
+      },
+    ],
+  },
+  "442A-E": {
+    video: {
+      youtubeId: "cVjyDgFrb2g",
+      title: "Industrial signalling and communication systems",
+    },
+    images: [
+      {
+        src: IMG.smokeDetector,
+        alt: "Signalling device",
+        caption: "Signalling, communications, and building automation systems.",
+      },
+    ],
+  },
+  "442A-F": {
+    video: {
+      youtubeId: "YRrE3fYArr8",
+      title: "PLC basics — inputs, outputs, and ladder logic",
+    },
+    images: [
+      {
+        src: IMG.motorStarter,
+        alt: "Industrial control panel",
+        caption: "Process control covers I/O devices, PLCs, and pneumatic/hydraulic controls.",
+      },
+    ],
+  },
+
+  "403A-A": {
+    video: {
+      youtubeId: "Vm_daEZ-veM",
+      title: "Construction site safety induction",
+    },
+    images: [
+      {
+        src: IMG.wrench,
+        alt: "Carpentry hand tools",
+        caption: "Common occupational skills start with safe tool use and jobsite awareness.",
+      },
+    ],
+  },
+  "403A-B": {
+    video: {
+      youtubeId: "wFdRbiGFx1M",
+      title: "Framing walls — precise stud layout",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Tape measure for layout",
+        caption: "Accurate layout keeps studs on module and sheathing joints on centre.",
+      },
+    ],
+  },
+  "403A-C": {
+    video: {
+      youtubeId: "tyQCAASaOUM",
+      title: "Concrete formwork before the pour",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Wood formwork framing",
+        caption: "Formwork must be level, braced, and oiled before placing concrete.",
+      },
+    ],
+  },
+  "403A-D": {
+    video: {
+      youtubeId: "3fP0LZMEV5w",
+      title: "House framing explained in 12 minutes",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Platform wood framing",
+        caption: "Framing members include plates, studs, joists, and rafters.",
+      },
+    ],
+  },
+  "403A-E": {
+    video: {
+      youtubeId: "WQU3Qq3p73I",
+      title: "How to install vinyl siding panels",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Exterior building envelope",
+        caption: "Exterior finishing relies on proper flashing, trim, and expansion gaps.",
+      },
+    ],
+  },
+  "403A-F": {
+    video: {
+      youtubeId: "wfsmfJ_tkuk",
+      title: "How to install baseboards step by step",
+    },
+    images: [
+      {
+        src: IMG.wrench,
+        alt: "Finish carpentry tools",
+        caption: "Interior finishing includes trim layout, cutting mitres, and tight joints.",
+      },
+    ],
+  },
+  "403A-G": {
+    video: {
+      youtubeId: "JP4uP5DMGLo",
+      title: "Building a new interior wall during renovation",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Renovation framing",
+        caption: "Renovations often combine selective demolition with new framed partitions.",
+      },
+    ],
+  },
 };
 
 export function blockMediaKey(tradeCode: string, blockCode: string) {
-  return `${tradeCode}-${blockCode}`;
+  return `${tradeCode.trim().toUpperCase()}-${blockCode.trim().toUpperCase()}`;
 }
 
 export function getBlockMedia(

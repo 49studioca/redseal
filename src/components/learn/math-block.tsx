@@ -3,6 +3,7 @@
 import katex from "katex";
 import "katex/dist/katex.min.css";
 import { parseMathBlockContent } from "@/lib/math/normalize-latex";
+import { LessonRichText } from "@/components/learn/lesson-rich-text";
 
 export function MathBlock({ content }: { content: string }) {
   const { latex, example } = parseMathBlockContent(content);
@@ -22,7 +23,9 @@ export function MathBlock({ content }: { content: string }) {
     <div className="space-y-3 overflow-x-auto rounded-lg bg-[#F6F3EE] p-4">
       <div dangerouslySetInnerHTML={{ __html: html }} />
       {example && (
-        <p className="text-sm leading-relaxed text-[#64748B]">{example}</p>
+        <p className="text-sm leading-relaxed text-[#64748B]">
+          <LessonRichText text={example} />
+        </p>
       )}
     </div>
   );

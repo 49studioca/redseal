@@ -75,10 +75,13 @@ export function calculateExamScore(
   const blockScores: Record<string, { correct: number; total: number }> = {};
 
   for (const q of questions) {
+    const answer = answers[q.id];
+    if (!answer) continue;
+
     const blockId = q.block_id ?? "unknown";
     if (!blockScores[blockId]) blockScores[blockId] = { correct: 0, total: 0 };
     blockScores[blockId].total++;
-    if (answers[q.id] === q.correct_option) {
+    if (answer === q.correct_option) {
       correct++;
       blockScores[blockId].correct++;
     }

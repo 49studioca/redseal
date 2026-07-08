@@ -47,6 +47,12 @@ Brand system from `design-reference/AI-Powered Trade Certification Platform/`:
 
 ## Launch trades
 
+All 56 trades include official RSOS exam block structure (from [red-seal.ca](https://red-seal.ca)). Five trades have live AI-generated content:
+
 - 309A Construction Electrician (open-book)
 - 447A Plumber
 - 276A Welder
+- 442A Industrial Electrician
+- 403A Carpenter
+
+Refresh RSOS exam data: `npm run db:generate-rsos-seed`

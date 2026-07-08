@@ -12,6 +12,11 @@ import {
   getFlashcardsForTrade,
 } from "@/data/seed";
 import type { Trade, RsosBlock, Question, Lesson, Flashcard, ReferenceChunk, ProvincialGuide } from "@/types";
+import {
+  enrichQuestionsForProvince,
+  resolveLessonsForProvince,
+  resolveQuestionsForProvince,
+} from "@/lib/content/province-content";
 
 import { usesSupabaseData } from "@/lib/supabase/config";
 
@@ -47,7 +52,13 @@ export async function fetchBlocks(tradeId: string): Promise<RsosBlock[]> {
 
 export async function fetchQuestions(
   tradeId: string,
-  filters?: { blockId?: string; type?: string; limit?: number }
+  filters?: {
+    blockId?: string;
+    type?: string;
+    limit?: number;
+    province?: string | null;
+    tradeCode?: string;
+  },
 ): Promise<Question[]> {
   if (!useSupabase()) return [];
   const { createClient } = await import("@/lib/supabase/server");
@@ -59,9 +70,19 @@ export async function fetchQuestions(
     .eq("review_status", "approved");
   if (filters?.blockId) query = query.eq("block_id", filters.blockId);
   if (filters?.type) query = query.eq("question_type", filters.type);
-  if (filters?.limit) query = query.limit(filters.limit);
   const { data } = await query;
-  return (data as Question[]) ?? [];
+  let questions = (data as Question[]) ?? [];
+  questions = resolveQuestionsForProvince(questions, filters?.province);
+  if (filters?.tradeCode) {
+    questions = enrichQuestionsForProvince(
+      questions,
+      tradeId,
+      filters.tradeCode,
+      filters.province,
+    );
+  }
+  if (filters?.limit) questions = questions.slice(0, filters.limit);
+  return questions;
 }
 
 export async function fetchQuestionById(id: string): Promise<Question | null> {
@@ -72,7 +93,10 @@ export async function fetchQuestionById(id: string): Promise<Question | null> {
   return (data as Question) ?? null;
 }
 
-export async function fetchLessons(tradeId: string): Promise<Lesson[]> {
+export async function fetchLessons(
+  tradeId: string,
+  province?: string | null,
+): Promise<Lesson[]> {
   if (!useSupabase()) return [];
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
@@ -82,10 +106,13 @@ export async function fetchLessons(tradeId: string): Promise<Lesson[]> {
     .eq("trade_id", tradeId)
     .eq("review_status", "approved")
     .order("sort_order");
-  return (data as Lesson[]) ?? [];
+  return resolveLessonsForProvince((data as Lesson[]) ?? [], province);
 }
 
-export async function fetchFlashcards(tradeId: string): Promise<Flashcard[]> {
+export async function fetchFlashcards(
+  tradeId: string,
+  province?: string | null,
+): Promise<Flashcard[]> {
   if (!useSupabase()) return [];
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
@@ -94,7 +121,13 @@ export async function fetchFlashcards(tradeId: string): Promise<Flashcard[]> {
     .select("*")
     .eq("trade_id", tradeId)
     .eq("review_status", "approved");
-  return (data as Flashcard[]) ?? [];
+
+  const cards = (data as Flashcard[]) ?? [];
+  if (!province) return cards.filter((card) => !card.province);
+
+  const provincial = cards.filter((card) => card.province === province);
+  const national = cards.filter((card) => !card.province);
+  return provincial.length > 0 ? provincial : national;
 }
 
 export async function searchReferenceChunks(
