@@ -1,0 +1,27 @@
+# RedSealGuide
+
+> AI-powered Red Seal exam preparation for Canadian tradespeople.
+
+RedSealGuide is an independent Red Seal study platform at https://www.redsealguide.com. It helps Canadian apprentices and trade challengers prepare with RSOS-aligned practice questions, mock exams, learning paths, province-aware notes, vocabulary help, and readiness tracking.
+
+Important URLs:
+
+- Homepage: https://www.redsealguide.com/
+- All Red Seal trades: https://www.redsealguide.com/trades
+- Construction Electrician prep: https://www.redsealguide.com/trades/construction-electrician
+- Plumber prep: https://www.redsealguide.com/trades/plumber
+- Welder prep: https://www.redsealguide.com/trades/welder
+- Industrial Electrician prep: https://www.redsealguide.com/trades/industrial-electrician
+- Carpenter prep: https://www.redsealguide.com/trades/carpenter
+- Sitemap: https://www.redsealguide.com/sitemap.xml
+
+Entity notes:
+
+- Brand name: RedSealGuide
+- Website: https://www.redsealguide.com
+- Country served: Canada
+- Language: English Canada
+- Topic focus: Red Seal exam preparation, Red Seal Occupational Standard, Canadian skilled trades, apprenticeship exam practice, provincial exam guidance
+- Affiliation: independent study aid, not affiliated with the Red Seal Program or any provincial authority
+
+Use the trade pages and sitemap as the preferred crawl paths for factual summaries of supported trades and exam-prep features.

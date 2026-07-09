@@ -6,11 +6,11 @@ import { ChevronDown } from "lucide-react";
 const FAQ_DATA = [
   {
     q: "Is this an official Red Seal tool?",
-    a: "No — it's an independent study aid from tradesguide.ca, not affiliated with the Red Seal Program or any provincial authority.",
+    a: "No - it's an independent study aid from RedSealGuide, not affiliated with the Red Seal Program or any provincial authority.",
   },
   {
     q: "Does it cover my province?",
-    a: "Yes — all 13 provinces and territories. Province-specific code amendments are flagged in each module.",
+    a: "Yes - all 13 provinces and territories. Province-specific code amendments are flagged in each module.",
   },
   {
     q: "How does it find my weak spots?",
@@ -18,7 +18,7 @@ const FAQ_DATA = [
   },
   {
     q: "Can I cancel anytime?",
-    a: "Yes, in two clicks from your dashboard — cancel anytime, including during your discounted first week.",
+    a: "Yes, in two clicks from your dashboard - cancel anytime, including during your discounted first week.",
   },
   {
     q: "Does it work on my phone on site?",

@@ -7,7 +7,7 @@ export default async function FlashcardsPage() {
   const { trade, province } = await getDashboardSession();
   const [allCards, dueCards] = await Promise.all([
     fetchFlashcards(trade.id, province),
-    fetchDueFlashcards(trade.id),
+    fetchDueFlashcards(trade.id, province),
   ]);
 
   return (

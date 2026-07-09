@@ -192,24 +192,25 @@ export function HeroQuizCard() {
     <div className="relative">
       <div className="absolute inset-x-[-10px] bottom-[-14px] top-[14px] left-[14px] rounded-[22px] bg-black/30 opacity-55 blur-sm" />
       <div className="relative overflow-hidden rounded-[18px] bg-white text-[#1F2A37] shadow-[0_30px_60px_rgba(0,0,0,0.4)]">
-        <div className="flex items-center gap-2.5 bg-[#1F2A37] px-[18px] py-[15px] text-white">
-          <span className="grid h-[30px] w-[30px] place-items-center rounded-lg bg-white/10 text-[#F4564E]">
-            <HeroIcon className="h-4 w-4" />
+        <div className="flex items-center gap-2 bg-[#1F2A37] px-3 py-3 text-white sm:gap-2.5 sm:px-[18px] sm:py-[15px]">
+          <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-white/10 text-[#F4564E] sm:h-[30px] sm:w-[30px]">
+            <HeroIcon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </span>
-          <div className="leading-tight">
-            <div className="font-[family-name:var(--font-barlow-semi)] text-sm font-bold">
-              {hero.name}
+          <div className="min-w-0 flex-1 leading-tight">
+            <div className="font-[family-name:var(--font-barlow-semi)] text-xs font-bold sm:text-sm">
+              <span className="sm:hidden">{hero.short}</span>
+              <span className="hidden sm:inline">{hero.name}</span>
             </div>
-            <div className="font-[family-name:var(--font-ibm-mono)] text-[10.5px] text-[#7DA0BD]">
+            <div className="truncate font-[family-name:var(--font-ibm-mono)] text-[9.5px] text-[#7DA0BD] sm:text-[10.5px]">
               {qd.block}
             </div>
           </div>
-          <span className="ml-auto flex items-center gap-1.5 rounded-md bg-[#FBBF24]/15 px-2 py-1 text-[11px] font-bold text-[#F4A11A]">
-            <Sparkles className="h-3.5 w-3.5" /> Live sample
+          <span className="ml-auto flex shrink-0 items-center gap-1 rounded-md bg-[#FBBF24]/15 px-1.5 py-0.5 text-[10px] font-bold whitespace-nowrap text-[#F4A11A] sm:gap-1.5 sm:px-2 sm:py-1 sm:text-[11px]">
+            <Sparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> Live sample
           </span>
         </div>
 
-        <div className="p-5">
+        <div className="p-4 sm:p-5">
           <div className="flex items-center justify-between">
             <span className="font-[family-name:var(--font-ibm-mono)] text-[11px] font-semibold text-[#94A3B8]">
               QUESTION 1 OF 20
@@ -220,7 +221,7 @@ export function HeroQuizCard() {
             </span>
           </div>
 
-          <h3 className="mt-3 min-h-[74px] font-[family-name:var(--font-barlow-semi)] text-[18.5px] font-semibold leading-snug">
+          <h3 className="mt-3 min-h-[60px] font-[family-name:var(--font-barlow-semi)] text-base font-semibold leading-snug sm:min-h-[74px] sm:text-[18.5px]">
             {qd.q}
           </h3>
 
@@ -324,30 +325,32 @@ export function HeroTradeChips() {
   const { heroId, selectTrade } = useHeroQuiz();
 
   return (
-    <div className="relative mx-auto max-w-[1180px] px-6 pb-10">
-      <div className="mb-3 text-xs font-bold uppercase tracking-wider text-[#FCE3E4]">
+    <div className="relative mx-auto max-w-[1180px] px-4 pb-10 sm:px-6">
+      <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#FCE3E4] sm:mb-3 sm:text-xs">
         Try it with your trade
       </div>
-      <div className="flex flex-wrap gap-2">
-        {TRADES.map((t) => {
-          const Icon = t.icon;
-          const sel = t.id === heroId;
-          return (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => selectTrade(t.id)}
-              className={`flex h-10 items-center gap-2 rounded-full px-[15px] text-sm font-semibold transition-colors ${
-                sel
-                  ? "border border-white bg-white text-[#D8232A]"
-                  : "border border-white/30 bg-white/10 text-white hover:border-white/40"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {t.short}
-            </button>
-          );
-        })}
+      <div className="-mx-4 min-w-0 overflow-x-auto overscroll-x-contain px-4 pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] sm:mx-0 sm:overflow-visible sm:px-0 sm:pb-0 [&::-webkit-scrollbar]:hidden">
+        <div className="flex w-max flex-nowrap gap-1.5 sm:w-full sm:flex-wrap sm:gap-2">
+          {TRADES.map((t) => {
+            const Icon = t.icon;
+            const sel = t.id === heroId;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => selectTrade(t.id)}
+                className={`flex h-8 shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-semibold transition-colors sm:h-10 sm:gap-2 sm:px-[15px] sm:text-sm ${
+                  sel
+                    ? "border border-white bg-white text-[#D8232A]"
+                    : "border border-white/30 bg-white/10 text-white hover:border-white/40"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                {t.short}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

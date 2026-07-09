@@ -33,6 +33,30 @@ const IMG = {
   welding: lessonImageSrc("welding"),
   woodFraming: lessonImageSrc("wood-framing"),
   tapeMeasure: lessonImageSrc("tape-measure"),
+  multimeter: lessonImageSrc("multimeter"),
+  cableTray: lessonImageSrc("cable-tray"),
+  conduitBend: lessonImageSrc("conduit-bend"),
+  circuitBreaker: lessonImageSrc("circuit-breaker"),
+  busDuct: lessonImageSrc("bus-duct"),
+  groundingRod: lessonImageSrc("grounding-rod"),
+  backupGenerator: lessonImageSrc("backup-generator"),
+  switchgear: lessonImageSrc("switchgear"),
+  transformer: lessonImageSrc("transformer"),
+  junctionBox: lessonImageSrc("junction-box"),
+  hvacControl: lessonImageSrc("hvac-control"),
+  baseboardHeater: lessonImageSrc("baseboard-heater"),
+  emergencyLight: lessonImageSrc("emergency-light"),
+  cathodicAnode: lessonImageSrc("cathodic-anode"),
+  variableFrequencyDrive: lessonImageSrc("variable-frequency-drive"),
+  pumpControl: lessonImageSrc("pump-control"),
+  plcRack: lessonImageSrc("plc-rack"),
+  networkRack: lessonImageSrc("network-rack"),
+  pneumaticValve: lessonImageSrc("pneumatic-valve"),
+  utilityMeter: lessonImageSrc("utility-meter"),
+  motorWiring: lessonImageSrc("motor-wiring"),
+  fireAlarmDevice: lessonImageSrc("fire-alarm-device"),
+  upsSystem: lessonImageSrc("ups-system"),
+  proximitySensor: lessonImageSrc("proximity-sensor"),
 } as const;
 
 /** Curated visuals per RSOS block — key: `{tradeCode}-{blockCode}` e.g. `447A-B` */
@@ -305,6 +329,71 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "442A-A-A-1": {
+    video: {
+      youtubeId: "o5CWnUFsevo",
+      title: "Lockout/tagout — controlling hazardous energy",
+    },
+    images: [
+      {
+        src: IMG.electricalPanel,
+        alt: "Industrial electrical panel with lockout devices",
+        caption: "Safety-related work starts with hazard assessment, PPE, and lockout/tagout.",
+      },
+    ],
+  },
+  "442A-A-A-2": {
+    video: {
+      youtubeId: "YdZfUEb9s-o",
+      title: "How to use a multimeter — voltage, continuity, and safe testing",
+    },
+    images: [
+      {
+        src: IMG.multimeter,
+        alt: "Digital multimeter",
+        caption: "Meters, pliers, drivers, and testers must be used per manufacturer specs.",
+      },
+    ],
+  },
+  "442A-A-A-3": {
+    video: {
+      youtubeId: "Vm_daEZ-veM",
+      title: "Construction site safety and work organization",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Tape measure for layout and planning",
+        caption: "Organizing work includes planning, material staging, permits, and crew coordination.",
+      },
+    ],
+  },
+  "442A-A-A-4": {
+    video: {
+      youtubeId: "5V6R_swdLGI",
+      title: "How to bend and install EMT conduit",
+    },
+    images: [
+      {
+        src: IMG.conduitBend,
+        alt: "Bent EMT conduit run",
+        caption: "Support components include strut, trapeze, unistrut, and seismic bracing per code.",
+      },
+    ],
+  },
+  "442A-A-A-5": {
+    video: {
+      youtubeId: "fJeRabV5hNU",
+      title: "Electrical system commissioning — from service to energized circuits",
+    },
+    images: [
+      {
+        src: IMG.wetRoomWiring,
+        alt: "Panel wiring during commissioning",
+        caption: "Commissioning verifies polarity, torque, insulation resistance, and safe energization.",
+      },
+    ],
+  },
   "442A-B": {
     video: {
       youtubeId: "vAD3r_nF6L4",
@@ -315,6 +404,123 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
         src: IMG.electricalPanel,
         alt: "Distribution and service equipment",
         caption: "Industrial service systems include transformers, protection, and bonding.",
+      },
+    ],
+  },
+  "442A-B-B-7": {
+    video: {
+      youtubeId: "ka73EcknrYo",
+      title: "How an electrical service works — utility, metering, and main panel",
+    },
+    images: [
+      {
+        src: IMG.utilityMeter,
+        alt: "Utility electrical meter",
+        caption: "Consumer/supply services connect utility feeds, metering, and main distribution.",
+      },
+    ],
+  },
+  "442A-B-B-8": {
+    video: {
+      youtubeId: "VGj32euYZ2c",
+      title: "Circuit breaker basics — overload and short-circuit protection",
+    },
+    images: [
+      {
+        src: IMG.circuitBreaker,
+        alt: "Circuit breakers in a panel",
+        caption: "OCPDs include breakers, fuses, and coordinated protection in MCCs and panels.",
+      },
+    ],
+  },
+  "442A-B-B-9": {
+    video: {
+      youtubeId: "310jd_DxH2s",
+      title: "What is three-phase power?",
+    },
+    images: [
+      {
+        src: IMG.busDuct,
+        alt: "Busbar distribution",
+        caption: "Low voltage distribution systems feed buses, panelboards, and branch circuits in plants.",
+      },
+    ],
+  },
+  "442A-B-B-10": {
+    video: {
+      youtubeId: "UMtftcKACRA",
+      title: "UPS basics — offline, line-interactive, and online power conditioning",
+    },
+    images: [
+      {
+        src: IMG.upsSystem,
+        alt: "Uninterruptible power supply unit",
+        caption: "Power conditioning equipment protects sensitive loads from sags, surges, and harmonics.",
+      },
+    ],
+  },
+  "442A-B-B-11": {
+    video: {
+      youtubeId: "vAD3r_nF6L4",
+      title: "Grounding, bonding, and ground fault detection",
+    },
+    images: [
+      {
+        src: IMG.groundingRod,
+        alt: "Grounding electrode installation",
+        caption: "Bonding and grounding paths limit fault energy and support GFCI/GFM operation.",
+      },
+    ],
+  },
+  "442A-B-B-12": {
+    video: {
+      youtubeId: "6idadtpqSrg",
+      title: "Transfer switches and standby power generating systems",
+    },
+    images: [
+      {
+        src: IMG.backupGenerator,
+        alt: "Standby generator installation",
+        caption: "Generating systems use transfer equipment, synchronizing, and load control.",
+      },
+    ],
+  },
+  "442A-B-B-13": {
+    video: {
+      youtubeId: "QAwEtVPkwL0",
+      title: "How photovoltaic solar systems connect to electrical infrastructure",
+    },
+    images: [
+      {
+        src: IMG.solarPanel,
+        alt: "Rooftop solar array",
+        caption: "Renewable generation and battery storage tie in through approved disconnects and inverters.",
+      },
+    ],
+  },
+  "442A-B-B-14": {
+    video: {
+      youtubeId: "igID6c7yifU",
+      title: "Industrial distribution equipment and switchgear fundamentals",
+    },
+    images: [
+      {
+        src: IMG.switchgear,
+        alt: "High-voltage switchgear",
+        caption: "High voltage systems use switchgear, clearances, and strict lockout procedures.",
+      },
+    ],
+  },
+  "442A-B-B-15": {
+    video: {
+      youtubeId: "tXPy4OE7ApE",
+      title: "Transformers — sizing, connections, and industrial installation",
+    },
+    images: [
+      {
+        src: IMG.transformer,
+        alt: "Distribution transformer",
+        caption: "Transformers step voltage for distribution; verify nameplate, taps, and grounding.",
       },
     ],
   },
@@ -331,6 +537,84 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "442A-C-C-16": {
+    video: {
+      youtubeId: "kpxT71wrUkI",
+      title: "Installing EMT conduit and raceway systems",
+    },
+    images: [
+      {
+        src: IMG.cableTray,
+        alt: "Cable tray in an industrial plant",
+        caption: "Raceways must be supported, bonded, and filled per CEC ampacity and bend rules.",
+      },
+    ],
+  },
+  "442A-C-C-17": {
+    video: {
+      youtubeId: "hKtedrJKyQs",
+      title: "Branch circuitry — from panel to devices and loads",
+    },
+    images: [
+      {
+        src: IMG.junctionBox,
+        alt: "Branch circuit junction box",
+        caption: "Branch circuits supply receptacles, lighting, and equipment from panelboards.",
+      },
+    ],
+  },
+  "442A-C-C-18": {
+    video: {
+      youtubeId: "FDnwU2rv6o4",
+      title: "Electrical panels and HVAC control wiring",
+    },
+    images: [
+      {
+        src: IMG.hvacControl,
+        alt: "Programmable thermostat and HVAC controls",
+        caption: "HVAC electrical includes starters, contactors, safeties, and control transformers.",
+      },
+    ],
+  },
+  "442A-C-C-19": {
+    video: {
+      youtubeId: "MS2fqnRYFcs",
+      title: "Installing electric baseboard heaters",
+    },
+    images: [
+      {
+        src: IMG.baseboardHeater,
+        alt: "Electric baseboard heater",
+        caption: "Electric heat requires correct breaker sizing, controls, and line-voltage thermostats.",
+      },
+    ],
+  },
+  "442A-C-C-20": {
+    video: {
+      youtubeId: "cVjyDgFrb2g",
+      title: "Exit and emergency lighting systems",
+    },
+    images: [
+      {
+        src: IMG.emergencyLight,
+        alt: "Emergency exit sign with battery backup",
+        caption: "Emergency lighting units require test switches, battery backup, and CEC compliance.",
+      },
+    ],
+  },
+  "442A-C-C-21": {
+    video: {
+      youtubeId: "qIuVmknmIpM",
+      title: "Impressed current cathodic protection",
+    },
+    images: [
+      {
+        src: IMG.cathodicAnode,
+        alt: "Sacrificial anode for cathodic protection",
+        caption: "Cathodic protection ties anodes, reference cells, and rectifiers to buried metal.",
+      },
+    ],
+  },
   "442A-D": {
     video: {
       youtubeId: "YRrE3fYArr8",
@@ -341,6 +625,58 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
         src: IMG.motorStarter,
         alt: "Motor control centre starter",
         caption: "Motor starters, drives, and control circuits are core exam topics.",
+      },
+    ],
+  },
+  "442A-D-D-22": {
+    video: {
+      youtubeId: "YRrE3fYArr8",
+      title: "Motor starters and control devices — DOL and reversing",
+    },
+    images: [
+      {
+        src: IMG.motorStarter,
+        alt: "Motor control centre starter bucket",
+        caption: "Starters combine contactors, overloads, and control power for motor circuits.",
+      },
+    ],
+  },
+  "442A-D-D-23": {
+    video: {
+      youtubeId: "g7jFGOn6xfU",
+      title: "What is a variable frequency drive (VFD)?",
+    },
+    images: [
+      {
+        src: IMG.variableFrequencyDrive,
+        alt: "Variable frequency drive unit",
+        caption: "Drives adjust motor speed via PWM; follow manufacturer wiring and STO guidance.",
+      },
+    ],
+  },
+  "442A-D-D-24": {
+    video: {
+      youtubeId: "c3SICJQ1Ih8",
+      title: "PLC motor control with ladder logic",
+    },
+    images: [
+      {
+        src: IMG.pumpControl,
+        alt: "Centrifugal pump and motor control",
+        caption: "Non-rotating loads use starters, sensors, and interlocks similar to motor control.",
+      },
+    ],
+  },
+  "442A-D-D-25": {
+    video: {
+      youtubeId: "R4mqSFOW8nQ",
+      title: "How circuit breakers and motor protection work",
+    },
+    images: [
+      {
+        src: IMG.motorWiring,
+        alt: "Electric motor connection",
+        caption: "Motors require correct voltage, overload setting, grounding, and alignment checks.",
       },
     ],
   },
@@ -357,6 +693,45 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "442A-E-E-26": {
+    video: {
+      youtubeId: "P-5s_8EBMt4",
+      title: "Installing fire alarm horn strobes",
+    },
+    images: [
+      {
+        src: IMG.fireAlarmDevice,
+        alt: "Fire alarm pull station",
+        caption: "Signalling includes horns, strobes, stack lights, and annunciators.",
+      },
+    ],
+  },
+  "442A-E-E-27": {
+    video: {
+      youtubeId: "d0iHCF58ZkI",
+      title: "Structured cabling explained",
+    },
+    images: [
+      {
+        src: IMG.networkRack,
+        alt: "Network patch panel",
+        caption: "Communication systems use shielded pairs, fibre, trays, and segregation from power.",
+      },
+    ],
+  },
+  "442A-E-E-28": {
+    video: {
+      youtubeId: "E-A1kRbg2Yo",
+      title: "Industrial Ethernet networks and field devices",
+    },
+    images: [
+      {
+        src: IMG.plcRack,
+        alt: "Building automation control rack",
+        caption: "BAS ties sensors, actuators, and controllers for HVAC, lighting, and access.",
+      },
+    ],
+  },
   "442A-F": {
     video: {
       youtubeId: "YRrE3fYArr8",
@@ -367,6 +742,45 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
         src: IMG.motorStarter,
         alt: "Industrial control panel",
         caption: "Process control covers I/O devices, PLCs, and pneumatic/hydraulic controls.",
+      },
+    ],
+  },
+  "442A-F-F-29": {
+    video: {
+      youtubeId: "zsajTNtxfAE",
+      title: "PLC ladder logic — NO and NC contacts",
+    },
+    images: [
+      {
+        src: IMG.proximitySensor,
+        alt: "Inductive proximity sensor for field I/O",
+        caption: "I/O devices include proximity, photo eyes, transmitters, and solenoid valves.",
+      },
+    ],
+  },
+  "442A-F-F-30": {
+    video: {
+      youtubeId: "VsElyL2xVJ4",
+      title: "Foundations of PLC systems and ladder logic",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Industrial control wiring in conduit",
+        caption: "Automated systems use ladder logic, I/O mapping, and documented change control.",
+      },
+    ],
+  },
+  "442A-F-F-31": {
+    video: {
+      youtubeId: "nQGDqIQjoXc",
+      title: "Industrial pneumatics — PLC wiring and testing",
+    },
+    images: [
+      {
+        src: IMG.pneumaticValve,
+        alt: "Pneumatic cylinder and valve",
+        caption: "Fluid power controls use regulators, valves, positioners, and electrical interlocks.",
       },
     ],
   },
@@ -464,22 +878,34 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
   },
 };
 
-export function blockMediaKey(tradeCode: string, blockCode: string) {
-  return `${tradeCode.trim().toUpperCase()}-${blockCode.trim().toUpperCase()}`;
+export function blockMediaKey(
+  tradeCode: string,
+  blockCode: string,
+  taskCode?: string,
+) {
+  const base = `${tradeCode.trim().toUpperCase()}-${blockCode.trim().toUpperCase()}`;
+  return taskCode
+    ? `${base}-${taskCode.trim().toUpperCase()}`
+    : base;
 }
 
 export function getBlockMedia(
   tradeCode: string,
   blockCode: string,
+  taskCode?: string,
 ): BlockMediaBundle | undefined {
+  if (taskCode) {
+    return BLOCK_MEDIA[blockMediaKey(tradeCode, blockCode, taskCode)];
+  }
   return BLOCK_MEDIA[blockMediaKey(tradeCode, blockCode)];
 }
 
 export function formatBlockMediaForPrompt(
   tradeCode: string,
   blockCode: string,
+  taskCode?: string,
 ): string {
-  const media = getBlockMedia(tradeCode, blockCode);
+  const media = getBlockMedia(tradeCode, blockCode, taskCode);
   if (!media) return "No curated media catalog for this block.";
 
   const lines: string[] = [];
@@ -495,3 +921,35 @@ export function formatBlockMediaForPrompt(
   }
   return lines.join("\n");
 }
+
+/** Dev/build guard: each 442A per-task lesson must have a unique video and image. */
+export function assertUnique442ATaskMedia(): void {
+  const tradeCode = "442A";
+  const usedVideos = new Map<string, string>();
+  const usedImages = new Map<string, string>();
+
+  for (const key of Object.keys(BLOCK_MEDIA)) {
+    if (!key.startsWith(`${tradeCode}-`) || key.split("-").length < 4) continue;
+
+    const media = BLOCK_MEDIA[key];
+    const videoId = media?.video?.youtubeId;
+    if (!videoId) throw new Error(`Task media ${key} is missing a video`);
+    if (usedVideos.has(videoId)) {
+      throw new Error(
+        `Duplicate video ${videoId} on ${key} (already on ${usedVideos.get(videoId)})`,
+      );
+    }
+    usedVideos.set(videoId, key);
+
+    const imageSrc = media?.images?.[0]?.src;
+    if (!imageSrc) throw new Error(`Task media ${key} is missing an image`);
+    if (usedImages.has(imageSrc)) {
+      throw new Error(
+        `Duplicate image on ${key} (already on ${usedImages.get(imageSrc)})`,
+      );
+    }
+    usedImages.set(imageSrc, key);
+  }
+}
+
+assertUnique442ATaskMedia();

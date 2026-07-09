@@ -9,12 +9,14 @@ interface LessonCheckQuestionProps {
   label?: string;
   answer: string;
   steps?: string;
+  codeVersion?: string;
 }
 
 export function LessonCheckQuestion({
   label,
   answer,
   steps,
+  codeVersion,
 }: LessonCheckQuestionProps) {
   const [revealed, setRevealed] = useState(false);
 
@@ -22,7 +24,10 @@ export function LessonCheckQuestion({
     <div className="rounded-xl border border-[#E5E0D8] bg-white">
       <div className="flex items-center justify-between gap-4 p-4">
         <p className="text-sm font-semibold text-[#1F2A37]">
-          <LessonRichText text={label ?? "Check your work"} />
+          <LessonRichText
+            text={label ?? "Check your work"}
+            codeVersion={codeVersion}
+          />
         </p>
         <Button
           variant="secondary"
@@ -42,7 +47,7 @@ export function LessonCheckQuestion({
 
       {revealed && (
         <div className="space-y-3 border-t border-[#E5E0D8] px-4 pb-4 pt-3">
-          {steps && (
+          {steps?.trim() && (
             <div className="space-y-1">
               {steps.split("\n").map((line, i) =>
                 line.trim() === "" ? (
@@ -52,18 +57,25 @@ export function LessonCheckQuestion({
                     key={i}
                     className="text-sm leading-relaxed text-[#475569]"
                   >
-                    <LessonRichText text={line} />
+                    <LessonRichText text={line} codeVersion={codeVersion} />
                   </div>
                 ),
               )}
             </div>
           )}
-          <div className="rounded-lg border border-[#10B981]/30 bg-[#ECFDF5] p-3">
-            <LessonRichText
-              text={answer}
-              className="text-sm font-semibold text-[#065F46]"
-            />
-          </div>
+          {answer.trim() ? (
+            <div className="rounded-lg border border-[#10B981]/30 bg-[#ECFDF5] p-3">
+              <LessonRichText
+                text={answer}
+                codeVersion={codeVersion}
+                className="text-sm font-semibold text-[#065F46]"
+              />
+            </div>
+          ) : (
+            <p className="text-sm text-[#64748B]">
+              Answer not available yet for this check question.
+            </p>
+          )}
         </div>
       )}
     </div>

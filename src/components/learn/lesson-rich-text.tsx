@@ -2,8 +2,7 @@
 
 import katex from "katex";
 import "katex/dist/katex.min.css";
-import { useDashboardPreferences } from "@/components/layout/dashboard-preferences-context";
-import { TranslatableText } from "@/components/translation/translatable-text";
+import { TextWithRuleReferences } from "@/components/learn/text-with-rule-references";
 import {
   parseLessonMathText,
   textHasDisplayMath,
@@ -63,16 +62,21 @@ export function LessonRichText({
   text,
   lessonId,
   className,
+  codeVersion,
 }: {
   text: string;
   lessonId?: string;
   className?: string;
+  codeVersion?: string;
 }) {
-  const { translationEnabled } = useDashboardPreferences();
-
   if (!textNeedsMathRendering(text)) {
     return (
-      <TranslatableText text={text} lessonId={lessonId} className={className} />
+      <TextWithRuleReferences
+        text={text}
+        lessonId={lessonId}
+        className={className}
+        codeVersion={codeVersion}
+      />
     );
   }
 
@@ -96,10 +100,13 @@ export function LessonRichText({
 
     if (!part.content) return null;
 
-    return translationEnabled ? (
-      <TranslatableText key={index} text={part.content} lessonId={lessonId} />
-    ) : (
-      <span key={index}>{part.content}</span>
+    return (
+      <TextWithRuleReferences
+        key={index}
+        text={part.content}
+        lessonId={lessonId}
+        codeVersion={codeVersion}
+      />
     );
   });
 

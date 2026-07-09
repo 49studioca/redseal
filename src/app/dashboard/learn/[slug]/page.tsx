@@ -8,39 +8,47 @@ import { getDashboardSession } from "@/lib/dashboard-session";
 import {
   blockCodeFromLessonSlug,
   prepareLessonBlocks,
+  taskCodeFromLessonSlug,
 } from "@/lib/content/parse-content-blocks";
+import {
+  adjacentLessonsInPath,
+  getFirstLessonForBlock,
+  lessonNavLabel,
+  usesPerTaskLessons,
+} from "@/lib/content/lesson-structure";
+import { getChapterTasksForBlockRef } from "@/data/seed";
+import { blockMediaKey } from "@/data/block-media";
+import { fetchBlockMediaOverrides } from "@/lib/content/block-media-overrides";
+import {
+  listImageAssetKeys,
+  listVideoAlternatives,
+} from "@/lib/admin/lesson-media";
 import type { Lesson, RsosBlock } from "@/types";
 
-function lessonForBlock(lessons: Lesson[], blockId: string) {
-  return lessons.find((l) => l.block_id === blockId);
+function blockForLesson(
+  blocks: RsosBlock[],
+  lesson: Lesson,
+): RsosBlock | undefined {
+  if (lesson.block_id) {
+    return blocks.find((block) => block.id === lesson.block_id);
+  }
+  const blockCode = blockCodeFromLessonSlug(lesson.slug);
+  return blockCode
+    ? blocks.find((block) => block.code === blockCode)
+    : undefined;
 }
 
-function adjacentBlockLessons(
-  blocks: RsosBlock[],
-  lessons: Lesson[],
-  currentBlockId?: string,
-) {
-  const index = currentBlockId
-    ? blocks.findIndex((b) => b.id === currentBlockId)
-    : -1;
-  if (index < 0) return { prev: undefined, next: undefined };
-
-  const prev =
-    index > 0
-      ? {
-          block: blocks[index - 1],
-          lesson: lessonForBlock(lessons, blocks[index - 1].id),
-        }
-      : undefined;
-  const next =
-    index < blocks.length - 1
-      ? {
-          block: blocks[index + 1],
-          lesson: lessonForBlock(lessons, blocks[index + 1].id),
-        }
-      : undefined;
-
-  return { prev, next };
+function taskNameForLesson(
+  lesson: Lesson,
+  tradeCode: string,
+  blockCode?: string,
+): string | undefined {
+  const taskCode =
+    lesson.chapter_task_code ?? taskCodeFromLessonSlug(lesson.slug);
+  if (!taskCode || !blockCode) return undefined;
+  return getChapterTasksForBlockRef(tradeCode, blockCode).find(
+    (task) => task.code === taskCode,
+  )?.name;
 }
 
 export default async function LessonPage({
@@ -49,24 +57,54 @@ export default async function LessonPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { trade, province } = await getDashboardSession();
+  const { trade, province, isAdmin } = await getDashboardSession();
   const [lessons, blocks] = await Promise.all([
     fetchLessons(trade.id, province),
     fetchBlocks(trade.id),
   ]);
   const lesson = lessons.find((l) => l.slug === slug);
-  const block = lesson?.block_id
-    ? blocks.find((b) => b.id === lesson.block_id)
-    : undefined;
-  const { prev, next } = adjacentBlockLessons(blocks, lessons, block?.id);
-  const blockIndex = block ? blocks.findIndex((b) => b.id === block.id) : -1;
-  const isLastBlock = blockIndex >= 0 && blockIndex === blocks.length - 1;
+  const block = lesson ? blockForLesson(blocks, lesson) : undefined;
+  const { prev, next } = lesson
+    ? adjacentLessonsInPath(lessons, lesson.id)
+    : { prev: undefined, next: undefined };
+  const prevBlock = prev ? blockForLesson(blocks, prev) : undefined;
+  const nextBlock = next ? blockForLesson(blocks, next) : undefined;
+  const isLastLessonInTrade =
+    lessons.length > 0 &&
+    lesson?.id ===
+      [...lessons].sort((a, b) => a.sort_order - b.sort_order).at(-1)?.id;
 
   if (!slug || !lesson) {
     notFound();
   }
 
   const blockCode = block?.code ?? blockCodeFromLessonSlug(lesson.slug);
+  const taskCode =
+    lesson.chapter_task_code ?? taskCodeFromLessonSlug(lesson.slug);
+  const taskName = taskNameForLesson(lesson, trade.code, block?.code);
+  const perTaskBlock = block
+    ? usesPerTaskLessons(trade.code, block.code)
+    : false;
+  const mediaOverrides = await fetchBlockMediaOverrides(
+    blockMediaKey(trade.code, blockCode ?? "", taskCode),
+  );
+  const preparedBlocks = prepareLessonBlocks(
+    lesson.content_blocks,
+    trade.code,
+    blockCode,
+    taskCode,
+    mediaOverrides,
+  );
+  const videoAlternativesById = isAdmin
+    ? Object.fromEntries(
+        preparedBlocks
+          .filter((block) => block.type === "video")
+          .map((block) => [
+            block.content.trim(),
+            listVideoAlternatives(trade.code, block.content.trim()),
+          ]),
+      )
+    : undefined;
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -78,16 +116,27 @@ export default async function LessonPage({
         </Link>
 
         {block && (
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-3 py-1">
-            <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
-              Block {block.code}
-            </span>
-            <span className="text-xs text-[#64748B]">
-              {block.exam_question_count} exam Qs · {block.exam_percentage}%
-            </span>
+          <div className="inline-flex flex-wrap items-center gap-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E5E0D8] bg-white px-3 py-1">
+              <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
+                Block {block.code}
+              </span>
+              <span className="text-xs text-[#64748B]">
+                {block.exam_question_count} exam Qs · {block.exam_percentage}%
+              </span>
+            </div>
+            {taskCode && (
+              <div className="inline-flex items-center rounded-full border border-[#E5E0D8] bg-[#FFFBF7] px-3 py-1">
+                <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
+                  {taskCode}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {taskName && <p className="mt-3 text-sm text-[#64748B]">{taskName}</p>}
 
       <h1 className="mt-4 font-[family-name:var(--font-barlow-semi)] text-3xl font-bold">
         {lesson.title}
@@ -111,21 +160,25 @@ export default async function LessonPage({
 
       <div className="mt-8">
         <LessonContent
-          blocks={prepareLessonBlocks(
-            lesson.content_blocks,
-            trade.code,
-            blockCode,
-          )}
+          blocks={preparedBlocks}
           lessonId={lesson.id}
+          lessonSlug={lesson.slug}
+          chapterTaskCode={lesson.chapter_task_code}
+          blockCode={blockCode}
+          isAdmin={isAdmin}
+          tradeCode={trade.code}
+          codeVersion={lesson.code_version}
+          imageAssetKeys={isAdmin ? listImageAssetKeys() : undefined}
+          videoAlternativesById={videoAlternativesById}
         />
       </div>
 
       <nav className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E0D8] pt-6">
-        {prev?.lesson ? (
-          <Link href={`/dashboard/learn/${prev.lesson.slug}`}>
+        {prev ? (
+          <Link href={`/dashboard/learn/${prev.slug}`}>
             <Button variant="secondary" size="sm">
               <ArrowLeft className="h-4 w-4" />
-              Block {prev.block.code}
+              {lessonNavLabel(prev, prevBlock)}
             </Button>
           </Link>
         ) : (
@@ -145,24 +198,26 @@ export default async function LessonPage({
             </Link>
           )}
 
-          {next?.lesson ? (
-            <Link href={`/dashboard/learn/${next.lesson.slug}`}>
+          {next ? (
+            <Link href={`/dashboard/learn/${next.slug}`}>
               <Button size="sm">
-                Block {next.block.code}
+                {lessonNavLabel(next, nextBlock)}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-          ) : next?.block ? (
-            <Link href="/dashboard/learn">
-              <Button variant="secondary" size="sm">
-                Block {next.block.code}
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            </Link>
-          ) : isLastBlock ? (
+          ) : isLastLessonInTrade ? (
             <Link href="/dashboard/mock-exam">
               <Button size="sm">
                 Start mock exam
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ) : nextBlock && perTaskBlock ? (
+            <Link
+              href={`/dashboard/learn/${getFirstLessonForBlock(lessons, nextBlock.id)?.slug ?? "/dashboard/learn"}`}
+            >
+              <Button variant="secondary" size="sm">
+                Block {nextBlock.code}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>

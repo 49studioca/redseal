@@ -93,6 +93,8 @@ export interface Lesson {
   trade_id: string;
   block_id?: string;
   subtask_id?: string;
+  /** RSOS exam task code when lesson covers a single task (e.g. B-7). */
+  chapter_task_code?: string;
   title: string;
   slug: string;
   summary?: string;
@@ -166,6 +168,15 @@ export interface ReferenceChunk {
   content: string;
   page_number?: number;
   code_version: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ReferenceDoc {
+  id: string;
+  title: string;
+  doc_type: string;
+  code_version: string;
+  storage_path?: string | null;
 }
 
 export interface GenerationJob {

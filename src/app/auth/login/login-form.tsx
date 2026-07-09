@@ -42,6 +42,7 @@ export function LoginForm() {
       return;
     }
     router.push(redirectTo);
+    router.refresh();
   };
 
   const handleDemo = () => {
@@ -53,12 +54,12 @@ export function LoginForm() {
       <div className="hidden w-1/2 bg-gradient-to-br from-[#D8232A] to-[#B81A20] p-12 text-white lg:flex lg:flex-col lg:justify-center">
         <Image
           src="/redseal-logo.svg"
-          alt="RedSealGuide"
+          alt="RedSeal Guide"
           width={80}
           height={80}
         />
         <h1 className="mt-6 font-[family-name:var(--font-barlow-condensed)] text-5xl font-bold">
-          RedSealGuide
+          RedSeal Guide
         </h1>
         <p className="mt-4 max-w-md text-lg text-[#FCE3E4]">
           AI-powered prep for Canada&apos;s Red Seal trades exams.

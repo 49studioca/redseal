@@ -69,7 +69,7 @@ export async function resolveUserProvince(): Promise<string> {
 export async function getDashboardSession(): Promise<DashboardSession> {
   let tradeId = "trade-309a";
   let userName = "Demo User";
-  let isAdmin = true;
+  let isAdmin = !usesSupabaseData();
   const cookieStore = await cookies();
   const demoPrefs = readDemoPreferences(cookieStore);
   let preferredLanguage = demoPrefs.preferredLanguage;

@@ -2,6 +2,35 @@
  * Repair LaTeX in math blocks after JSON parsing.
  * AI often emits single backslashes (e.g. \frac); JSON treats \f as form-feed and \t as tab.
  */
+/** Strip inline-math delimiters and prose accidentally merged into a display-math string. */
+function splitInlineMathWrappersAndProse(raw: string): ParsedMathBlock {
+  let s = raw.trim();
+
+  if (s.startsWith("\\(")) {
+    s = s.slice(2).trimStart();
+  }
+  if (s.startsWith("\\[")) {
+    s = s.slice(2).trimStart();
+  }
+
+  const parenIdx = s.indexOf("\\)");
+  if (parenIdx !== -1) {
+    const latex = s.slice(0, parenIdx).trim();
+    let tail = s.slice(parenIdx + 2).trim();
+    if (tail.startsWith(".")) tail = tail.slice(1).trim();
+    return {
+      latex: normalizeMathLatex(latex),
+      example: tail || undefined,
+    };
+  }
+
+  if (s.endsWith("\\]")) {
+    s = s.slice(0, -2).trimEnd();
+  }
+
+  return { latex: normalizeMathLatex(s) };
+}
+
 export function normalizeMathLatex(math: string): string {
   let s = math.trim();
 
@@ -135,8 +164,14 @@ export function parseMathBlockContent(content: string): ParsedMathBlock {
 
   if (trimmed.startsWith("{")) {
     const parsed = parseMathJsonObject(trimmed);
-    if (parsed) return parsed;
+    if (parsed) {
+      const split = splitInlineMathWrappersAndProse(parsed.latex);
+      return {
+        latex: split.latex,
+        example: parsed.example ?? split.example,
+      };
+    }
   }
 
-  return { latex: normalizeMathLatex(trimmed) };
+  return splitInlineMathWrappersAndProse(trimmed);
 }

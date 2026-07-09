@@ -1,6 +1,8 @@
 import type { ContentBlock } from "@/types";
 import { normalizeContentBlocks } from "@/lib/content/normalize-content-blocks";
 import { injectBlockMedia } from "@/lib/content/inject-block-media";
+import { coalesceCheckQuestionMeta } from "@/lib/content/check-question-meta";
+import type { BlockMediaOverrideRow } from "@/lib/admin/lesson-media";
 
 const CONTENT_BLOCK_TYPES = new Set<ContentBlock["type"]>([
   "text",
@@ -46,13 +48,20 @@ export function parseContentBlocks(raw: unknown): ContentBlock[] {
       type,
       content: block.content,
       meta:
-        block.meta && typeof block.meta === "object"
-          ? (block.meta as Record<string, unknown>)
-          : undefined,
+        type === "check_question"
+          ? coalesceCheckQuestionMeta(block)
+          : block.meta && typeof block.meta === "object"
+            ? (block.meta as Record<string, unknown>)
+            : undefined,
     });
   }
 
   return parsed;
+}
+
+export function taskCodeFromLessonSlug(slug: string): string | undefined {
+  const match = slug.match(/^block-[a-z]-([a-z]-\d+)-/i);
+  return match ? match[1].toUpperCase() : undefined;
 }
 
 export function blockCodeFromLessonSlug(slug: string): string | undefined {
@@ -64,9 +73,11 @@ export function prepareLessonBlocks(
   raw: unknown,
   tradeCode: string,
   blockCode?: string,
+  taskCode?: string,
+  mediaOverrides?: BlockMediaOverrideRow[],
 ): ContentBlock[] {
   const normalized = normalizeContentBlocks(parseContentBlocks(raw));
   const code = blockCode?.trim().toUpperCase();
   if (!code) return normalized;
-  return injectBlockMedia(normalized, tradeCode, code);
+  return injectBlockMedia(normalized, tradeCode, code, taskCode, mediaOverrides);
 }

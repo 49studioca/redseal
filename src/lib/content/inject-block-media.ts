@@ -1,5 +1,11 @@
 import type { ContentBlock } from "@/types";
-import { getBlockMedia } from "@/data/block-media";
+import {
+  blockMediaKey,
+  getBlockMedia,
+  type BlockMediaBundle,
+} from "@/data/block-media";
+import type { BlockMediaOverrideRow } from "@/lib/admin/lesson-media";
+import { mergeMediaOverride } from "@/lib/admin/lesson-media";
 
 function hasMediaType(blocks: ContentBlock[], type: "video" | "image") {
   return blocks.some((b) => b.type === type);
@@ -59,11 +65,25 @@ export function injectBlockMedia(
   blocks: ContentBlock[],
   tradeCode: string,
   blockCode?: string,
+  taskCode?: string,
+  mediaOverrides?: BlockMediaOverrideRow[],
 ): ContentBlock[] {
   if (!blockCode) return blocks;
 
-  const media = getBlockMedia(tradeCode, blockCode);
+  let media: BlockMediaBundle | undefined = getBlockMedia(
+    tradeCode,
+    blockCode,
+    taskCode,
+  );
   if (!media) return blocks;
+
+  if (mediaOverrides?.length) {
+    const key = blockMediaKey(tradeCode, blockCode, taskCode);
+    const relevant = mediaOverrides.filter((row) => row.media_key === key);
+    if (relevant.length) {
+      media = mergeMediaOverride(media, relevant);
+    }
+  }
 
   let result = blocks;
 

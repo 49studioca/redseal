@@ -8,6 +8,20 @@ function escapeRegExp(value: string): string {
 }
 
 /** JSON often turns `\text` into a tab + `ext` — repair common stripped macros in prose. */
+function repairJsonEscapedLatex(text: string): string {
+  return text
+    .replace(/\u0009ext\{/g, "\\text{")
+    .replace(/\u000Crac\{/g, "\\frac{")
+    .replace(/\u0009imes/g, "\\times");
+}
+
+function repairUnclosedDisplayMath(text: string): string {
+  const opens = (text.match(/\\\[/g) ?? []).length;
+  const closes = (text.match(/\\\]/g) ?? []).length;
+  if (opens <= closes) return text;
+  return text + "\\]".repeat(opens - closes);
+}
+
 function repairStrippedLatexMacros(text: string): string {
   let repaired = text;
 
@@ -26,7 +40,9 @@ function repairStrippedLatexMacros(text: string): string {
 
 /** AI often writes `\(L\) L` — drop the redundant plain symbol after inline math. */
 export function normalizeInlineMathText(text: string): string {
-  let normalized = repairStrippedLatexMacros(text.trim());
+  let normalized = repairJsonEscapedLatex(text.trim());
+  normalized = repairUnclosedDisplayMath(normalized);
+  normalized = repairStrippedLatexMacros(normalized);
 
   normalized = normalized.replace(
     /\\\(\s*([\w]+?)\s*\\\)(\s*)\1(?=[\s,.;:!?)]|$)/gi,
@@ -90,16 +106,16 @@ function dedupePlainTextAfterMath(parts: TextPart[]): TextPart[] {
 }
 
 const RICH_MATH_PATTERN =
-  /\\\[([\s\S]+?)\\\]|\$\$([\s\S]+?)\$\$|\\\((.+?)\\\)|\$(?!\$)(.+?)\$/g;
+  /\\\[([\s\S]+?)\\\]|\$\$([\s\S]+?)\$\$|\\\((.+?)\\\)|\$(?!\$)(.+?)\$/;
 
 /** Split text on display `\[...\]`, `$$...$$`, and inline `\(...\)` / `$...$` math. */
 export function splitTextWithInlineMath(text: string): TextPart[] {
   const source = normalizeInlineMathText(text);
   const parts: TextPart[] = [];
   let lastIndex = 0;
-  let match: RegExpExecArray | null;
 
-  while ((match = RICH_MATH_PATTERN.exec(source)) !== null) {
+  for (const match of source.matchAll(new RegExp(RICH_MATH_PATTERN.source, "g"))) {
+    if (match.index === undefined) continue;
     if (match.index > lastIndex) {
       parts.push({
         type: "text",
@@ -203,6 +219,10 @@ function extractTrailingEquation(text: string): {
 } {
   const trimmed = normalizeInlineMathText(text);
 
+  if (/\\\[|\$\$/.test(trimmed)) {
+    return { prose: trimmed };
+  }
+
   const textMacroEq = trimmed.match(
     /^([\s\S]*?)\s*(\\text\{[^}]+\}\s*=[\s\S]+)$/,
   );
@@ -228,6 +248,10 @@ function extractTrailingEquation(text: string): {
 function parseEquationSegment(text: string, preferDisplay = false): TextPart[] {
   const trimmed = normalizeInlineMathText(text);
   if (!trimmed) return [];
+
+  if (/\\\[/.test(trimmed) && !textHasInlineMath(trimmed)) {
+    return coalesceFragmentedEquationParts(splitTextWithInlineMath(trimmed));
+  }
 
   if (textHasInlineMath(trimmed)) {
     const parts = coalesceFragmentedEquationParts(splitTextWithInlineMath(trimmed));
@@ -363,6 +387,10 @@ export function parseLessonMathText(text: string): TextPart[] {
     ];
   }
 
+  if (textHasInlineMath(trimmed)) {
+    return coalesceFragmentedEquationParts(splitTextWithInlineMath(trimmed));
+  }
+
   const { prose, equation } = extractTrailingEquation(trimmed);
   if (equation) {
     return [
@@ -372,7 +400,7 @@ export function parseLessonMathText(text: string): TextPart[] {
     ];
   }
 
-  if (textHasInlineMath(trimmed)) {
+  if (/\\\[/.test(trimmed)) {
     return coalesceFragmentedEquationParts(splitTextWithInlineMath(trimmed));
   }
 

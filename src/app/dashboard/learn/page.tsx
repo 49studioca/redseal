@@ -11,7 +11,11 @@ import {
   MIN_ATTEMPTS_FOR_WEAK_BLOCKS,
   WEAK_BLOCK_SCORE_THRESHOLD,
 } from "@/lib/progress/block-mastery";
-import { getChapterTasksForBlock, getTradeDetailContent } from "@/data/seed";
+import { getChapterTasksForBlockRef, getTradeDetailContent } from "@/data/seed";
+import {
+  getLessonsForBlock,
+  usesPerTaskLessons,
+} from "@/lib/content/lesson-structure";
 
 export default async function LearnPage() {
   const { trade, province } = await getDashboardSession();
@@ -71,8 +75,12 @@ export default async function LearnPage() {
       {blocks.length > 0 ? (
         <div className="mt-8 space-y-8">
           {blocks.map((block) => {
-            const blockLessons = lessons.filter((l) => l.block_id === block.id);
-            const chapterTasks = getChapterTasksForBlock(block.id);
+            const blockLessons = getLessonsForBlock(lessons, block.id);
+            const chapterTasks = getChapterTasksForBlockRef(
+              trade.code,
+              block.code,
+            );
+            const perTask = usesPerTaskLessons(trade.code, block.code);
 
             return (
               <section key={block.id}>
@@ -101,7 +109,7 @@ export default async function LearnPage() {
                   </div>
                 )}
 
-                {chapterTasks.length > 0 && (
+                {chapterTasks.length > 0 && !perTask && (
                   <ul className="mt-3 flex flex-wrap gap-2">
                     {chapterTasks.map((task) => (
                       <li
@@ -118,42 +126,48 @@ export default async function LearnPage() {
                   </ul>
                 )}
 
+                {perTask && blockLessons.length > 0 && (
+                  <p className="mt-2 text-xs text-[#64748B]">
+                    {blockLessons.length} task lessons · one per RSOS exam task
+                  </p>
+                )}
+
                 <div className="mt-4 grid gap-4">
                   {blockLessons.length > 0 ? (
                     blockLessons.map((lesson) => (
                       <Card key={lesson.id} className="p-5">
                         <div className="flex flex-col gap-3">
-                          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                            <div className="flex min-w-0 flex-1 items-start gap-3">
-                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FCEBEC]">
-                                <BookOpen className="h-4 w-4 text-[#C0271E]" />
-                              </div>
-                              <div className="min-w-0 flex-1">
-                                <h3 className="font-semibold">
-                                  {lesson.title}
-                                </h3>
-                              </div>
+                          <div className="flex min-w-0 items-start gap-3">
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FCEBEC]">
+                              <BookOpen className="h-4 w-4 text-[#C0271E]" />
                             </div>
-                            <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
-                              <Link href={`/dashboard/learn/${lesson.slug}`}>
-                                <Button size="sm">
-                                  Start lesson{" "}
-                                  <ArrowRight className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              {lesson.audio_url && (
-                                <Button variant="secondary" size="sm">
-                                  <Headphones className="h-4 w-4" /> Audio only
-                                </Button>
+                            <div className="min-w-0 flex-1">
+                              {lesson.chapter_task_code && (
+                                <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
+                                  {lesson.chapter_task_code}
+                                </span>
                               )}
-                              <Link
-                                href={`/dashboard/practice?block=${block.id}`}
-                              >
-                                <Button variant="secondary" size="sm">
-                                  Practice Block {block.code}
-                                </Button>
-                              </Link>
+                              <h3 className="font-semibold">{lesson.title}</h3>
                             </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Link href={`/dashboard/learn/${lesson.slug}`}>
+                              <Button size="sm">
+                                Start lesson <ArrowRight className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                            {lesson.audio_url && (
+                              <Button variant="secondary" size="sm">
+                                <Headphones className="h-4 w-4" /> Audio only
+                              </Button>
+                            )}
+                            <Link
+                              href={`/dashboard/practice?block=${block.id}`}
+                            >
+                              <Button variant="secondary" size="sm">
+                                Practice Block {block.code}
+                              </Button>
+                            </Link>
                           </div>
                           <p className="text-sm text-[#64748B]">
                             {lesson.summary}

@@ -40,10 +40,23 @@ export const ALL_QUESTIONS: Question[] = [];
 export const SAMPLE_LESSONS: Lesson[] = [];
 export const SAMPLE_FLASHCARDS: Flashcard[] = [];
 
+/** Sample CEC excerpts for RAG + open-book viewer (expand via ingestion pipeline). */
+export const REFERENCE_DOC_CEC_ID = "a0000000-0000-4000-8000-00000000cec0";
+
+export const REFERENCE_DOCS = [
+  {
+    id: REFERENCE_DOC_CEC_ID,
+    title: "Canadian Electrical Code (CEC)",
+    doc_type: "CEC",
+    code_version: "CEC-2024",
+    storage_path: "cec-2024.pdf",
+  },
+];
+
 export const REFERENCE_CHUNKS = [
   {
-    id: "ref-1",
-    doc_id: "doc-cec",
+    id: "a0000000-0000-4000-8000-000000000001",
+    doc_id: REFERENCE_DOC_CEC_ID,
     rule_number: "8-102(1)(a)",
     section_title: "Voltage Drop — Branch Circuits",
     content: "The voltage drop in branch circuits shall not exceed 3% of the system voltage at the farthest outlet of power, heating, or lighting loads.",
@@ -51,8 +64,8 @@ export const REFERENCE_CHUNKS = [
     code_version: "CEC-2024",
   },
   {
-    id: "ref-2",
-    doc_id: "doc-cec",
+    id: "a0000000-0000-4000-8000-000000000002",
+    doc_id: REFERENCE_DOC_CEC_ID,
     rule_number: "26-724",
     section_title: "Arc-Fault Circuit Interrupters",
     content: "Branch circuits in dwelling units supplying receptacles in bedrooms, living rooms, dining rooms, and other specified areas shall be protected by an arc-fault circuit interrupter.",
@@ -396,6 +409,24 @@ export function getChapterTasksForBlock(blockId: string): RsosChapterTask[] {
       exam_question_count: block.exam_question_count,
     },
   ];
+}
+
+/** Resolve RSOS tasks when the block comes from Supabase (UUID id). */
+export function getChapterTasksForBlockRef(
+  tradeCode: string,
+  blockCode: string,
+): RsosChapterTask[] {
+  const seedTrade = TRADES.find(
+    (trade) => trade.code.toUpperCase() === tradeCode.toUpperCase(),
+  );
+  if (!seedTrade) return [];
+  const seedBlock = ALL_BLOCKS.find(
+    (block) =>
+      block.trade_id === seedTrade.id &&
+      block.code.toUpperCase() === blockCode.toUpperCase(),
+  );
+  if (!seedBlock) return [];
+  return getChapterTasksForBlock(seedBlock.id);
 }
 
 export function getDefaultCodeVersion(tradeId: string) {

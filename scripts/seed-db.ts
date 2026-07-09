@@ -32,6 +32,7 @@ import {
   PROVINCIAL_GUIDES,
   TRADE_GENERATION_PROFILES,
   REFERENCE_CHUNKS,
+  REFERENCE_DOCS,
   CHAPTER_TASKS,
   getExamQuestionCountForTrade,
 } from "../src/data/seed";
@@ -128,8 +129,21 @@ async function seed() {
     });
   }
 
+  for (const doc of REFERENCE_DOCS) {
+    const { error } = await supabase.from("reference_docs").upsert({
+      id: doc.id,
+      title: doc.title,
+      doc_type: doc.doc_type,
+      code_version: doc.code_version,
+      storage_path: doc.storage_path ?? null,
+      is_licensed: false,
+    });
+    if (error) throw error;
+  }
+  console.log("Reference docs:", REFERENCE_DOCS.length);
+
   for (const chunk of REFERENCE_CHUNKS) {
-    await supabase.from("reference_chunks").upsert({
+    const { error } = await supabase.from("reference_chunks").upsert({
       id: chunk.id,
       doc_id: chunk.doc_id,
       rule_number: chunk.rule_number,
@@ -138,7 +152,9 @@ async function seed() {
       page_number: chunk.page_number,
       code_version: chunk.code_version,
     });
+    if (error) throw error;
   }
+  console.log("Reference chunks:", REFERENCE_CHUNKS.length);
 
   console.log("Structural seed complete. Run: npm run db:generate-content");
 }

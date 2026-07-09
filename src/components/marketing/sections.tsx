@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -15,6 +16,7 @@ import {
   GraduationCap,
   Hammer,
   HardHat,
+  Languages,
   MousePointerClick,
   Smartphone,
   Sparkles,
@@ -38,22 +40,25 @@ import {
 export function MarketingHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-[#F1ECE3] bg-white/[0.88] backdrop-blur-[10px]">
-      <div className="mx-auto flex h-[70px] max-w-[1180px] items-center gap-[26px] px-6">
-        <Link href="/#top" className="flex items-center gap-[11px]">
+      <div className="mx-auto flex h-[60px] max-w-[1180px] items-center gap-2 px-4 sm:h-[70px] sm:gap-[26px] sm:px-6">
+        <Link
+          href="/#top"
+          className="flex min-w-0 shrink items-center gap-2 sm:gap-[11px]"
+        >
           <Image
             src="/redseal-logo.svg"
             alt="RedSeal seal mark"
             width={38}
             height={38}
-            className="shrink-0"
+            className="h-8 w-8 shrink-0 sm:h-[38px] sm:w-[38px]"
           />
-          <div className="leading-none">
-            <div className="whitespace-nowrap font-[family-name:var(--font-barlow-condensed)] text-[21px] font-bold uppercase tracking-wide">
+          <div className="min-w-0 leading-none">
+            <div className="truncate font-[family-name:var(--font-barlow-condensed)] text-[17px] font-bold uppercase tracking-wide sm:text-[21px]">
               <span className="text-[#D8232A]">RedSeal</span>{" "}
               <span className="text-[#1F2A37]">AI&nbsp;Prep</span>
             </div>
-            <div className="mt-px font-[family-name:var(--font-ibm-mono)] text-[10px] tracking-wide text-[#94A3B8]">
-              tradesguide.ca
+            <div className="mt-px hidden font-[family-name:var(--font-ibm-mono)] text-[10px] tracking-wide text-[#94A3B8] sm:block">
+              redsealguide.com
             </div>
           </div>
         </Link>
@@ -76,13 +81,17 @@ export function MarketingHeader() {
         <div className="flex-1" />
         <Link
           href="/auth/login"
-          className="rounded-[9px] px-3.5 py-2 text-[14.5px] font-semibold text-[#1F2A37] hover:bg-[#F3EFE8]"
+          className="hidden shrink-0 rounded-[9px] px-3.5 py-2 text-[14.5px] font-semibold text-[#1F2A37] hover:bg-[#F3EFE8] sm:inline-flex"
         >
           Log in
         </Link>
-        <Link href="/auth/signup">
-          <Button size="md">
-            Start free <ArrowRight className="h-4 w-4" />
+        <Link href="/auth/signup" className="shrink-0">
+          <Button
+            size="sm"
+            className="h-9 px-3 text-xs sm:h-[42px] sm:px-[18px] sm:text-sm"
+          >
+            Start free
+            <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         </Link>
       </div>
@@ -93,74 +102,83 @@ export function MarketingHeader() {
 export function HeroSection() {
   return (
     <HeroQuizProvider>
-      <section
-        id="top"
-        className="relative overflow-hidden bg-[radial-gradient(1200px_640px_at_82%_-12%,#E23A30_0%,#D8232A_46%,#B81A20_100%)] text-white"
-      >
-        <div
-          className="pointer-events-none absolute inset-0 opacity-[0.13]"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 1px 1px, #fff 1.5px, transparent 0)",
-            backgroundSize: "26px 26px",
-            maskImage: "linear-gradient(180deg, #000, transparent 92%)",
-          }}
-        />
-        <div className="pointer-events-none absolute bottom-[-120px] right-[-130px] h-[420px] w-[420px] rounded-full border-2 border-dashed border-white/20" />
-        <div className="pointer-events-none absolute right-[-170px] top-[-110px] h-[340px] w-[340px] rounded-full bg-black/10" />
-
-        <div className="relative mx-auto grid max-w-[1180px] items-center gap-12 px-6 pb-0 pt-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12 md:pb-0 md:pt-16">
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] py-1.5 pl-2 pr-3.5 text-[12.5px] font-semibold text-[#CFE0EE]">
-              <span className="inline-flex items-center gap-1 rounded-full bg-[#F4A11A] px-2 py-0.5 text-[11px] font-extrabold text-[#1F2A37]">
-                <HeroSparkles className="h-3.5 w-3.5" /> AI-built
-              </span>
-              Unofficial Red Seal prep, rebuilt for 2026
-            </div>
-            <h1 className="mt-5 text-balance font-[family-name:var(--font-barlow-condensed)] text-[64px] font-bold leading-[0.96] tracking-tight">
-              Pass your Red Seal
-              <br />
-              the{" "}
-              <span className="underline decoration-white/50 decoration-[3px] underline-offset-[6px]">
-                first time.
-              </span>
-            </h1>
-            <p className="mt-[18px] max-w-[440px] text-lg leading-normal text-[#FCE3E4]">
-              AI builds your study plan around{" "}
-              <b className="text-white">your</b> weak spots. Pick a trade and
-              go.
-            </p>
-            <div className="mt-7 flex flex-wrap gap-3">
-              <Link href="/auth/signup">
-                <Button variant="white" size="lg">
-                  <HeroZap className="h-5 w-5" /> Start free — no card
-                </Button>
-              </Link>
-              <Link href="/#how">
-                <Button
-                  size="lg"
-                  className="h-[52px] border-[1.5px] border-white/50 bg-transparent px-[22px] text-base font-bold text-white hover:bg-white/10"
-                >
-                  <HeroPlayCircle className="h-[18px] w-[18px]" /> See how it
-                  works
-                </Button>
-              </Link>
-            </div>
-            <div className="mt-[26px] flex flex-wrap gap-[18px] text-[13.5px] font-semibold text-[#FCE3E4]">
-              {[
-                "All 56 Red Seal trades",
-                "Every province & territory",
-                "Maple-leaf code, not US",
-              ].map((t) => (
-                <span key={t} className="flex items-center gap-1.5">
-                  <HeroCircleCheck className="h-4 w-4 text-white" /> {t}
-                </span>
-              ))}
-            </div>
-          </div>
-          <HeroQuizCard />
+      <section id="top" className="relative text-white">
+        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(1200px_640px_at_82%_-12%,#E23A30_0%,#D8232A_46%,#B81A20_100%)]">
+          <div
+            className="pointer-events-none absolute inset-0 opacity-[0.13]"
+            style={{
+              backgroundImage:
+                "radial-gradient(circle at 1px 1px, #fff 1.5px, transparent 0)",
+              backgroundSize: "26px 26px",
+              maskImage: "linear-gradient(180deg, #000, transparent 92%)",
+            }}
+          />
+          <div className="pointer-events-none absolute bottom-[-120px] right-[-130px] h-[420px] w-[420px] rounded-full border-2 border-dashed border-white/20" />
+          <div className="pointer-events-none absolute right-[-170px] top-[-110px] h-[340px] w-[340px] rounded-full bg-black/10" />
         </div>
-        <HeroTradeChips />
+
+        <div className="relative">
+          <div className="relative mx-auto grid max-w-[1180px] items-center gap-12 px-4 pb-0 pt-12 sm:px-6 sm:pt-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12 md:pb-0 md:pt-16">
+            <div>
+              <div className="flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-white/15 bg-white/[0.07] py-1.5 pl-2 pr-3.5 text-[11px] font-semibold leading-snug text-[#CFE0EE] sm:text-[12.5px]">
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F4A11A] px-2 py-0.5 text-[10px] font-extrabold text-[#1F2A37] sm:text-[11px]">
+                  <HeroSparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{" "}
+                  AI-built
+                </span>
+                <span className="min-w-0">
+                  Unofficial Red Seal prep, rebuilt for 2026
+                </span>
+              </div>
+              <h1 className="mt-5 text-balance font-[family-name:var(--font-barlow-condensed)] text-[40px] font-bold leading-[0.96] tracking-tight sm:text-[52px] md:text-[64px]">
+                Pass your Red Seal
+                <br />
+                the{" "}
+                <span className="underline decoration-white/50 decoration-2 underline-offset-4 sm:decoration-[3px] sm:underline-offset-[6px]">
+                  first time.
+                </span>
+              </h1>
+              <p className="mt-4 max-w-[440px] text-base leading-normal text-[#FCE3E4] sm:mt-[18px] sm:text-lg">
+                AI builds your study plan around{" "}
+                <b className="text-white">your</b> weak spots. Pick a trade and
+                go.
+              </p>
+              <div className="mt-5 flex flex-wrap gap-2 sm:mt-7 sm:gap-3">
+                <Link href="/auth/signup">
+                  <Button
+                    variant="white"
+                    className="h-10 px-3.5 text-sm sm:h-[52px] sm:px-6 sm:text-base"
+                  >
+                    <HeroZap className="h-4 w-4 sm:h-5 sm:w-5" />
+                    <span className="sm:hidden">Start free</span>
+                    <span className="hidden sm:inline">
+                      Start free — no card
+                    </span>
+                  </Button>
+                </Link>
+                <Link href="/#how">
+                  <Button className="h-10 border-[1.5px] border-white/50 bg-transparent px-3.5 text-sm font-bold text-white hover:bg-white/10 sm:h-[52px] sm:px-[22px] sm:text-base">
+                    <HeroPlayCircle className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
+                    <span className="sm:hidden">How it works</span>
+                    <span className="hidden sm:inline">See how it works</span>
+                  </Button>
+                </Link>
+              </div>
+              <div className="mt-[26px] flex flex-wrap gap-[18px] text-[13.5px] font-semibold text-[#FCE3E4]">
+                {[
+                  "All 56 Red Seal trades",
+                  "Every province & territory",
+                  "Maple-leaf code, not US",
+                ].map((t) => (
+                  <span key={t} className="flex items-center gap-1.5">
+                    <HeroCircleCheck className="h-4 w-4 text-white" /> {t}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <HeroQuizCard />
+          </div>
+          <HeroTradeChips />
+        </div>
       </section>
     </HeroQuizProvider>
   );
@@ -300,40 +318,46 @@ export function FeatureHighlight() {
       color: "text-[#1F2A37]",
     },
     {
-      title: "Streaks",
-      body: "Nudges, no gamified nonsense.",
-      icon: Flame,
-      bg: "bg-[#FEF2F2]",
-      color: "text-[#DC2626]",
+      title: "Word translation",
+      body: (
+        <>
+          Click any word to <b>translate</b> lessons in your language.
+        </>
+      ),
+      icon: Languages,
+      bg: "bg-[#EFF6FF]",
+      color: "text-[#2563EB]",
     },
   ];
 
   return (
-    <section className="mx-auto max-w-[1180px] px-6 pb-[30px] pt-[54px]">
+    <section className="mx-auto max-w-[1180px] px-4 pb-[30px] pt-[54px] sm:px-6">
       <div className="grid gap-[18px] md:grid-cols-[1.4fr_1fr]">
-        <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-br from-[#E0392F] to-[#C2151B] p-8 text-white">
+        <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-br from-[#E0392F] to-[#C2151B] p-5 text-white sm:p-8">
           <div className="absolute bottom-[-40px] right-[-30px] h-[200px] w-[200px] rounded-full bg-black/10" />
-          <div className="relative flex items-center gap-2.5 text-[13px] font-bold uppercase tracking-wide text-[#FCE3E4]">
-            <Target className="h-[18px] w-[18px]" /> Weak-spot targeting
+          <div className="relative flex items-center gap-2.5 text-[11px] font-bold uppercase tracking-wide text-[#FCE3E4] sm:text-[13px]">
+            <Target className="h-4 w-4 sm:h-[18px] sm:w-[18px]" /> Weak-spot
+            targeting
           </div>
-          <h3 className="relative mt-3.5 max-w-[440px] font-[family-name:var(--font-barlow-condensed)] text-[34px] font-bold leading-[1.02]">
+          <h3 className="relative mt-3.5 max-w-[440px] font-[family-name:var(--font-barlow-condensed)] text-[26px] font-bold leading-[1.02] sm:text-[30px] md:text-[34px]">
             Every wrong answer makes your next quiz smarter
           </h3>
-          <p className="relative mt-3 max-w-[440px] text-[15.5px] leading-relaxed text-[#FCE3E4]">
+          <p className="relative mt-3 max-w-[440px] text-sm leading-relaxed text-[#FCE3E4] sm:text-[15.5px]">
             We rebuild your modules around the blocks that trip you up — no
             wasted reps.
           </p>
-          <div className="relative mt-[22px] flex flex-wrap gap-2.5">
+          <div className="relative mt-4 flex flex-wrap gap-1.5 sm:mt-[22px] sm:gap-2.5">
             {[
-              "Adaptive difficulty",
-              "Spaced repetition",
-              "Per-block analytics",
+              { label: "Adaptive difficulty", mobileLabel: "Adaptive" },
+              { label: "Spaced repetition", mobileLabel: "Spaced rep" },
+              { label: "Per-block analytics", mobileLabel: "Analytics" },
             ].map((tag) => (
               <span
-                key={tag}
-                className="rounded-[9px] border border-white/10 bg-white/[0.08] px-3 py-2 text-[13px] font-semibold"
+                key={tag.label}
+                className="rounded-[9px] border border-white/10 bg-white/[0.08] px-2 py-1.5 text-[11px] font-semibold sm:px-3 sm:py-2 sm:text-[13px]"
               >
-                {tag}
+                <span className="sm:hidden">{tag.mobileLabel}</span>
+                <span className="hidden sm:inline">{tag.label}</span>
               </span>
             ))}
           </div>
@@ -458,43 +482,43 @@ export function TradesPreview() {
       id="trades"
       className="mt-10 border-y border-[#E5E0D8] bg-[#F6F3EE]"
     >
-      <div className="mx-auto max-w-[1180px] px-6 py-[72px]">
+      <div className="mx-auto max-w-[1180px] px-4 py-12 sm:px-6 sm:py-[72px]">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="text-[13px] font-bold uppercase tracking-wider text-[#D8232A]">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-[#D8232A] sm:text-[13px]">
               Supported trades
             </div>
-            <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[46px] font-bold leading-none tracking-tight">
+            <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[32px] font-bold leading-none tracking-tight sm:text-[40px] md:text-[46px]">
               From wire to weld, we&apos;ve got your ticket
             </h2>
           </div>
           <Link
             href="/trades"
-            className="flex items-center gap-1.5 text-[15px] font-bold text-[#C0271E]"
+            className="flex items-center gap-1.5 text-sm font-bold text-[#C0271E] sm:text-[15px]"
           >
             See all 56 trades
             <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
-        <div className="mt-[34px] grid grid-cols-2 gap-3.5 md:grid-cols-4">
+        <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-[34px] sm:gap-3.5 md:grid-cols-4">
           {tradeCards.map((t) => {
             const Icon = t.icon;
             return (
               <Link
                 key={t.code}
                 href="/auth/signup"
-                className="flex items-center gap-3 rounded-[14px] border border-[#E5E0D8] bg-white p-[18px] transition-all hover:-translate-y-0.5 hover:border-[#C0271E] hover:shadow-[0_8px_20px_rgba(31,42,55,0.10)]"
+                className="flex items-center gap-2 rounded-[14px] border border-[#E5E0D8] bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-[#C0271E] hover:shadow-[0_8px_20px_rgba(31,42,55,0.10)] sm:gap-3 sm:p-[18px]"
               >
                 <span
-                  className={`grid h-11 w-11 shrink-0 place-items-center rounded-[11px] ${t.bg} ${t.color}`}
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] sm:h-11 sm:w-11 ${t.bg} ${t.color}`}
                 >
-                  <Icon className="h-[22px] w-[22px]" />
+                  <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
                 </span>
-                <span>
-                  <span className="block font-[family-name:var(--font-barlow-semi)] text-base font-semibold text-[#1F2A37]">
+                <span className="min-w-0">
+                  <span className="block truncate font-[family-name:var(--font-barlow-semi)] text-sm font-semibold text-[#1F2A37] sm:text-base">
                     {t.name}
                   </span>
-                  <span className="mt-px block font-[family-name:var(--font-ibm-mono)] text-[11px] text-[#94A3B8]">
+                  <span className="mt-px block font-[family-name:var(--font-ibm-mono)] text-[10px] text-[#94A3B8] sm:text-[11px]">
                     {t.code}
                   </span>
                 </span>
@@ -509,9 +533,9 @@ export function TradesPreview() {
 
 export function TestimonialSection() {
   return (
-    <section className="mx-auto max-w-[1180px] px-6 py-[78px]">
-      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-[#E0392F] to-[#C2151B] px-11 py-12 text-white">
-        <div className="pointer-events-none absolute right-[30px] top-6 font-[family-name:var(--font-barlow-condensed)] text-[160px] font-bold leading-none text-white/[0.16]">
+    <section className="mx-auto max-w-[1180px] px-4 py-12 sm:px-6 sm:py-[78px]">
+      <div className="relative overflow-hidden rounded-[20px] bg-gradient-to-br from-[#E0392F] to-[#C2151B] px-5 py-8 text-white sm:px-11 sm:py-12">
+        <div className="pointer-events-none absolute right-3 top-3 font-[family-name:var(--font-barlow-condensed)] text-[100px] font-bold leading-none text-white/[0.16] sm:right-[30px] sm:top-6 sm:text-[160px]">
           &rdquo;
         </div>
         <div className="relative max-w-[760px]">
@@ -519,11 +543,11 @@ export function TestimonialSection() {
             {[0, 1, 2, 3, 4].map((i) => (
               <Star
                 key={i}
-                className="h-[18px] w-[18px] fill-white text-white"
+                className="h-4 w-4 fill-white text-white sm:h-[18px] sm:w-[18px]"
               />
             ))}
           </div>
-          <p className="mt-[18px] font-[family-name:var(--font-barlow-semi)] text-[30px] font-medium leading-snug tracking-tight">
+          <p className="mt-4 font-[family-name:var(--font-barlow-semi)] text-[22px] font-medium leading-snug tracking-tight sm:mt-[18px] sm:text-[26px] md:text-[30px]">
             &ldquo;Failed the electrician exam by 4 points. Six weeks on here,
             passed the retake with an{" "}
             <span className="font-bold underline decoration-white/50 underline-offset-[3px]">
@@ -531,13 +555,13 @@ export function TestimonialSection() {
             </span>
             .&rdquo;
           </p>
-          <div className="mt-6 flex items-center gap-3">
-            <div className="grid h-12 w-12 place-items-center rounded-full border-2 border-white/25 bg-[#1F2A37] font-[family-name:var(--font-barlow-semi)] text-base font-bold">
+          <div className="mt-5 flex items-center gap-3 sm:mt-6">
+            <div className="grid h-10 w-10 shrink-0 place-items-center rounded-full border-2 border-white/25 bg-[#1F2A37] font-[family-name:var(--font-barlow-semi)] text-sm font-bold sm:h-12 sm:w-12 sm:text-base">
               DK
             </div>
-            <div>
-              <div className="text-base font-bold">Dylan K.</div>
-              <div className="text-[13.5px] text-[#FCE3E4]">
+            <div className="min-w-0">
+              <div className="text-sm font-bold sm:text-base">Dylan K.</div>
+              <div className="text-xs leading-snug text-[#FCE3E4] sm:text-[13.5px]">
                 Construction Electrician · Hamilton, ON
               </div>
             </div>
@@ -549,12 +573,20 @@ export function TestimonialSection() {
 }
 
 export function PricingSection() {
-  const sharedFeatures = [
+  const sharedFeatures: ReactNode[] = [
     "All 56 Red Seal trades",
     "Unlimited AI quizzes",
     "Unlimited mock exams",
     "Weak-spot targeting",
     "Code-referenced answers",
+    <>
+      <span className="sm:hidden">
+        Click to <b>translate</b> words
+      </span>
+      <span className="hidden sm:inline">
+        Click any word to <b>translate</b> lesson content
+      </span>
+    </>,
     "Cancel anytime",
   ];
 
@@ -593,80 +625,85 @@ export function PricingSection() {
 
   return (
     <section id="pricing" className="border-y border-[#E5E0D8] bg-[#F6F3EE]">
-      <div className="mx-auto max-w-[1180px] px-6 py-[78px]">
+      <div className="mx-auto max-w-[1180px] px-4 py-12 sm:px-6 sm:py-[78px]">
         <div className="mx-auto max-w-[600px] text-center">
-          <div className="text-[13px] font-bold uppercase tracking-wider text-[#D8232A]">
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#D8232A] sm:text-[13px]">
             Pricing
           </div>
-          <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[46px] font-bold leading-none tracking-tight">
+          <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[32px] font-bold leading-none tracking-tight sm:text-[40px] md:text-[46px]">
             Cheaper than rewriting the exam
           </h2>
-          <p className="mt-3 text-[17px] text-[#64748B]">
+          <p className="mt-3 text-sm text-[#64748B] sm:text-[17px]">
             A re-test costs hundreds and weeks of your time. Try any plan for
             your first week, then keep going — or cancel.
           </p>
-          <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#FCEBEC] px-[15px] py-[7px] text-[13.5px] font-bold text-[#B6291F]">
-            <Tag className="h-[15px] w-[15px]" />
-            Every plan: discounted first week · cancel anytime
+          <div className="mt-4 inline-flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-[#FCEBEC] px-3 py-1.5 text-[11px] font-bold text-[#B6291F] sm:mt-5 sm:gap-2 sm:px-[15px] sm:py-[7px] sm:text-[13.5px]">
+            <Tag className="h-3.5 w-3.5 sm:h-[15px] sm:w-[15px]" />
+            <span className="sm:hidden">
+              Discounted first week · cancel anytime
+            </span>
+            <span className="hidden sm:inline">
+              Every plan: discounted first week · cancel anytime
+            </span>
           </div>
         </div>
 
-        <div className="mt-10 grid items-stretch gap-[18px] md:grid-cols-3">
+        <div className="mt-6 grid items-stretch gap-3 sm:mt-10 sm:gap-[18px] md:grid-cols-3">
           {plans.map((plan) => (
             <div
               key={plan.name}
-              className={`relative flex flex-col rounded-[18px] p-7 ${
+              className={`relative flex flex-col rounded-[18px] p-5 sm:p-7 ${
                 plan.dark
                   ? "border-[1.5px] border-white/40 bg-gradient-to-br from-[#E0392F] to-[#C2151B] text-white shadow-[0_18px_40px_rgba(216,35,42,0.32)]"
                   : "border border-[#E5E0D8] bg-white text-[#1F2A37] shadow-sm"
               }`}
             >
               {plan.popular && (
-                <div className="absolute right-4 top-4 rounded-[7px] bg-white px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-[#D8232A]">
+                <div className="absolute right-3 top-3 rounded-[7px] bg-white px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#D8232A] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-[11px]">
                   Most popular
                 </div>
               )}
               <div
-                className={`font-[family-name:var(--font-barlow-semi)] text-sm font-bold uppercase tracking-wide ${plan.accent}`}
+                className={`font-[family-name:var(--font-barlow-semi)] text-xs font-bold uppercase tracking-wide sm:text-sm ${plan.accent}`}
               >
                 {plan.name}
               </div>
-              <div className="mt-3.5 flex items-baseline gap-1">
+              <div className="mt-2.5 flex items-baseline gap-1 sm:mt-3.5">
                 <span
-                  className={`font-[family-name:var(--font-barlow-condensed)] text-[50px] font-bold leading-[0.9] ${plan.dark ? "text-white" : "text-[#1F2A37]"}`}
+                  className={`font-[family-name:var(--font-barlow-condensed)] text-[40px] font-bold leading-[0.9] sm:text-[50px] ${plan.dark ? "text-white" : "text-[#1F2A37]"}`}
                 >
                   {plan.price}
                 </span>
                 <span
-                  className={`text-[15px] font-semibold ${plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]"}`}
+                  className={`text-sm font-semibold sm:text-[15px] ${plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]"}`}
                 >
                   {plan.per}
                 </span>
               </div>
               <div
-                className={`mt-1.5 text-[13.5px] ${plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]"}`}
+                className={`mt-1 text-xs sm:mt-1.5 sm:text-[13.5px] ${plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]"}`}
               >
                 {plan.sub}
               </div>
-              <Link href="/auth/signup" className="mt-5 block">
+              <Link href="/auth/signup" className="mt-4 block sm:mt-5">
                 <Button
                   variant={plan.dark ? "white" : "dark"}
-                  className="h-[46px] w-full rounded-[11px] text-[15px] font-extrabold"
+                  className="h-10 w-full rounded-[11px] text-sm font-extrabold sm:h-[46px] sm:text-[15px]"
                 >
                   {plan.cta}
                 </Button>
               </Link>
               <div
-                className={`my-5 h-px ${plan.dark ? "bg-white/10" : "bg-[#ECE6DC]"}`}
+                className={`my-4 h-px sm:my-5 ${plan.dark ? "bg-white/10" : "bg-[#ECE6DC]"}`}
               />
-              <div className="flex flex-col gap-[11px]">
-                {sharedFeatures.map((f) => (
+              <div className="flex flex-col gap-2 sm:gap-[11px]">
+                {sharedFeatures.map((f, i) => (
                   <div
-                    key={f}
-                    className={`flex items-start gap-2 text-sm ${plan.dark ? "text-[#FCE3E4]" : "text-[#334155]"}`}
+                    key={i}
+                    className={`flex items-start gap-2 text-xs sm:text-sm ${plan.dark ? "text-[#FCE3E4]" : "text-[#334155]"}`}
                   >
                     <Check
-                      className={`mt-0.5 h-4 w-4 shrink-0 ${plan.dark ? "text-white" : "text-[#059669]"}`}
+                      className={`mt-0.5 h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${plan.dark ? "text-white" : "text-[#059669]"}`}
                     />
                     {f}
                   </div>
@@ -755,7 +792,7 @@ export function MarketingFooter() {
             trades folks who were tired of dusty study binders.
           </p>
           <div className="mt-3.5 font-[family-name:var(--font-ibm-mono)] text-xs text-[#5F87A6]">
-            tradesguide.ca
+            redsealguide.com
           </div>
         </div>
         {footCols.map((col) => (
@@ -776,7 +813,7 @@ export function MarketingFooter() {
       <div className="border-t border-white/[0.07]">
         <div className="mx-auto flex max-w-[1180px] flex-wrap justify-between gap-3.5 px-6 py-[18px] text-[12.5px] text-[#5F87A6]">
           <span>
-            © 2026 tradesguide.ca · Unofficial — not affiliated with the Red
+            © 2026 redsealguide.com · Unofficial - not affiliated with the Red
             Seal Program or any provincial authority.
           </span>
           <span>Made in Canada 🍁</span>

@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   generateChapterLesson,
+  generateTaskLesson,
   generateQuestion,
   generateFlashcardsFromLesson,
 } from "@/lib/ai/generate";
@@ -10,11 +11,16 @@ import {
   resolveTradeId,
   resolveBlockId,
   upsertApprovedLesson,
+  removeLegacyBlockLesson,
   appendBlockQuestions,
   replaceBlockQuestions,
   replaceLessonFlashcards,
   fetchLessonForBlock,
 } from "./persist-generated";
+import {
+  usesPerTaskLessons,
+  taskLessonSortOrder,
+} from "./lesson-structure";
 import { computePracticeQuestionCount } from "./practice-questions";
 import { shuffleQuestionOptions } from "@/lib/practice/shuffle-options";
 
@@ -100,31 +106,92 @@ export async function generateAndPersistBlockContent(
   let lessonText = "";
 
   if (!input.options?.skipLesson) {
-    const lesson = await generateChapterLesson({
-      tradeName: input.trade.name,
-      tradeCode: input.trade.code,
-      blockCode: input.block.code,
-      blockName: input.block.name,
-      blockId: input.block.id,
-      chapterTasks: input.chapterTasks,
-      retrievedChunks: input.retrievedChunks,
-      codeVersion: input.codeVersion,
-      province: input.province,
-      tradeProfile: input.tradeProfile,
-    });
+    const perTask = usesPerTaskLessons(input.trade.id, input.block.code);
 
-    const saved = await upsertApprovedLesson(input.supabase, {
-      tradeId,
-      blockId,
-      blockCode: input.block.code,
-      tradeCode: input.trade.code,
-      sortOrder: input.block.sort_order,
-      codeVersion: input.codeVersion,
-      province: input.province,
-      lesson,
-    });
-    result.lessonId = saved.id as string;
-    lessonText = lesson.content_blocks.map((b) => b.content).join("\n");
+    if (perTask) {
+      await removeLegacyBlockLesson(input.supabase, {
+        tradeId,
+        tradeCode: input.trade.code,
+        blockCode: input.block.code,
+        province: input.province,
+      });
+
+      for (let i = 0; i < input.chapterTasks.length; i++) {
+        const task = input.chapterTasks[i];
+        if (i > 0) {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+        const lesson = await generateTaskLesson({
+          tradeName: input.trade.name,
+          tradeCode: input.trade.code,
+          blockCode: input.block.code,
+          blockName: input.block.name,
+          task,
+          retrievedChunks: input.retrievedChunks,
+          codeVersion: input.codeVersion,
+          province: input.province,
+          tradeProfile: input.tradeProfile,
+        });
+
+        const saved = await upsertApprovedLesson(input.supabase, {
+          tradeId,
+          blockId,
+          blockCode: input.block.code,
+          tradeCode: input.trade.code,
+          sortOrder: taskLessonSortOrder(input.block.sort_order, i),
+          codeVersion: input.codeVersion,
+          province: input.province,
+          taskCode: task.code,
+          lesson,
+        });
+        if (!result.lessonId) result.lessonId = saved.id as string;
+
+        if (!input.options?.skipFlashcards) {
+          const taskText = lesson.content_blocks.map((b) => b.content).join("\n");
+          const cards = await generateFlashcardsFromLesson(
+            `${task.code}: ${lesson.title}`,
+            taskText,
+          );
+          const flashcardIds = await replaceLessonFlashcards(input.supabase, {
+            tradeId,
+            lessonId: saved.id as string,
+            codeVersion: input.codeVersion,
+            province: input.province,
+            cards,
+            reviewStatus: "approved",
+          });
+          result.flashcardIds.push(
+            ...flashcardIds.map((row) => row.id as string),
+          );
+        }
+      }
+    } else {
+      const lesson = await generateChapterLesson({
+        tradeName: input.trade.name,
+        tradeCode: input.trade.code,
+        blockCode: input.block.code,
+        blockName: input.block.name,
+        blockId: input.block.id,
+        chapterTasks: input.chapterTasks,
+        retrievedChunks: input.retrievedChunks,
+        codeVersion: input.codeVersion,
+        province: input.province,
+        tradeProfile: input.tradeProfile,
+      });
+
+      const saved = await upsertApprovedLesson(input.supabase, {
+        tradeId,
+        blockId,
+        blockCode: input.block.code,
+        tradeCode: input.trade.code,
+        sortOrder: input.block.sort_order,
+        codeVersion: input.codeVersion,
+        province: input.province,
+        lesson,
+      });
+      result.lessonId = saved.id as string;
+      lessonText = lesson.content_blocks.map((b) => b.content).join("\n");
+    }
   }
 
   if (!input.options?.skipQuestions) {
@@ -210,7 +277,10 @@ export async function generateAndPersistBlockContent(
     result.questionIds = saved.map((r) => r.id as string);
   }
 
-  if (!input.options?.skipFlashcards) {
+  if (
+    !input.options?.skipFlashcards &&
+    !usesPerTaskLessons(input.trade.id, input.block.code)
+  ) {
     let lessonId = result.lessonId;
     if (!lessonText) {
       const existing = await fetchLessonForBlock(

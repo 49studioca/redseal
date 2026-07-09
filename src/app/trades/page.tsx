@@ -1,13 +1,54 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   MarketingHeader,
   MarketingFooter,
 } from "@/components/marketing/sections";
 import { TRADES } from "@/data/seed";
+import { SITE_NAME, absoluteUrl, jsonLd } from "@/lib/seo";
+
+export const metadata: Metadata = {
+  title: `All Red Seal Trades Covered`,
+  description:
+    "Browse all Red Seal trades covered by RedSealGuide, including Construction Electrician, Plumber, Welder, Industrial Electrician, Carpenter, and more.",
+  alternates: {
+    canonical: "/trades",
+  },
+  openGraph: {
+    title: `All Red Seal Trades Covered | ${SITE_NAME}`,
+    description:
+      "Find RSOS-aligned exam prep pages for Canada's Red Seal trades.",
+    url: "/trades",
+  },
+};
 
 export default function TradesPage() {
+  const schema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${absoluteUrl("/trades")}#collection`,
+    name: "All Red Seal Trades Covered",
+    description:
+      "Browse Red Seal exam prep pages for Canadian trades covered by RedSealGuide.",
+    url: absoluteUrl("/trades"),
+    mainEntity: {
+      "@type": "ItemList",
+      numberOfItems: TRADES.length,
+      itemListElement: TRADES.map((trade, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: `${trade.name} Red Seal exam prep`,
+        url: absoluteUrl(`/trades/${trade.slug}`),
+      })),
+    },
+  };
+
   return (
     <div className="min-h-screen bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}
+      />
       <MarketingHeader />
       <div className="mx-auto max-w-[1180px] px-6 py-16">
         <h1 className="font-[family-name:var(--font-barlow-condensed)] text-4xl font-bold">

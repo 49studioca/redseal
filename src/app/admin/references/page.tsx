@@ -3,30 +3,58 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Upload } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
 export default function AdminReferencesPage() {
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
     setUploading(true);
+    setMessage("");
+    setError("");
+
     const formData = new FormData();
     formData.append("file", file);
     formData.append("doc_type", "CEC");
     formData.append("code_version", "CEC-2024");
     formData.append("title", file.name);
 
-    const res = await fetch("/api/admin/references", {
-      method: "POST",
-      body: formData,
-    });
-    const data = await res.json();
-    setMessage(data.message ?? "Upload complete");
-    setUploading(false);
+    try {
+      const res = await fetch("/api/admin/references", {
+        method: "POST",
+        body: formData,
+      });
+
+      const raw = await res.text();
+      let data: { message?: string; error?: string } = {};
+      if (raw.trim()) {
+        try {
+          data = JSON.parse(raw) as { message?: string; error?: string };
+        } catch {
+          throw new Error(
+            raw.trim() || `Upload failed (${res.status} ${res.statusText})`,
+          );
+        }
+      } else if (!res.ok) {
+        throw new Error(`Upload failed (${res.status} ${res.statusText})`);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.error ?? `Upload failed (${res.status})`);
+      }
+
+      setMessage(data.message ?? "Upload complete");
+    } catch (err) {
+      setError((err as Error).message);
+    } finally {
+      setUploading(false);
+      e.target.value = "";
+    }
   };
 
   return (
@@ -55,16 +83,15 @@ export default function AdminReferencesPage() {
             </span>
             <input
               type="file"
-              accept=".pdf"
+              accept=".pdf,application/pdf"
               className="hidden"
               onChange={handleUpload}
               disabled={uploading}
             />
           </label>
           {message && <p className="mt-4 text-sm text-[#047857]">{message}</p>}
-          {uploading && (
-            <p className="mt-4 text-sm">Processing and embedding chunks...</p>
-          )}
+          {error && <p className="mt-4 text-sm text-[#B91C1C]">{error}</p>}
+          {uploading && <p className="mt-4 text-sm">Uploading PDF…</p>}
         </Card>
 
         <Card className="mt-4 p-4 text-sm text-[#64748B]">

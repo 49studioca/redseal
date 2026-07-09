@@ -1,6 +1,10 @@
 /**
  * Download curated lesson images and upload to Supabase Storage (`images` bucket).
  * Usage: npm run db:sync-lesson-images
+ * Options: --force (re-download even if already in storage)
+ *
+ * Wikimedia requires a descriptive User-Agent — set LESSON_IMAGE_SYNC_USER_AGENT in .env
+ * or we use a default project contact string.
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -34,22 +38,65 @@ loadEnvFile();
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const force = process.argv.includes("--force");
+
+const WIKIMEDIA_USER_AGENT =
+  process.env.LESSON_IMAGE_SYNC_USER_AGENT ??
+  "RedSealGuide/1.0 (lesson image sync; contact: admin@redsealguide.ca)";
+
+/** Wikimedia rate-limits aggressively — wait between every download. */
+const DELAY_BETWEEN_MS = 2500;
 
 function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
+  return new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 }
 
-async function downloadWithRetry(sourceUrl: string, attempts = 5) {
+function retryAfterMs(response: Response): number | undefined {
+  const header = response.headers.get("retry-after");
+  if (!header) return undefined;
+  const seconds = Number.parseInt(header, 10);
+  if (!Number.isNaN(seconds)) return seconds * 1000;
+  const date = Date.parse(header);
+  if (!Number.isNaN(date)) return Math.max(0, date - Date.now());
+  return undefined;
+}
+
+async function downloadWithRetry(sourceUrl: string, attempts = 8) {
   for (let i = 0; i < attempts; i++) {
-    const response = await fetch(sourceUrl);
+    const response = await fetch(sourceUrl, {
+      headers: {
+        "User-Agent": WIKIMEDIA_USER_AGENT,
+        Accept: "image/*",
+      },
+    });
+
     if (response.ok) return response;
+
     if (response.status === 429 && i < attempts - 1) {
-      await sleep(1500 * (i + 1));
+      const retryAfter = retryAfterMs(response) ?? 5000 * 2 ** i;
+      const waitMs = Math.min(retryAfter, 120_000);
+      console.warn(
+        `  Rate limited — waiting ${Math.round(waitMs / 1000)}s before retry ${i + 2}/${attempts}…`,
+      );
+      await sleep(waitMs);
       continue;
     }
+
     throw new Error(`HTTP ${response.status}`);
   }
+
   throw new Error("download failed");
+}
+
+async function storageObjectExists(
+  supabase: ReturnType<typeof createClient>,
+  storagePath: string,
+): Promise<boolean> {
+  const { data, error } = await supabase.storage
+    .from("images")
+    .download(storagePath);
+
+  return !error && data !== null;
 }
 
 async function main() {
@@ -61,9 +108,24 @@ async function main() {
   }
 
   const supabase = createClient(url, key);
+  const entries = Object.entries(LESSON_IMAGE_ASSETS);
   let uploaded = 0;
+  let skipped = 0;
+  const failed: string[] = [];
 
-  for (const [assetKey, asset] of Object.entries(LESSON_IMAGE_ASSETS)) {
+  console.log(`Syncing ${entries.length} lesson images (${force ? "force" : "skip existing"})…`);
+  console.log(`User-Agent: ${WIKIMEDIA_USER_AGENT}\n`);
+
+  for (const [assetKey, asset] of entries) {
+    if (!force) {
+      const exists = await storageObjectExists(supabase, asset.storagePath);
+      if (exists) {
+        skipped += 1;
+        console.log(`○ ${assetKey} (already in storage)`);
+        continue;
+      }
+    }
+
     let response: Response;
     try {
       response = await downloadWithRetry(asset.sourceUrl);
@@ -71,13 +133,14 @@ async function main() {
       console.error(
         `Failed to download ${assetKey}: ${(error as Error).message}`,
       );
+      failed.push(assetKey);
       process.exitCode = 1;
+      await sleep(DELAY_BETWEEN_MS);
       continue;
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-    const contentType =
-      response.headers.get("content-type") ?? "image/jpeg";
+    const contentType = response.headers.get("content-type") ?? "image/jpeg";
 
     const { error } = await supabase.storage
       .from("images")
@@ -89,17 +152,26 @@ async function main() {
 
     if (error) {
       console.error(`Upload failed for ${assetKey}:`, error.message);
+      failed.push(assetKey);
       process.exitCode = 1;
+      await sleep(DELAY_BETWEEN_MS);
       continue;
     }
 
     uploaded += 1;
     const publicUrl = `${url.replace(/\/$/, "")}/storage/v1/object/public/images/${asset.storagePath}`;
     console.log(`✓ ${assetKey} → ${publicUrl}`);
-    await sleep(400);
+    await sleep(DELAY_BETWEEN_MS);
   }
 
-  console.log(`\nUploaded ${uploaded}/${Object.keys(LESSON_IMAGE_ASSETS).length} images.`);
+  console.log(
+    `\nDone: ${uploaded} uploaded, ${skipped} skipped, ${failed.length} failed (${entries.length} total).`,
+  );
+
+  if (failed.length > 0) {
+    console.log(`Failed assets: ${failed.join(", ")}`);
+    console.log("Re-run later (existing uploads are skipped): npm run db:sync-lesson-images");
+  }
 }
 
 void main();

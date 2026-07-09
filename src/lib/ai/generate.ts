@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import type { ReferenceChunk } from "@/types";
 import type { QuestionOption } from "@/types";
 import { normalizeContentBlocks } from "@/lib/content/normalize-content-blocks";
+import { hasCheckAnswer } from "@/lib/content/check-question-meta";
 import { formatProvincePromptForTrade } from "@/lib/content/province-content";
 import { formatBlockMediaForPrompt } from "@/data/block-media";
 
@@ -143,6 +144,7 @@ DO:
 - Include at least 1 "video" block (YouTube ID in content, title in meta) and 1 "image" block (image URL in content, alt/caption in meta) — use entries from the curated media catalog when provided
 - In math JSON strings, escape every LaTeX backslash twice (e.g. \\\\frac, \\\\text, \\\\) so JSON parsing preserves them
 - math "content" must be one LaTeX string only — never a nested JSON object; put example narration in a following "text" block
+- Never put \\(...\\) delimiters or English sentences inside math blocks — formula only in math; explanation in the next text block
 - For inline variables in text blocks use \\(L\\) only once — never repeat the plain letter after it (wrong: \\(L\\) L, correct: \\(L\\) is)
 - For display formulas use a dedicated "math" block with LaTeX — not \\[...\\] inside text blocks
 - End with 1–2 "check_question" blocks that test applied understanding (meta.answer required; meta.steps optional for multi-step calcs)
@@ -172,6 +174,144 @@ Return valid JSON only:
   ],
   "estimated_minutes": number
 }`;
+
+const TASK_LESSON_SYSTEM_PROMPT = `You are an expert Red Seal trade instructor writing a focused lesson for ONE RSOS exam task within a larger block.
+Use Canadian codes and standards only — never US NEC or OSHA-centric guidance unless noting a Canadian equivalent.
+
+Write DEEP TEACHING CONTENT for this single task — not a checklist.
+
+DO:
+- Teach how to DO this specific work: procedures, calculations, code rules, tooling, safety, troubleshooting
+- Write 8–12 content_blocks with substantive paragraphs (3–5 sentences each)
+- Include at least 2 callouts (meta.variant: "tip" or "warning") with practical jobsite advice
+- Include at least 1 worked example; use "math" blocks with LaTeX when calculations apply
+- Include at least 1 "video" block and 1 "image" block when curated media is provided
+- Use ONLY the video/image blocks from the curated media catalog — do not substitute other YouTube IDs or image URLs
+- In math JSON strings, escape every LaTeX backslash twice (e.g. \\\\frac, \\\\text)
+- End with 1–2 "check_question" blocks — each MUST include meta.answer (required) and meta.steps when showing calculation work
+- check_question meta.answer: concise model answer (plain English or LaTeX with \\text{}); cite CEC rule numbers when relevant
+
+DO NOT:
+- Cover other RSOS tasks from the same block — stay focused on the one task given
+- Open with exam question counts or "this task covers..."
+- Use headings like "B-7 — Task name" without teaching content beneath
+- Produce fewer than 8 content blocks
+
+Return valid JSON only:
+{
+  "title": "Descriptive topic title for this task (not 'Task B-7: ...')",
+  "summary": "One sentence describing what the learner can do after this lesson",
+  "content_blocks": [
+    {"type": "heading", "content": "..."},
+    {"type": "text", "content": "..."},
+    {"type": "check_question", "content": "What is the maximum allowable voltage drop for branch circuits?", "meta": {"answer": "3% of system voltage (CEC Rule 8-102(1)(a))."}}
+  ],
+  "estimated_minutes": number
+}`;
+
+function normalizeLessonMath(lesson: GeneratedLesson): GeneratedLesson {
+  return {
+    ...lesson,
+    content_blocks: normalizeContentBlocks(
+      lesson.content_blocks as import("@/types").ContentBlock[],
+    ) as GeneratedLesson["content_blocks"],
+  };
+}
+
+export async function fillMissingCheckQuestionAnswers(
+  lesson: GeneratedLesson,
+  context: {
+    tradeName: string;
+    tradeCode: string;
+    codeVersion?: string;
+  },
+): Promise<GeneratedLesson> {
+  const blocks = lesson.content_blocks.map((block) => ({
+    ...block,
+    meta: block.meta ? { ...block.meta } : undefined,
+  }));
+
+  const missing = blocks
+    .map((block, index) => ({ block, index }))
+    .filter(
+      ({ block }) =>
+        block.type === "check_question" && !hasCheckAnswer(block.meta),
+    );
+
+  if (missing.length === 0 || !openrouter) {
+    return { ...lesson, content_blocks: blocks };
+  }
+
+  const lessonExcerpt = blocks
+    .filter((block) => block.type !== "check_question")
+    .map((block) => block.content)
+    .join("\n\n")
+    .slice(0, 6000);
+
+  const response = await openrouter.chat.completions.create({
+    model: CHAT_MODEL,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You write model answers for Canadian Red Seal lesson check-your-work prompts. Use Canadian Electrical Code (CEC) references when relevant. Return valid JSON only.",
+      },
+      {
+        role: "user",
+        content: `Trade: ${context.tradeName} (${context.tradeCode})
+Code version: ${context.codeVersion ?? "CEC-2024"}
+Lesson: ${lesson.title}
+${lesson.summary ? `Summary: ${lesson.summary}` : ""}
+
+Lesson content:
+${lessonExcerpt}
+
+Write a concise model answer for each check question (1–3 sentences). For calculations, include the key formula and result in meta.answer; put step-by-step work in meta.steps when helpful.
+
+Return JSON:
+{
+  "answers": [
+    {"answer": "...", "steps": "optional"},
+    ...
+  ]
+}
+
+Questions:
+${missing.map(({ block }, i) => `${i + 1}. ${block.content}`).join("\n")}`,
+      },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.3,
+  });
+
+  const parsed = JSON.parse(response.choices[0]?.message?.content ?? "{}") as {
+    answers?: Array<{ answer?: string; steps?: string }>;
+  };
+
+  for (let i = 0; i < missing.length; i++) {
+    const generated = parsed.answers?.[i];
+    if (!generated?.answer?.trim()) continue;
+    const { index } = missing[i];
+    blocks[index].meta = {
+      ...blocks[index].meta,
+      answer: generated.answer.trim(),
+      ...(generated.steps?.trim() ? { steps: generated.steps.trim() } : {}),
+    };
+  }
+
+  return normalizeLessonMath({ ...lesson, content_blocks: blocks });
+}
+
+async function finalizeGeneratedLesson(
+  lesson: GeneratedLesson,
+  context: {
+    tradeName: string;
+    tradeCode: string;
+    codeVersion?: string;
+  },
+): Promise<GeneratedLesson> {
+  return fillMissingCheckQuestionAnswers(normalizeLessonMath(lesson), context);
+}
 
 export async function generateChapterLesson(input: {
   tradeName: string;
@@ -233,18 +373,81 @@ ${formatBlockMediaForPrompt(input.tradeCode, input.blockCode)}`,
     temperature: 0.6,
   });
 
-  return normalizeLessonMath(
+  return finalizeGeneratedLesson(
     JSON.parse(response.choices[0]?.message?.content ?? "{}") as GeneratedLesson,
+    {
+      tradeName: input.tradeName,
+      tradeCode: input.tradeCode,
+      codeVersion: input.codeVersion,
+    },
   );
 }
 
-function normalizeLessonMath(lesson: GeneratedLesson): GeneratedLesson {
-  return {
-    ...lesson,
-    content_blocks: normalizeContentBlocks(
-      lesson.content_blocks as import("@/types").ContentBlock[],
-    ) as GeneratedLesson["content_blocks"],
+export async function generateTaskLesson(input: {
+  tradeName: string;
+  tradeCode: string;
+  blockCode: string;
+  blockName: string;
+  task: { code: string; name: string; exam_question_count: number };
+  retrievedChunks: ReferenceChunk[];
+  codeVersion?: string;
+  province?: string;
+  tradeProfile?: {
+    glossary?: Record<string, string>;
+    code_standards?: string[];
+    calculation_templates?: string[];
   };
+}): Promise<GeneratedLesson> {
+  if (!openrouter) {
+    return mockGenerateChapterLesson({
+      tradeName: input.tradeName,
+      tradeCode: input.tradeCode,
+      blockCode: input.blockCode,
+      blockName: input.blockName,
+      chapterTasks: [input.task],
+      codeVersion: input.codeVersion,
+    });
+  }
+
+  const provinceContext = formatProvincePromptForTrade(
+    input.province,
+    input.tradeCode,
+  );
+
+  const response = await openrouter.chat.completions.create({
+    model: CHAT_MODEL,
+    messages: [
+      { role: "system", content: TASK_LESSON_SYSTEM_PROMPT },
+      {
+        role: "user",
+        content: `Trade: ${input.tradeName} (${input.tradeCode})
+RSOS block context: ${input.blockName} (Block ${input.blockCode})
+RSOS task (teach ONLY this task in depth): ${input.task.code}: ${input.task.name}
+Code version: ${input.codeVersion ?? "current"}
+${provinceContext ? `\n${provinceContext}\n` : ""}
+Reference material (cite rule numbers and tables from here):
+${formatChunksForPrompt(input.retrievedChunks) || "No reference chunks — use accurate Canadian trade knowledge for this task."}
+
+Glossary: ${JSON.stringify(input.tradeProfile?.glossary ?? {})}
+Code standards: ${(input.tradeProfile?.code_standards ?? []).join(", ")}
+Calculation topics to cover if relevant: ${(input.tradeProfile?.calculation_templates ?? []).join(", ") || "none specified"}
+
+Curated media for this block (include when relevant):
+${formatBlockMediaForPrompt(input.tradeCode, input.blockCode, input.task.code)}`,
+      },
+    ],
+    response_format: { type: "json_object" },
+    temperature: 0.6,
+  });
+
+  return finalizeGeneratedLesson(
+    JSON.parse(response.choices[0]?.message?.content ?? "{}") as GeneratedLesson,
+    {
+      tradeName: input.tradeName,
+      tradeCode: input.tradeCode,
+      codeVersion: input.codeVersion,
+    },
+  );
 }
 
 export async function generateLesson(input: {

@@ -6,9 +6,34 @@ export function stableLessonSlug(
   tradeCode: string,
   blockCode: string,
   province?: string,
+  taskCode?: string,
 ) {
-  const base = `block-${blockCode.toLowerCase()}-${tradeCode.toLowerCase().replace(/[^a-z0-9]/g, "")}`;
+  const trade = tradeCode.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const block = blockCode.toLowerCase();
+  const task = taskCode ? `-${taskCode.toLowerCase()}` : "";
+  const base = `block-${block}${task}-${trade}`;
   return province ? `${base}-${province.toLowerCase()}` : base;
+}
+
+export async function removeLegacyBlockLesson(
+  supabase: SupabaseClient,
+  input: {
+    tradeId: string;
+    tradeCode: string;
+    blockCode: string;
+    province?: string;
+  },
+) {
+  const slug = stableLessonSlug(
+    input.tradeCode,
+    input.blockCode,
+    input.province,
+  );
+  await supabase
+    .from("lessons")
+    .delete()
+    .eq("trade_id", input.tradeId)
+    .eq("slug", slug);
 }
 
 export async function resolveTradeId(
@@ -56,6 +81,7 @@ export async function upsertApprovedLesson(
     sortOrder: number;
     codeVersion?: string;
     province?: string;
+    taskCode?: string;
     lesson: GeneratedLesson;
   },
 ) {
@@ -64,6 +90,7 @@ export async function upsertApprovedLesson(
     input.tradeCode,
     input.blockCode,
     input.province,
+    input.taskCode,
   );
 
   const { data: existing } = await supabase

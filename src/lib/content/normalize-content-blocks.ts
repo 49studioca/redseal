@@ -4,11 +4,13 @@ import {
   looksLikeMathJson,
   parseMathBlockContent,
 } from "@/lib/math/normalize-latex";
+import { normalizeCheckQuestionBlock as coalesceCheckQuestion } from "@/lib/content/check-question-meta";
 
 function normalizeCheckQuestionBlock(block: ContentBlock): ContentBlock {
-  if (block.type !== "check_question" || !block.meta) return block;
+  const coalesced = coalesceCheckQuestion(block);
+  if (coalesced.type !== "check_question" || !coalesced.meta) return coalesced;
 
-  const meta = { ...block.meta };
+  const meta = { ...coalesced.meta };
   if (typeof meta.answer === "string") {
     meta.answer = normalizeInlineMathText(meta.answer);
   }
@@ -16,7 +18,7 @@ function normalizeCheckQuestionBlock(block: ContentBlock): ContentBlock {
     meta.steps = normalizeInlineMathText(meta.steps);
   }
 
-  return { ...block, meta };
+  return { ...coalesced, meta };
 }
 
 function normalizeTextBlock(block: ContentBlock): ContentBlock {
@@ -44,6 +46,11 @@ export function normalizeContentBlocks(blocks: ContentBlock[]): ContentBlock[] {
   const normalized: ContentBlock[] = [];
 
   for (const block of blocks) {
+    if (typeof block.content !== "string") {
+      normalized.push(block);
+      continue;
+    }
+
     const isMathPayload =
       block.type === "math" || looksLikeMathJson(block.content);
 

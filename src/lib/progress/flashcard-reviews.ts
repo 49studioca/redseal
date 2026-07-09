@@ -58,8 +58,9 @@ function isDue(review: FlashcardReviewRecord | undefined, now: number): boolean 
 
 export async function fetchDueFlashcards(
   tradeId: string,
+  province?: string | null,
 ): Promise<FlashcardWithReview[]> {
-  const cards = await fetchFlashcards(tradeId);
+  const cards = await fetchFlashcards(tradeId, province);
   if (cards.length === 0) return [];
 
   const cookieStore = await cookies();
@@ -145,7 +146,10 @@ export async function recordFlashcardReview(
   return upsertDemoFlashcardReview(cookieStore, flashcardId, record);
 }
 
-export async function countDueFlashcards(tradeId: string): Promise<number> {
-  const due = await fetchDueFlashcards(tradeId);
+export async function countDueFlashcards(
+  tradeId: string,
+  province?: string | null,
+): Promise<number> {
+  const due = await fetchDueFlashcards(tradeId, province);
   return due.length;
 }
