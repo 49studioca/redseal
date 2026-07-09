@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") ?? "open";
 
-  if (!usesSupabaseData()) {
+  if (!usesSupabaseData() || !auth.supabase) {
     return NextResponse.json({ reports: [] as LessonMediaReportRow[] });
   }
 

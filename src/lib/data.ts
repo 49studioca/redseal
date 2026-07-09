@@ -13,11 +13,7 @@ import {
   getFlashcardsForTrade,
 } from "@/data/seed";
 import type { Trade, RsosBlock, Question, Lesson, Flashcard, ReferenceChunk, ReferenceDoc, ProvincialGuide } from "@/types";
-import {
-  buildPdfPageUrl,
-  getSeedReferenceDoc,
-  resolveReferenceDocPdfUrl,
-} from "@/lib/reference/reference-pdf";
+import { getSeedReferenceDoc } from "@/lib/reference/reference-pdf";
 import {
   enrichQuestionsForProvince,
   resolveLessonsForProvince,
@@ -194,24 +190,6 @@ export async function fetchReferenceDoc(
   };
 }
 
-export async function getReferencePdfViewUrl(
-  docId: string,
-  pageNumber?: number,
-): Promise<{ url: string; title: string; page: number | null } | null> {
-  const doc = await fetchReferenceDoc(docId);
-  if (!doc) return null;
-
-  const baseUrl = resolveReferenceDocPdfUrl(doc);
-  if (!baseUrl) return null;
-
-  const page = pageNumber && pageNumber > 0 ? pageNumber : null;
-  return {
-    url: buildPdfPageUrl(baseUrl, page ?? undefined),
-    title: doc.title,
-    page,
-  };
-}
-
 function ruleNumberCandidates(ruleNumber: string): string[] {
   const normalized = ruleNumber.trim();
   const candidates = [normalized];
@@ -228,7 +206,11 @@ function preferIngestedChunk(
   const scored = [...chunks].sort((a, b) => {
     const score = (c: ReferenceChunk) => {
       const meta = c.metadata as { source?: string } | undefined;
-      const ingested = meta?.source === "ingest-cec-section" ? 1000 : 0;
+      const ingested =
+        meta?.source === "ingest-cec-full" ||
+        meta?.source === "ingest-cec-section"
+          ? 1000
+          : 0;
       return ingested + (c.content?.length ?? 0);
     };
     return score(b) - score(a);

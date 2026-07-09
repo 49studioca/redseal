@@ -19,7 +19,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
 
-  if (!usesSupabaseData()) {
+  if (!usesSupabaseData() || !auth.supabase) {
     return NextResponse.json({ ok: true, demo: true });
   }
 

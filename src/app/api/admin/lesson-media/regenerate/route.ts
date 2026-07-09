@@ -138,15 +138,16 @@ export async function POST(request: Request) {
     ? String(body.video_title).trim()
     : undefined;
 
-  if (!usesSupabaseData()) {
+  if (!usesSupabaseData() || !auth.supabase) {
     return NextResponse.json({ ok: true, demo: true });
   }
 
+  const supabase = auth.supabase;
   let lesson: LessonContext | null = null;
   let resolveReportId: string | null = null;
 
   if (reportId) {
-    const { data: report, error: reportError } = await auth.supabase
+    const { data: report, error: reportError } = await supabase
       .from("lesson_media_reports")
       .select(
         `
@@ -193,7 +194,7 @@ export async function POST(request: Request) {
     mediaType = report.media_type as "image" | "video";
     mediaSrc = report.media_src;
   } else if (lessonId && mediaType && mediaSrc) {
-    lesson = await loadLessonContext(auth.supabase, lessonId);
+    lesson = await loadLessonContext(supabase, lessonId);
     if (!lesson) {
       return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
@@ -218,7 +219,7 @@ export async function POST(request: Request) {
   }
 
   if (resolveReportId) {
-    const { error: resolveError } = await auth.supabase
+    const { error: resolveError } = await supabase
       .from("lesson_media_reports")
       .update({
         status: "resolved",
@@ -231,7 +232,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: resolveError.message }, { status: 500 });
     }
   } else {
-    await auth.supabase
+    await supabase
       .from("lesson_media_reports")
       .update({
         status: "resolved",
@@ -260,17 +261,18 @@ export async function GET(request: Request) {
   const mediaSrc = searchParams.get("media_src");
   const tradeCodeParam = searchParams.get("trade_code");
 
-  if (!usesSupabaseData()) {
+  if (!usesSupabaseData() || !auth.supabase) {
     return NextResponse.json({
       image_keys: listImageAssetKeys(),
       videos: [],
     });
   }
 
+  const supabase = auth.supabase;
   let tradeCode = tradeCodeParam ?? "";
 
   if (reportId) {
-    const { data: report } = await auth.supabase
+    const { data: report } = await supabase
       .from("lesson_media_reports")
       .select(
         `
@@ -311,7 +313,7 @@ export async function GET(request: Request) {
 
   if (lessonId && mediaType && mediaSrc) {
     if (!tradeCode) {
-      const lesson = await loadLessonContext(auth.supabase, lessonId);
+      const lesson = await loadLessonContext(supabase, lessonId);
       tradeCode = lesson?.trade?.code ?? "";
     }
 

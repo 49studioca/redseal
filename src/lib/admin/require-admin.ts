@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { usesSupabaseData } from "@/lib/supabase/config";
 
+type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
+
 export async function requireAdmin() {
   if (!usesSupabaseData()) {
     return { userId: "demo-admin", supabase: null as never };
@@ -29,9 +31,12 @@ export async function requireAdmin() {
   return { userId: user.id, supabase };
 }
 
-export async function assertAdminApi() {
+export async function assertAdminApi(): Promise<
+  | { ok: false; status: number; error: string }
+  | { ok: true; userId: string; supabase: SupabaseServerClient | null }
+> {
   if (!usesSupabaseData()) {
-    return { ok: true as const, userId: "demo-admin", supabase: null };
+    return { ok: true, userId: "demo-admin", supabase: null };
   }
 
   const supabase = await createClient();
@@ -40,7 +45,7 @@ export async function assertAdminApi() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return { ok: false as const, status: 401, error: "Unauthorized" };
+    return { ok: false, status: 401, error: "Unauthorized" };
   }
 
   const { data: profile } = await supabase
@@ -50,8 +55,8 @@ export async function assertAdminApi() {
     .single();
 
   if (!profile?.is_admin) {
-    return { ok: false as const, status: 403, error: "Forbidden" };
+    return { ok: false, status: 403, error: "Forbidden" };
   }
 
-  return { ok: true as const, userId: user.id, supabase };
+  return { ok: true, userId: user.id, supabase };
 }

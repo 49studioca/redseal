@@ -36,20 +36,20 @@ export async function upsertBlockMediaOverride(
     mediaType === "video"
       ? {
           media_key: mediaKey,
-          media_type: mediaType,
+          media_type: "video" as const,
           video_youtube_id: payload.video_youtube_id ?? null,
           video_title: payload.video_title ?? null,
-          image_src: null,
-          image_alt: null,
-          image_caption: null,
+          image_src: null as string | null,
+          image_alt: null as string | null,
+          image_caption: null as string | null,
           updated_by: userId,
           updated_at: new Date().toISOString(),
         }
       : {
           media_key: mediaKey,
-          media_type: mediaType,
-          video_youtube_id: null,
-          video_title: null,
+          media_type: "image" as const,
+          video_youtube_id: null as string | null,
+          video_title: null as string | null,
           image_src: payload.image_src ?? null,
           image_alt: payload.image_alt ?? null,
           image_caption: payload.image_caption ?? null,
@@ -59,7 +59,9 @@ export async function upsertBlockMediaOverride(
 
   const { error } = await supabase
     .from("block_media_overrides")
-    .upsert(row, { onConflict: "media_key,media_type" });
+    .upsert(row as Record<string, unknown>, {
+      onConflict: "media_key,media_type",
+    });
 
   if (error) throw new Error(error.message);
 }

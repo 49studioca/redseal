@@ -35,7 +35,7 @@ export default async function AdminQAPage() {
       .eq("status", "open")
       .order("created_at", { ascending: false });
 
-    reports = (data ?? []) as LessonMediaReportRow[];
+    reports = (data ?? []) as unknown as LessonMediaReportRow[];
   }
 
   return <AdminQAClient initialReports={reports} />;

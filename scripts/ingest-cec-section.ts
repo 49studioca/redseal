@@ -129,7 +129,6 @@ async function extractPages(
   const fontsDir = resolve(process.cwd(), "node_modules/pdfjs-dist/standard_fonts");
   const doc = await pdfjs.getDocument({
     data,
-    disableWorker: true,
     standardFontDataUrl: `${pathToFileURL(fontsDir).href}/`,
   }).promise;
   const last = Math.min(endPage, doc.numPages);
@@ -163,7 +162,6 @@ async function findSectionPageWindow(
   const fontsDir = resolve(process.cwd(), "node_modules/pdfjs-dist/standard_fonts");
   const doc = await pdfjs.getDocument({
     data,
-    disableWorker: true,
     standardFontDataUrl: `${pathToFileURL(fontsDir).href}/`,
   }).promise;
   const needle = new RegExp(`(?:^|\\s)${section}-\\d{1,4}\\b`);

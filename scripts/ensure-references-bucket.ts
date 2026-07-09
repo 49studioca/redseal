@@ -1,5 +1,7 @@
 /**
- * Create/update the public `references` Storage bucket for CEC PDFs.
+ * Ensure the private `references` Storage bucket exists for CEC PDFs.
+ * The full PDF must NOT be public — the app serves rule-page excerpts only.
+ *
  * Usage: npx tsx scripts/ensure-references-bucket.ts
  */
 import { readFileSync } from "fs";
@@ -48,7 +50,7 @@ async function main() {
 
   const exists = buckets?.some((b) => b.name === "references");
   const options = {
-    public: true,
+    public: false,
     fileSizeLimit: 400 * 1024 * 1024,
     allowedMimeTypes: ["application/pdf"],
   };
@@ -56,14 +58,21 @@ async function main() {
   if (!exists) {
     const { error } = await supabase.storage.createBucket("references", options);
     if (error) throw error;
-    console.log("Created public bucket: references (400MB PDF limit)");
+    console.log("Created PRIVATE bucket: references");
   } else {
     const { error } = await supabase.storage.updateBucket("references", {
-      public: true,
+      public: false,
+      fileSizeLimit: 400 * 1024 * 1024,
+      allowedMimeTypes: ["application/pdf"],
     });
-    if (error) console.warn("Could not set bucket public:", error.message);
-    else console.log("Set bucket public: references");
+    if (error) console.warn("Could not lock bucket private:", error.message);
+    else console.log("Locked bucket private: references");
   }
+
+  // Drop public-read policy if present (SQL via RPC not available; warn user).
+  console.log(
+    "Confirm in Supabase Dashboard → Storage → references → Public bucket = OFF",
+  );
 
   const { data: bucketsAfter } = await supabase.storage.listBuckets();
   const ref = bucketsAfter?.find((b) => b.name === "references");
