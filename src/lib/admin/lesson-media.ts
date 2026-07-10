@@ -179,7 +179,11 @@ export type SwapLessonMediaInput = {
   mediaType: "image" | "video";
   currentSrc: string;
   mode: "auto" | "manual";
+  /** Manual image: curated catalog key OR direct image URL */
   imageKey?: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  imageCaption?: string;
   youtubeId?: string;
   videoTitle?: string;
 };
@@ -202,17 +206,34 @@ export function buildMediaSwap(
   const existingCaption = curated?.images?.[0]?.caption;
 
   if (input.mediaType === "image") {
-    const image =
-      input.mode === "manual" && input.imageKey
-        ? imageFromAssetKey(input.imageKey as LessonImageKey, existingCaption)
-        : pickAlternativeImage(
-            input.tradeCode,
-            input.currentSrc,
-            existingCaption,
-          );
+    let image: BlockMediaImage | null = null;
+
+    if (input.mode === "manual" && input.imageSrc) {
+      image = {
+        src: input.imageSrc,
+        alt: input.imageAlt?.trim() || "Lesson reference image",
+        caption:
+          input.imageCaption?.trim() ||
+          existingCaption ||
+          input.imageAlt?.trim() ||
+          "Lesson reference image",
+      };
+    } else if (input.mode === "manual" && input.imageKey) {
+      image = imageFromAssetKey(
+        input.imageKey as LessonImageKey,
+        existingCaption,
+      );
+    } else {
+      // Auto mode without a pre-resolved AI image falls back to catalog.
+      image = pickAlternativeImage(
+        input.tradeCode,
+        input.currentSrc,
+        existingCaption,
+      );
+    }
 
     if (!image) {
-      return { error: "No alternative image available in catalog" };
+      return { error: "No alternative image available" };
     }
 
     return {

@@ -2,11 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, RefreshCw, Settings2 } from "lucide-react";
+import { Loader2, Settings2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { regenerateLessonMediaAction } from "@/lib/admin/lesson-media-actions";
-
-type VideoOption = { youtubeId: string; title: string };
 
 export function LessonMediaAdminControls({
   lessonId,
@@ -16,8 +13,6 @@ export function LessonMediaAdminControls({
   tradeCode,
   mediaType,
   mediaSrc,
-  imageAssetKeys = [],
-  videoAlternatives = [],
 }: {
   lessonId: string;
   lessonSlug: string;
@@ -27,37 +22,64 @@ export function LessonMediaAdminControls({
   mediaType: "image" | "video";
   mediaSrc: string;
   imageAssetKeys?: string[];
-  videoAlternatives?: VideoOption[];
+  videoAlternatives?: { youtubeId: string; title: string }[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [imageKey, setImageKey] = useState(imageAssetKeys[0] ?? "");
-  const [youtubeId, setYoutubeId] = useState(
-    videoAlternatives[0]?.youtubeId ?? "",
-  );
-  const [videoTitle, setVideoTitle] = useState(
-    videoAlternatives[0]?.title ?? "",
-  );
+  const [imageSrc, setImageSrc] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
+  const [youtubeId, setYoutubeId] = useState("");
+  const [videoTitle, setVideoTitle] = useState("");
 
   const regenerate = (mode: "auto" | "manual") => {
     setError(null);
     startTransition(async () => {
       try {
-        await regenerateLessonMediaAction({
-          lessonId,
-          lessonSlug,
-          chapterTaskCode,
-          blockCode,
-          tradeCode,
-          mediaType,
-          mediaSrc,
-          mode,
-          imageKey: mediaType === "image" ? imageKey : undefined,
-          youtubeId: mediaType === "video" ? youtubeId : undefined,
-          videoTitle: mediaType === "video" ? videoTitle : undefined,
+        const res = await fetch("/api/admin/lesson-media/regenerate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lesson_id: lessonId,
+            media_type: mediaType,
+            media_src: mediaSrc,
+            mode,
+            image_src:
+              mediaType === "image" && mode === "manual"
+                ? imageSrc.trim() || undefined
+                : undefined,
+            image_alt:
+              mediaType === "image" && mode === "manual"
+                ? imageAlt.trim() || undefined
+                : undefined,
+            youtube_id:
+              mediaType === "video" && mode === "manual"
+                ? youtubeId.trim() || undefined
+                : undefined,
+            video_title:
+              mediaType === "video" && mode === "manual"
+                ? videoTitle.trim() || undefined
+                : undefined,
+            lesson_slug: lessonSlug,
+            chapter_task_code: chapterTaskCode,
+            block_code: blockCode,
+            trade_code: tradeCode,
+          }),
         });
+
+        const contentType = res.headers.get("content-type") ?? "";
+        const data = contentType.includes("application/json")
+          ? await res.json()
+          : null;
+
+        if (!res.ok) {
+          throw new Error(
+            (data && typeof data.error === "string" && data.error) ||
+              `Regeneration failed (${res.status})`,
+          );
+        }
+
         setOpen(false);
         router.refresh();
       } catch (err) {
@@ -65,6 +87,11 @@ export function LessonMediaAdminControls({
       }
     });
   };
+
+  const canApplyManual =
+    mediaType === "image"
+      ? Boolean(imageSrc.trim())
+      : Boolean(youtubeId.trim() && videoTitle.trim());
 
   return (
     <div className="border-t border-[#E5E0D8] bg-[#FFFBF7] px-3 py-2">
@@ -100,48 +127,40 @@ export function LessonMediaAdminControls({
       {open && (
         <div className="mt-2 space-y-2">
           {mediaType === "image" ? (
-            <select
-              value={imageKey}
-              onChange={(e) => setImageKey(e.target.value)}
-              className="w-full rounded-lg border border-[#E5E0D8] bg-white p-2 text-xs outline-none focus:border-[#C0271E]"
-            >
-              {imageAssetKeys.map((key) => (
-                <option key={key} value={key}>
-                  {key.replace(/-/g, " ")}
-                </option>
-              ))}
-            </select>
+            <div className="space-y-2">
+              <p className="text-xs text-[#64748B]">
+                AI reads this lesson and finds a matching Wikimedia Commons
+                photo, then hosts it in storage.
+              </p>
+              <input
+                value={imageSrc}
+                onChange={(e) => setImageSrc(e.target.value)}
+                placeholder="Or paste image URL (optional)"
+                className="w-full rounded-lg border border-[#E5E0D8] bg-white p-2 text-xs outline-none focus:border-[#C0271E]"
+              />
+              <input
+                value={imageAlt}
+                onChange={(e) => setImageAlt(e.target.value)}
+                placeholder="Alt text (optional with URL)"
+                className="w-full rounded-lg border border-[#E5E0D8] bg-white p-2 text-xs outline-none focus:border-[#C0271E]"
+              />
+            </div>
           ) : (
             <div className="space-y-2">
-              {videoAlternatives.length > 0 && (
-                <select
-                  value={youtubeId}
-                  onChange={(e) => {
-                    const picked = videoAlternatives.find(
-                      (v) => v.youtubeId === e.target.value,
-                    );
-                    setYoutubeId(e.target.value);
-                    if (picked) setVideoTitle(picked.title);
-                  }}
-                  className="w-full rounded-lg border border-[#E5E0D8] bg-white p-2 text-xs outline-none focus:border-[#C0271E]"
-                >
-                  {videoAlternatives.map((video) => (
-                    <option key={video.youtubeId} value={video.youtubeId}>
-                      {video.title}
-                    </option>
-                  ))}
-                </select>
-              )}
+              <p className="text-xs text-[#64748B]">
+                AI reads this lesson and finds a matching YouTube training
+                video.
+              </p>
               <input
                 value={youtubeId}
                 onChange={(e) => setYoutubeId(e.target.value)}
-                placeholder="YouTube ID or URL"
+                placeholder="Or paste YouTube ID or URL (optional)"
                 className="w-full rounded-lg border border-[#E5E0D8] bg-white p-2 text-xs outline-none focus:border-[#C0271E]"
               />
               <input
                 value={videoTitle}
                 onChange={(e) => setVideoTitle(e.target.value)}
-                placeholder="Video title"
+                placeholder="Video title (required with URL)"
                 className="w-full rounded-lg border border-[#E5E0D8] bg-white p-2 text-xs outline-none focus:border-[#C0271E]"
               />
             </div>
@@ -160,20 +179,22 @@ export function LessonMediaAdminControls({
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
                 <>
-                  <RefreshCw className="h-3 w-3" />
-                  Auto-pick
+                  <Sparkles className="h-3 w-3" />
+                  Find with AI
                 </>
               )}
             </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              disabled={isPending}
-              onClick={() => regenerate("manual")}
-              className="h-7 px-2 text-xs"
-            >
-              Apply selected
-            </Button>
+            {canApplyManual ? (
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={isPending}
+                onClick={() => regenerate("manual")}
+                className="h-7 px-2 text-xs"
+              >
+                Apply selected
+              </Button>
+            ) : null}
           </div>
         </div>
       )}

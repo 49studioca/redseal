@@ -115,27 +115,23 @@ function normalizeText(raw: string): string {
     .trim();
 }
 
-/** Known CEC Part I section numbers (approx). Filters ISBN/TOC false positives. */
+/** Known CEC Part I section numbers. Filters ISBN/TOC/standard false positives. */
 const VALID_SECTIONS = new Set([
-  0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38,
-  40, 42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76,
-  78, 80, 82, 84, 86,
+  2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40,
+  42, 44, 46, 48, 50, 52, 54, 56, 58, 60, 62, 64, 66, 68, 70, 72, 74, 76, 78,
+  80, 82, 84, 86,
 ]);
 
 function isPlausibleCecRule(ruleNumber: string): boolean {
   const [sectionRaw, restRaw] = ruleNumber.split("-");
   if (!sectionRaw || !restRaw) return false;
-  // Reject zero-padded junk like 00-000, 01-xxx from front matter
   if (/^0\d/.test(sectionRaw)) return false;
   const section = Number(sectionRaw);
   const rest = Number(restRaw);
   if (!Number.isFinite(section) || !Number.isFinite(rest)) return false;
   if (!VALID_SECTIONS.has(section)) return false;
-  // Real CEC rules are typically xxx with 3 digits (000, 100, 102…) or similar
-  if (restRaw.length > 4) return false;
-  if (rest > 9999) return false;
-  // Skip tiny TOC-style numbers like 3-1 unless section 0 definitions
-  if (rest < 10 && section !== 0) return false;
+  // CEC Part I rules are almost always N-XXX (3 digits), e.g. 8-102, 26-724.
+  if (restRaw.length !== 3) return false;
   return true;
 }
 

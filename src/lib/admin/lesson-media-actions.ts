@@ -8,6 +8,9 @@ import {
   resolveLessonMediaContext,
 } from "@/lib/admin/lesson-media";
 import { upsertBlockMediaOverride } from "@/lib/content/block-media-overrides";
+import { findLessonImageFromContent } from "@/lib/ai/find-lesson-image";
+import { findLessonVideoFromContent } from "@/lib/ai/find-lesson-video";
+import { getBlockMedia } from "@/data/block-media";
 
 function parseYoutubeId(value: string): string {
   const trimmed = value.trim();
@@ -23,7 +26,7 @@ function parseYoutubeId(value: string): string {
 
 async function requireAdminAction() {
   if (!usesSupabaseData()) {
-    return { userId: "demo-admin" };
+    return { userId: "demo-admin" as const, supabase: null };
   }
 
   const supabase = await createClient();
@@ -58,6 +61,9 @@ export async function regenerateLessonMediaAction(input: {
   mediaSrc: string;
   mode: "auto" | "manual";
   imageKey?: string;
+  imageSrc?: string;
+  imageAlt?: string;
+  imageCaption?: string;
   youtubeId?: string;
   videoTitle?: string;
 }) {
@@ -73,6 +79,75 @@ export async function regenerateLessonMediaAction(input: {
   const { tradeCode, blockCode, taskCode, mediaKey } =
     resolveLessonMediaContext(lesson);
 
+  let imageSrc = input.imageSrc;
+  let imageAlt = input.imageAlt;
+  let imageCaption = input.imageCaption;
+  let youtubeId = input.youtubeId
+    ? parseYoutubeId(input.youtubeId)
+    : undefined;
+  let videoTitle = input.videoTitle;
+  let mode = input.mode;
+
+  if (input.mode === "auto") {
+    if (!usesSupabaseData() || !supabase) {
+      throw new Error("AI media search requires Supabase to be configured");
+    }
+
+    const { data: lessonRow, error: lessonError } = await supabase
+      .from("lessons")
+      .select(
+        `
+        title,
+        summary,
+        content_blocks,
+        trade:trades ( name )
+      `,
+      )
+      .eq("id", input.lessonId)
+      .single();
+
+    if (lessonError || !lessonRow) {
+      throw new Error("Lesson not found");
+    }
+
+    const trade = Array.isArray(lessonRow.trade)
+      ? lessonRow.trade[0]
+      : lessonRow.trade;
+    const curated = getBlockMedia(tradeCode, blockCode, taskCode);
+    const contentBlocks = (lessonRow.content_blocks as {
+      type?: string;
+      content?: string;
+      meta?: Record<string, unknown>;
+    }[]) ?? [];
+
+    if (input.mediaType === "image") {
+      const found = await findLessonImageFromContent({
+        title: lessonRow.title,
+        summary: lessonRow.summary ?? undefined,
+        contentBlocks,
+        tradeName: trade?.name,
+        currentSrc: input.mediaSrc,
+        currentAlt: curated?.images?.[0]?.alt,
+        mediaKey,
+      });
+      imageSrc = found.src;
+      imageAlt = found.alt;
+      imageCaption = found.caption;
+    } else {
+      const found = await findLessonVideoFromContent({
+        title: lessonRow.title,
+        summary: lessonRow.summary ?? undefined,
+        contentBlocks,
+        tradeName: trade?.name,
+        currentYoutubeId: input.mediaSrc,
+        currentTitle: curated?.video?.title,
+      });
+      youtubeId = found.youtubeId;
+      videoTitle = found.title;
+    }
+    mode = "manual";
+  }
+
   const swap = buildMediaSwap({
     tradeCode,
     blockCode,
@@ -80,19 +155,20 @@ export async function regenerateLessonMediaAction(input: {
     mediaKey,
     mediaType: input.mediaType,
     currentSrc: input.mediaSrc,
-    mode: input.mode,
+    mode,
     imageKey: input.imageKey,
-    youtubeId: input.youtubeId
-      ? parseYoutubeId(input.youtubeId)
-      : undefined,
-    videoTitle: input.videoTitle,
+    imageSrc,
+    imageAlt,
+    imageCaption,
+    youtubeId,
+    videoTitle,
   });
 
   if ("error" in swap) {
     throw new Error(swap.error);
   }
 
-  if (!usesSupabaseData()) {
+  if (!usesSupabaseData() || !supabase) {
     revalidatePath(`/dashboard/learn/${input.lessonSlug}`);
     return { ok: true };
   }
@@ -120,12 +196,14 @@ export async function regenerateLessonMediaAction(input: {
     );
   }
 
-  await supabase!
+  await supabase
     .from("lesson_media_reports")
     .update({
       status: "resolved",
       resolved_at: new Date().toISOString(),
-      admin_notes: `Media regenerated inline (${input.mode})`,
+      admin_notes: `Media regenerated inline (${input.mode}${
+        input.mode === "auto" ? ", AI search" : ""
+      })`,
     })
     .eq("lesson_id", input.lessonId)
     .eq("media_type", input.mediaType)

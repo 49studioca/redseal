@@ -41,7 +41,10 @@ export function parseContentBlocks(raw: unknown): ContentBlock[] {
   for (const entry of blocks) {
     if (!entry || typeof entry !== "object") continue;
     const block = entry as Record<string, unknown>;
-    const type = normalizeBlockType(block.type);
+    // Legacy AI rows sometimes omitted `type` while still storing prose in `content`.
+    const type =
+      normalizeBlockType(block.type) ??
+      (typeof block.content === "string" ? "text" : null);
     if (!type || typeof block.content !== "string") continue;
 
     parsed.push({

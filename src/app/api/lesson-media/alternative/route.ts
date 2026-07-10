@@ -1,16 +1,99 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { usesSupabaseData } from "@/lib/supabase/config";
-import {
-  imageFromAssetKey,
-  listImageAssetKeys,
-  listVideoAlternatives,
-  pickAlternativeImage,
-  pickAlternativeVideo,
-  resolveLessonMediaContext,
-} from "@/lib/admin/lesson-media";
+import { resolveLessonMediaContext } from "@/lib/admin/lesson-media";
+import { findLessonImageFromContent } from "@/lib/ai/find-lesson-image";
+import { findLessonVideoFromContent } from "@/lib/ai/find-lesson-video";
 import { getBlockMedia } from "@/data/block-media";
-import type { LessonImageKey } from "@/data/lesson-image-assets";
+
+async function loadLesson(lessonId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Unauthorized" as const, status: 401 as const };
+
+  const { data: lesson, error } = await supabase
+    .from("lessons")
+    .select(
+      `
+      slug,
+      title,
+      summary,
+      content_blocks,
+      chapter_task_code,
+      trade:trades ( code, name ),
+      block:rsos_blocks ( code )
+    `,
+    )
+    .eq("id", lessonId)
+    .single();
+
+  if (error || !lesson) {
+    return { error: "Lesson not found" as const, status: 404 as const };
+  }
+
+  return { lesson, user };
+}
+
+async function findAlternative(input: {
+  lesson: {
+    slug: string;
+    title: string;
+    summary: string | null;
+    content_blocks: unknown;
+    chapter_task_code: string | null;
+    trade?: { code: string; name?: string } | { code: string; name?: string }[] | null;
+    block?: { code: string } | { code: string }[] | null;
+  };
+  mediaType: "image" | "video";
+  mediaSrc: string;
+}) {
+  const trade = Array.isArray(input.lesson.trade)
+    ? input.lesson.trade[0]
+    : input.lesson.trade;
+  const block = Array.isArray(input.lesson.block)
+    ? input.lesson.block[0]
+    : input.lesson.block;
+
+  const { tradeCode, blockCode, taskCode, mediaKey } = resolveLessonMediaContext({
+    slug: input.lesson.slug,
+    chapter_task_code: input.lesson.chapter_task_code,
+    trade: trade ?? undefined,
+    block: block ?? undefined,
+  });
+
+  const contentBlocks = (input.lesson.content_blocks as {
+    type?: string;
+    content?: string;
+    meta?: Record<string, unknown>;
+  }[]) ?? [];
+  const curated = getBlockMedia(tradeCode, blockCode, taskCode);
+
+  if (input.mediaType === "image") {
+    const alternative = await findLessonImageFromContent({
+      title: input.lesson.title,
+      summary: input.lesson.summary ?? undefined,
+      contentBlocks,
+      tradeName: trade?.name,
+      currentSrc: input.mediaSrc,
+      currentAlt: curated?.images?.[0]?.alt,
+      mediaKey,
+      host: false,
+    });
+    return { alternative, ai_search: true };
+  }
+
+  const alternative = await findLessonVideoFromContent({
+    title: input.lesson.title,
+    summary: input.lesson.summary ?? undefined,
+    contentBlocks,
+    tradeName: trade?.name,
+    currentYoutubeId: input.mediaSrc,
+    currentTitle: curated?.video?.title,
+  });
+  return { alternative, ai_search: true };
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -30,70 +113,32 @@ export async function GET(request: Request) {
   }
 
   if (!usesSupabaseData()) {
-    if (mediaType === "image") {
-      const key = listImageAssetKeys()[0];
-      const image = imageFromAssetKey(key);
-      return NextResponse.json({
-        alternative: image,
-        image_keys: listImageAssetKeys(),
-      });
-    }
-    return NextResponse.json({ alternative: null, videos: [] });
+    return NextResponse.json({ alternative: null });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const loaded = await loadLesson(lessonId);
+  if ("error" in loaded) {
+    return NextResponse.json({ error: loaded.error }, { status: loaded.status });
   }
 
-  const { data: lesson, error } = await supabase
-    .from("lessons")
-    .select(
-      `
-      slug,
-      chapter_task_code,
-      trade:trades ( code ),
-      block:rsos_blocks ( code )
-    `,
-    )
-    .eq("id", lessonId)
-    .single();
-
-  if (error || !lesson) {
-    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
-  }
-
-  const trade = Array.isArray(lesson.trade) ? lesson.trade[0] : lesson.trade;
-  const block = Array.isArray(lesson.block) ? lesson.block[0] : lesson.block;
-
-  const { tradeCode, blockCode, taskCode } = resolveLessonMediaContext({
-    slug: lesson.slug,
-    chapter_task_code: lesson.chapter_task_code,
-    trade: trade ?? undefined,
-    block: block ?? undefined,
-  });
-
-  const curated = getBlockMedia(tradeCode, blockCode, taskCode);
-  const existingCaption = curated?.images?.[0]?.caption;
-
-  if (mediaType === "image") {
-    const alternative = pickAlternativeImage(tradeCode, mediaSrc, existingCaption);
-    return NextResponse.json({
-      alternative,
-      image_keys: listImageAssetKeys().filter((key) => {
-        const image = imageFromAssetKey(key, existingCaption);
-        return image.src !== mediaSrc;
-      }),
+  try {
+    const result = await findAlternative({
+      lesson: loaded.lesson,
+      mediaType,
+      mediaSrc,
     });
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : `Could not find an alternative ${mediaType}`,
+      },
+      { status: 404 },
+    );
   }
-
-  const videos = listVideoAlternatives(tradeCode, mediaSrc);
-  const alternative = pickAlternativeVideo(tradeCode, mediaSrc);
-
-  return NextResponse.json({ alternative, videos });
 }
 
 export async function POST(request: Request) {
@@ -101,90 +146,40 @@ export async function POST(request: Request) {
   const lessonId = String(body.lesson_id ?? "").trim();
   const mediaType = String(body.media_type ?? "").trim();
   const mediaSrc = String(body.media_src ?? "").trim();
-  const imageKey = body.image_key ? String(body.image_key).trim() : undefined;
-  const youtubeId = body.youtube_id ? String(body.youtube_id).trim() : undefined;
 
   if (!lessonId || !mediaType || !mediaSrc) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
+
+  if (mediaType !== "image" && mediaType !== "video") {
+    return NextResponse.json({ error: "invalid media_type" }, { status: 400 });
   }
 
   if (!usesSupabaseData()) {
     return NextResponse.json({ alternative: null });
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const loaded = await loadLesson(lessonId);
+  if ("error" in loaded) {
+    return NextResponse.json({ error: loaded.error }, { status: loaded.status });
   }
 
-  const { data: lesson } = await supabase
-    .from("lessons")
-    .select(
-      `
-      slug,
-      chapter_task_code,
-      trade:trades ( code ),
-      block:rsos_blocks ( code )
-    `,
-    )
-    .eq("id", lessonId)
-    .single();
-
-  if (!lesson) {
-    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  try {
+    const result = await findAlternative({
+      lesson: loaded.lesson,
+      mediaType,
+      mediaSrc,
+    });
+    return NextResponse.json(result);
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : `Could not find an alternative ${mediaType}`,
+      },
+      { status: 404 },
+    );
   }
-
-  const trade = Array.isArray(lesson.trade) ? lesson.trade[0] : lesson.trade;
-  const block = Array.isArray(lesson.block) ? lesson.block[0] : lesson.block;
-
-  const { tradeCode, blockCode, taskCode } = resolveLessonMediaContext({
-    slug: lesson.slug,
-    chapter_task_code: lesson.chapter_task_code,
-    trade: trade ?? undefined,
-    block: block ?? undefined,
-  });
-
-  const curated = getBlockMedia(tradeCode, blockCode, taskCode);
-  const existingCaption = curated?.images?.[0]?.caption;
-
-  if (mediaType === "image") {
-    const alternative =
-      imageKey && listImageAssetKeys().includes(imageKey as LessonImageKey)
-        ? imageFromAssetKey(imageKey as LessonImageKey, existingCaption)
-        : pickAlternativeImage(tradeCode, mediaSrc, existingCaption);
-
-    if (!alternative || alternative.src === mediaSrc) {
-      return NextResponse.json(
-        { error: "No other image available" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({ alternative });
-  }
-
-  if (mediaType === "video") {
-    const videos = listVideoAlternatives(tradeCode, mediaSrc);
-    const currentIndex = youtubeId
-      ? videos.findIndex((video) => video.youtubeId === youtubeId)
-      : -1;
-    const next =
-      currentIndex >= 0
-        ? videos[(currentIndex + 1) % videos.length]
-        : pickAlternativeVideo(tradeCode, mediaSrc);
-
-    if (!next) {
-      return NextResponse.json(
-        { error: "No other video available" },
-        { status: 404 },
-      );
-    }
-
-    return NextResponse.json({ alternative: next });
-  }
-
-  return NextResponse.json({ error: "invalid media_type" }, { status: 400 });
 }

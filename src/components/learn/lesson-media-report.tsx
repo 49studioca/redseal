@@ -306,8 +306,9 @@ export function LessonMediaReport({
         {showFindAlternative && !alternativeLoaded && (
           <div className="mt-4 rounded-xl border border-[#E5E0D8] bg-[#FFFBF7] p-4">
             <p className="text-sm text-[#64748B]">
-              Want a better match? Search our catalog for a related{" "}
-              {mediaTypeLabel}.
+              {mediaType === "image"
+                ? "Want a better match? AI can search Wikimedia Commons using this lesson’s content."
+                : "Want a better match? AI can search YouTube using this lesson’s content."}
             </p>
             <Button
               variant="secondary"

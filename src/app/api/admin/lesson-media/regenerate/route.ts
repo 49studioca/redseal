@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { assertAdminApi } from "@/lib/admin/require-admin";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import {
@@ -8,6 +9,12 @@ import {
   resolveLessonMediaContext,
 } from "@/lib/admin/lesson-media";
 import { upsertBlockMediaOverride } from "@/lib/content/block-media-overrides";
+import { findLessonImageFromContent } from "@/lib/ai/find-lesson-image";
+import { findLessonVideoFromContent } from "@/lib/ai/find-lesson-video";
+import { getBlockMedia } from "@/data/block-media";
+
+export const maxDuration = 120;
+export const runtime = "nodejs";
 
 function parseYoutubeId(value: string): string {
   const trimmed = value.trim();
@@ -23,8 +30,11 @@ function parseYoutubeId(value: string): string {
 
 type LessonContext = {
   slug: string;
+  title?: string;
+  summary?: string | null;
+  content_blocks?: unknown;
   chapter_task_code: string | null;
-  trade?: { code: string } | null;
+  trade?: { code: string; name?: string } | null;
   block?: { code: string } | null;
 };
 
@@ -37,8 +47,11 @@ async function loadLessonContext(
     .select(
       `
       slug,
+      title,
+      summary,
+      content_blocks,
       chapter_task_code,
-      trade:trades ( code ),
+      trade:trades ( code, name ),
       block:rsos_blocks ( code )
     `,
     )
@@ -52,6 +65,9 @@ async function loadLessonContext(
 
   return {
     slug: lesson.slug,
+    title: lesson.title,
+    summary: lesson.summary,
+    content_blocks: lesson.content_blocks,
     chapter_task_code: lesson.chapter_task_code,
     trade: trade ?? null,
     block: block ?? null,
@@ -66,12 +82,59 @@ async function applyMediaSwap(
   mode: "auto" | "manual",
   manual: {
     imageKey?: string;
+    imageSrc?: string;
+    imageAlt?: string;
+    imageCaption?: string;
     youtubeId?: string;
     videoTitle?: string;
   },
 ) {
   const { tradeCode, blockCode, taskCode, mediaKey } =
     resolveLessonMediaContext(lesson);
+
+  let resolvedMode = mode;
+  let imageSrc = manual.imageSrc;
+  let imageAlt = manual.imageAlt;
+  let imageCaption = manual.imageCaption;
+  let youtubeId = manual.youtubeId;
+  let videoTitle = manual.videoTitle;
+
+  if (mode === "auto") {
+    const curated = getBlockMedia(tradeCode, blockCode, taskCode);
+    const contentBlocks = (lesson.content_blocks as {
+      type?: string;
+      content?: string;
+      meta?: Record<string, unknown>;
+    }[]) ?? [];
+
+    if (mediaType === "image") {
+      const found = await findLessonImageFromContent({
+        title: lesson.title ?? lesson.slug,
+        summary: lesson.summary ?? undefined,
+        contentBlocks,
+        tradeName: lesson.trade?.name,
+        currentSrc: mediaSrc,
+        currentAlt: curated?.images?.[0]?.alt,
+        mediaKey,
+      });
+      imageSrc = found.src;
+      imageAlt = found.alt;
+      imageCaption = found.caption;
+      resolvedMode = "manual";
+    } else {
+      const found = await findLessonVideoFromContent({
+        title: lesson.title ?? lesson.slug,
+        summary: lesson.summary ?? undefined,
+        contentBlocks,
+        tradeName: lesson.trade?.name,
+        currentYoutubeId: mediaSrc,
+        currentTitle: curated?.video?.title,
+      });
+      youtubeId = found.youtubeId;
+      videoTitle = found.title;
+      resolvedMode = "manual";
+    }
+  }
 
   const swap = buildMediaSwap({
     tradeCode,
@@ -80,10 +143,13 @@ async function applyMediaSwap(
     mediaKey,
     mediaType,
     currentSrc: mediaSrc,
-    mode,
+    mode: resolvedMode,
     imageKey: manual.imageKey,
-    youtubeId: manual.youtubeId,
-    videoTitle: manual.videoTitle,
+    imageSrc,
+    imageAlt,
+    imageCaption,
+    youtubeId,
+    videoTitle,
   });
 
   if ("error" in swap) {
@@ -131,6 +197,15 @@ export async function POST(request: Request) {
   const imageKey = body.image_key
     ? String(body.image_key).trim()
     : undefined;
+  const imageSrc = body.image_src
+    ? String(body.image_src).trim()
+    : undefined;
+  const imageAlt = body.image_alt
+    ? String(body.image_alt).trim()
+    : undefined;
+  const imageCaption = body.image_caption
+    ? String(body.image_caption).trim()
+    : undefined;
   const youtubeId = body.youtube_id
     ? parseYoutubeId(String(body.youtube_id))
     : undefined;
@@ -157,8 +232,11 @@ export async function POST(request: Request) {
         media_src,
         lesson:lessons (
           slug,
+          title,
+          summary,
+          content_blocks,
           chapter_task_code,
-          trade:trades ( code ),
+          trade:trades ( code, name ),
           block:rsos_blocks ( code )
         )
       `,
@@ -186,6 +264,9 @@ export async function POST(request: Request) {
 
     lesson = {
       slug: reportLesson.slug,
+      title: reportLesson.title,
+      summary: reportLesson.summary,
+      content_blocks: reportLesson.content_blocks,
       chapter_task_code: reportLesson.chapter_task_code,
       trade: trade ?? null,
       block: block ?? null,
@@ -205,47 +286,63 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await applyMediaSwap(
-    auth.userId,
-    lesson,
-    mediaType,
-    mediaSrc,
-    mode,
-    { imageKey, youtubeId, videoTitle },
-  );
+  try {
+    const result = await applyMediaSwap(
+      auth.userId,
+      lesson,
+      mediaType,
+      mediaSrc,
+      mode,
+      { imageKey, imageSrc, imageAlt, imageCaption, youtubeId, videoTitle },
+    );
 
-  if ("error" in result) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-
-  if (resolveReportId) {
-    const { error: resolveError } = await supabase
-      .from("lesson_media_reports")
-      .update({
-        status: "resolved",
-        resolved_at: new Date().toISOString(),
-        admin_notes: `Media regenerated (${mode})`,
-      })
-      .eq("id", resolveReportId);
-
-    if (resolveError) {
-      return NextResponse.json({ error: resolveError.message }, { status: 500 });
+    if ("error" in result) {
+      return NextResponse.json({ error: result.error }, { status: result.status });
     }
-  } else {
-    await supabase
-      .from("lesson_media_reports")
-      .update({
-        status: "resolved",
-        resolved_at: new Date().toISOString(),
-        admin_notes: `Media regenerated inline (${mode})`,
-      })
-      .eq("lesson_id", lessonId)
-      .eq("media_type", mediaType)
-      .eq("media_src", mediaSrc)
-      .eq("status", "open");
-  }
 
-  return NextResponse.json({ ok: true, media_key: result.mediaKey });
+    if (resolveReportId) {
+      const { error: resolveError } = await supabase
+        .from("lesson_media_reports")
+        .update({
+          status: "resolved",
+          resolved_at: new Date().toISOString(),
+          admin_notes: `Media regenerated (${mode}${
+            mode === "auto" ? ", AI search" : ""
+          })`,
+        })
+        .eq("id", resolveReportId);
+
+      if (resolveError) {
+        return NextResponse.json({ error: resolveError.message }, { status: 500 });
+      }
+    } else {
+      await supabase
+        .from("lesson_media_reports")
+        .update({
+          status: "resolved",
+          resolved_at: new Date().toISOString(),
+          admin_notes: `Media regenerated inline (${mode}${
+            mode === "auto" ? ", AI search" : ""
+          })`,
+        })
+        .eq("lesson_id", lessonId)
+        .eq("media_type", mediaType)
+        .eq("media_src", mediaSrc)
+        .eq("status", "open");
+    }
+
+    revalidatePath(`/dashboard/learn/${lesson.slug}`);
+    return NextResponse.json({ ok: true, media_key: result.mediaKey });
+  } catch (err) {
+    console.error("[lesson-media/regenerate]", err);
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error ? err.message : "Failed to regenerate media",
+      },
+      { status: 500 },
+    );
+  }
 }
 
 export async function GET(request: Request) {
@@ -303,7 +400,10 @@ export async function GET(request: Request) {
     tradeCode = trade?.code ?? "";
 
     if (report.media_type === "image") {
-      return NextResponse.json({ image_keys: listImageAssetKeys() });
+      return NextResponse.json({
+        image_keys: listImageAssetKeys(),
+        ai_search: true,
+      });
     }
 
     return NextResponse.json({
@@ -318,7 +418,10 @@ export async function GET(request: Request) {
     }
 
     if (mediaType === "image") {
-      return NextResponse.json({ image_keys: listImageAssetKeys() });
+      return NextResponse.json({
+        image_keys: listImageAssetKeys(),
+        ai_search: true,
+      });
     }
 
     return NextResponse.json({

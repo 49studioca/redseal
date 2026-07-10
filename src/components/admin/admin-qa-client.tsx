@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Loader2, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, Loader2, Search, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { resolveLessonImageSrc } from "@/lib/storage/lesson-images";
@@ -14,8 +14,6 @@ const REASON_LABELS: Record<string, string> = {
   inappropriate: "Inappropriate",
   other: "Other",
 };
-
-type VideoOption = { youtubeId: string; title: string };
 
 function MediaPreview({ report }: { report: LessonMediaReportRow }) {
   if (report.media_type === "image") {
@@ -51,45 +49,12 @@ function RegeneratePanel({
   onDone: () => void;
 }) {
   const [panelOpen, setPanelOpen] = useState(false);
-  const [imageKey, setImageKey] = useState("");
-  const [imageKeys, setImageKeys] = useState<string[]>([]);
-  const [videos, setVideos] = useState<VideoOption[]>([]);
+  const [imageSrc, setImageSrc] = useState("");
+  const [imageAlt, setImageAlt] = useState("");
   const [youtubeId, setYoutubeId] = useState("");
   const [videoTitle, setVideoTitle] = useState("");
   const [loading, setLoading] = useState(false);
-  const [optionsLoading, setOptionsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const loadOptions = async () => {
-    setOptionsLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(
-        `/api/admin/lesson-media/regenerate?report_id=${report.id}`,
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Could not load alternatives");
-      if (report.media_type === "image") {
-        const keys = (data.image_keys as string[]) ?? [];
-        setImageKeys(keys);
-        setImageKey(keys[0] ?? "");
-      } else {
-        const list = (data.videos as VideoOption[]) ?? [];
-        setVideos(list);
-        if (list[0]) {
-          setYoutubeId(list[0].youtubeId);
-          setVideoTitle(list[0].title);
-        }
-      }
-      setPanelOpen(true);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Could not load alternatives",
-      );
-    } finally {
-      setOptionsLoading(false);
-    }
-  };
 
   const regenerate = async (mode: "auto" | "manual") => {
     setLoading(true);
@@ -101,9 +66,22 @@ function RegeneratePanel({
         body: JSON.stringify({
           report_id: report.id,
           mode,
-          image_key: report.media_type === "image" ? imageKey : undefined,
-          youtube_id: report.media_type === "video" ? youtubeId : undefined,
-          video_title: report.media_type === "video" ? videoTitle : undefined,
+          image_src:
+            report.media_type === "image" && mode === "manual"
+              ? imageSrc.trim() || undefined
+              : undefined,
+          image_alt:
+            report.media_type === "image" && mode === "manual"
+              ? imageAlt.trim() || undefined
+              : undefined,
+          youtube_id:
+            report.media_type === "video" && mode === "manual"
+              ? youtubeId.trim() || undefined
+              : undefined,
+          video_title:
+            report.media_type === "video" && mode === "manual"
+              ? videoTitle.trim() || undefined
+              : undefined,
         }),
       });
       const data = await res.json();
@@ -123,29 +101,22 @@ function RegeneratePanel({
         <Button
           size="sm"
           variant="secondary"
-          disabled={optionsLoading}
-          onClick={() => void loadOptions()}
+          onClick={() => {
+            setError(null);
+            setPanelOpen(true);
+          }}
         >
-          {optionsLoading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <>
-              <Search className="h-4 w-4" />
-              Find alternative
-            </>
-          )}
+          <Search className="h-4 w-4" />
+          Find alternative
         </Button>
       </div>
     );
   }
 
-  if (optionsLoading) {
-    return (
-      <p className="mt-3 flex items-center gap-2 text-sm text-[#64748B]">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading alternatives…
-      </p>
-    );
-  }
+  const canApplyManual =
+    report.media_type === "image"
+      ? Boolean(imageSrc.trim())
+      : Boolean(youtubeId.trim() && videoTitle.trim());
 
   return (
     <div className="mt-4 rounded-xl border border-[#F4A11A]/30 bg-[#FFFBEB] p-4">
@@ -154,48 +125,38 @@ function RegeneratePanel({
       </p>
 
       {report.media_type === "image" ? (
-        <select
-          value={imageKey}
-          onChange={(e) => setImageKey(e.target.value)}
-          className="mt-3 w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E]"
-        >
-          {imageKeys.map((key) => (
-            <option key={key} value={key}>
-              {key.replace(/-/g, " ")}
-            </option>
-          ))}
-        </select>
+        <div className="mt-3 space-y-2">
+          <p className="text-sm text-[#92400E]/90">
+            AI will read the lesson and find a matching Wikimedia Commons photo.
+          </p>
+          <input
+            value={imageSrc}
+            onChange={(e) => setImageSrc(e.target.value)}
+            placeholder="Or paste image URL (optional)"
+            className="w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E]"
+          />
+          <input
+            value={imageAlt}
+            onChange={(e) => setImageAlt(e.target.value)}
+            placeholder="Alt text (optional with URL)"
+            className="w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E]"
+          />
+        </div>
       ) : (
         <div className="mt-3 space-y-2">
-          {videos.length > 0 && (
-            <select
-              value={youtubeId}
-              onChange={(e) => {
-                const picked = videos.find(
-                  (v) => v.youtubeId === e.target.value,
-                );
-                setYoutubeId(e.target.value);
-                if (picked) setVideoTitle(picked.title);
-              }}
-              className="w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E]"
-            >
-              {videos.map((video) => (
-                <option key={video.youtubeId} value={video.youtubeId}>
-                  {video.title}
-                </option>
-              ))}
-            </select>
-          )}
+          <p className="text-sm text-[#92400E]/90">
+            AI will read the lesson and find a matching YouTube training video.
+          </p>
           <input
             value={youtubeId}
             onChange={(e) => setYoutubeId(e.target.value)}
-            placeholder="YouTube ID or URL"
+            placeholder="Or paste YouTube ID or URL (optional)"
             className="w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E]"
           />
           <input
             value={videoTitle}
             onChange={(e) => setVideoTitle(e.target.value)}
-            placeholder="Video title"
+            placeholder="Video title (required with URL)"
             className="w-full rounded-lg border border-[#E5E0D8] p-2 text-sm outline-none focus:border-[#C0271E]"
           />
         </div>
@@ -213,19 +174,21 @@ function RegeneratePanel({
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <>
-              <RefreshCw className="h-4 w-4" />
-              Auto-pick replacement
+              <Sparkles className="h-4 w-4" />
+              Find with AI
             </>
           )}
         </Button>
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={loading}
-          onClick={() => void regenerate("manual")}
-        >
-          Apply selected
-        </Button>
+        {canApplyManual && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={loading}
+            onClick={() => void regenerate("manual")}
+          >
+            Apply selected
+          </Button>
+        )}
       </div>
     </div>
   );
