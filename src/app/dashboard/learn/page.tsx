@@ -2,10 +2,12 @@ import Link from "next/link";
 import { Headphones, ArrowRight, BookOpen, ExternalLink } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LockedLessonCard } from "@/components/subscription/locked-lesson-card";
+import { UpgradePrompt } from "@/components/subscription/upgrade-prompt";
 import { fetchLessons, fetchBlocks } from "@/lib/data";
 import { getDashboardSession } from "@/lib/dashboard-session";
+import { isFreeLesson } from "@/lib/access/subscription";
 import { getProvincialStudyContext } from "@/lib/content/province-content";
-import { ProvincialStudyBanner } from "@/components/dashboard/provincial-study-banner";
 import {
   getWeakBlocksForTrade,
   MIN_ATTEMPTS_FOR_WEAK_BLOCKS,
@@ -18,7 +20,7 @@ import {
 } from "@/lib/content/lesson-structure";
 
 export default async function LearnPage() {
-  const { trade, province } = await getDashboardSession();
+  const { trade, province, isPremium } = await getDashboardSession();
   const lessons = await fetchLessons(trade.id, province);
   const blocks = await fetchBlocks(trade.id);
   const provincialContext = getProvincialStudyContext(
@@ -46,13 +48,6 @@ export default async function LearnPage() {
         {provincialContext.provinceName}
       </p>
 
-      <div className="mt-6">
-        <ProvincialStudyBanner
-          context={provincialContext}
-          tradeSlug={trade.slug}
-        />
-      </div>
-
       {rsosPdfLink && (
         <Card className="mt-6 border-[#E5E0D8] bg-[#FFFBF7] p-5">
           <p className="text-sm text-[#64748B]">
@@ -70,6 +65,13 @@ export default async function LearnPage() {
             tasks used on the Red Seal exam.
           </p>
         </Card>
+      )}
+
+      {!isPremium && (
+        <UpgradePrompt
+          className="mt-6"
+          description="Free access includes the A-1 lesson. Upgrade for the full learning path, unlimited practice, mock exams, and flashcards."
+        />
       )}
 
       {blocks.length > 0 ? (
@@ -134,51 +136,71 @@ export default async function LearnPage() {
 
                 <div className="mt-4 grid gap-4">
                   {blockLessons.length > 0 ? (
-                    blockLessons.map((lesson) => (
-                      <Card key={lesson.id} className="p-5">
-                        <div className="flex flex-col gap-3">
-                          <div className="flex min-w-0 items-start gap-3">
-                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FCEBEC]">
-                              <BookOpen className="h-4 w-4 text-[#C0271E]" />
+                    blockLessons.map((lesson) => {
+                      const unlocked =
+                        isPremium ||
+                        isFreeLesson(lesson, trade.code, block.code);
+
+                      if (!unlocked) {
+                        return (
+                          <LockedLessonCard
+                            key={lesson.id}
+                            title={lesson.title}
+                            taskCode={lesson.chapter_task_code}
+                            summary={lesson.summary}
+                          />
+                        );
+                      }
+
+                      return (
+                        <Card key={lesson.id} className="p-5">
+                          <div className="flex flex-col gap-3">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FCEBEC]">
+                                <BookOpen className="h-4 w-4 text-[#C0271E]" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                {lesson.chapter_task_code && (
+                                  <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
+                                    {lesson.chapter_task_code}
+                                  </span>
+                                )}
+                                <h3 className="font-semibold">
+                                  {lesson.title}
+                                </h3>
+                              </div>
                             </div>
-                            <div className="min-w-0 flex-1">
-                              {lesson.chapter_task_code && (
-                                <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
-                                  {lesson.chapter_task_code}
-                                </span>
+                            <div className="flex flex-wrap gap-2">
+                              <Link href={`/dashboard/learn/${lesson.slug}`}>
+                                <Button size="sm">
+                                  Start lesson{" "}
+                                  <ArrowRight className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              {lesson.audio_url && (
+                                <Button variant="secondary" size="sm">
+                                  <Headphones className="h-4 w-4" /> Audio only
+                                </Button>
                               )}
-                              <h3 className="font-semibold">{lesson.title}</h3>
+                              <Link
+                                href={`/dashboard/practice?block=${block.id}`}
+                              >
+                                <Button variant="secondary" size="sm">
+                                  Practice Block {block.code}
+                                </Button>
+                              </Link>
                             </div>
+                            <p className="text-sm text-[#64748B]">
+                              {lesson.summary}
+                            </p>
+                            <p className="font-[family-name:var(--font-ibm-mono)] text-xs text-[#94A3B8]">
+                              ~{lesson.estimated_minutes} min ·{" "}
+                              {lesson.content_blocks.length} sections
+                            </p>
                           </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Link href={`/dashboard/learn/${lesson.slug}`}>
-                              <Button size="sm">
-                                Start lesson <ArrowRight className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            {lesson.audio_url && (
-                              <Button variant="secondary" size="sm">
-                                <Headphones className="h-4 w-4" /> Audio only
-                              </Button>
-                            )}
-                            <Link
-                              href={`/dashboard/practice?block=${block.id}`}
-                            >
-                              <Button variant="secondary" size="sm">
-                                Practice Block {block.code}
-                              </Button>
-                            </Link>
-                          </div>
-                          <p className="text-sm text-[#64748B]">
-                            {lesson.summary}
-                          </p>
-                          <p className="font-[family-name:var(--font-ibm-mono)] text-xs text-[#94A3B8]">
-                            ~{lesson.estimated_minutes} min ·{" "}
-                            {lesson.content_blocks.length} sections
-                          </p>
-                        </div>
-                      </Card>
-                    ))
+                        </Card>
+                      );
+                    })
                   ) : (
                     <Card className="p-5">
                       <p className="text-sm text-[#64748B]">

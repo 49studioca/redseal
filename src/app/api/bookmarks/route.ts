@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerSessionUser } from "@/lib/supabase/server-auth";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { fetchQuestions } from "@/lib/data";
 import {
@@ -17,9 +18,7 @@ async function getBookmarkIds(): Promise<string[]> {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerSessionUser();
   if (!user) {
     return demoIds;
   }
@@ -85,9 +84,7 @@ export async function POST(request: Request) {
 
   if (usesSupabaseData()) {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getServerSessionUser();
 
     if (user) {
       const { data: existing } = await supabase

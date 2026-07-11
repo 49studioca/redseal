@@ -5,7 +5,6 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import {
-  LayoutDashboard,
   BookOpen,
   ClipboardCheck,
   Layers,
@@ -15,8 +14,10 @@ import {
   Bookmark,
   BookmarkCheck,
   LogOut,
+  Video,
 } from "lucide-react";
 import { ProvinceSelector } from "@/components/dashboard/province-selector";
+import { HeaderTradeProvinceMenu } from "@/components/dashboard/header-trade-province-menu";
 import { cn } from "@/lib/utils";
 import type { Trade } from "@/types";
 import type { ExamReadinessSummary } from "@/lib/progress/exam-readiness";
@@ -29,15 +30,34 @@ import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/learn", label: "Learning Path", icon: BookOpen },
-  { href: "/dashboard/practice", label: "Practice", icon: ClipboardCheck },
+  {
+    href: "/dashboard/learn",
+    label: "Learning Path",
+    icon: BookOpen,
+    tourId: "tour-nav-learn",
+  },
+  {
+    href: "/dashboard/video-learning",
+    label: "Video Learning",
+    icon: Video,
+  },
+  {
+    href: "/dashboard/practice",
+    label: "Practice",
+    icon: ClipboardCheck,
+    tourId: "tour-nav-practice",
+  },
   {
     href: "/dashboard/saved-questions",
     label: "Saved Questions",
     icon: BookmarkCheck,
   },
-  { href: "/dashboard/mock-exam", label: "Mock Exams", icon: Layers },
+  {
+    href: "/dashboard/mock-exam",
+    label: "Mock Exams",
+    icon: Layers,
+    tourId: "tour-nav-mock-exam",
+  },
   { href: "/dashboard/flashcards", label: "Flashcards", icon: Headphones },
   { href: "/dashboard/vocabulary", label: "Saved Words", icon: Bookmark },
 ];
@@ -55,7 +75,10 @@ export function DashboardSidebar({
 
   return (
     <aside className="flex h-full min-h-0 w-[262px] shrink-0 flex-col overflow-hidden border-r border-[#E5E0D8] bg-white p-4">
-      <div className="relative shrink-0 overflow-hidden rounded-[13px] bg-gradient-to-br from-[#D8232A] to-[#B01A1F] p-4 text-white">
+      <div
+        className="relative shrink-0 overflow-hidden rounded-[13px] bg-gradient-to-br from-[#D8232A] to-[#B01A1F] p-4 text-white"
+        data-tour="tour-trade-card"
+      >
         <div className="absolute -right-5 -top-5 h-[78px] w-[78px] rounded-full bg-white/10" />
         <div className="relative flex items-center gap-3">
           <span className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[10px] bg-white/15 text-xl">
@@ -84,6 +107,7 @@ export function DashboardSidebar({
             <Link
               key={item.href}
               href={item.href}
+              data-tour={item.tourId}
               className={cn(
                 "flex items-center gap-2.5 rounded-[10px] px-3 py-2.5 text-[13.5px] font-semibold transition-colors",
                 active
@@ -144,7 +168,7 @@ export function DashboardHeader({
         const supabase = createClient();
         await supabase.auth.signOut();
       }
-      router.push("/auth/login");
+      router.push("/auth?signin");
       router.refresh();
     } finally {
       setIsLoggingOut(false);
@@ -191,18 +215,8 @@ export function DashboardHeader({
         </div>
       </Link>
       <div className="flex-1" />
-      <div className="flex h-[42px] items-center gap-2.5 rounded-[10px] border border-white/15 bg-white/5 px-3.5 text-white">
-        <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#C0271E] text-sm">
-          {trade.icon}
-        </span>
-        <div className="flex flex-col leading-tight">
-          <span className="text-[10px] font-semibold uppercase tracking-wide text-[#7DA0BD]">
-            Your trade
-          </span>
-          <span className="text-sm font-bold">{trade.short_name}</span>
-        </div>
-      </div>
-      <div className="relative" ref={menuRef}>
+      <HeaderTradeProvinceMenu trade={trade} />
+      <div className="relative" ref={menuRef} data-tour="tour-profile">
         <button
           type="button"
           aria-expanded={menuOpen}

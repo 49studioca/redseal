@@ -6,10 +6,10 @@ import {
   TradesPreview,
   FeatureHighlight,
   TestimonialSection,
-  PricingSection,
   CtaBand,
   MarketingFooter,
 } from "@/components/marketing/sections";
+import { PricingSection } from "@/components/marketing/pricing-section";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { homepageSchema, jsonLd } from "@/lib/seo";
 

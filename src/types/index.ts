@@ -205,3 +205,33 @@ export interface ProvincialGuide {
   exam_info?: string;
   meta_description?: string;
 }
+
+export interface BlockLearningVideo {
+  id: string;
+  trade_id: string;
+  block_id: string;
+  youtube_id: string;
+  title: string;
+  description?: string | null;
+  channel_hint?: string | null;
+  search_query?: string | null;
+  topic_label?: string | null;
+  sort_order: number;
+  review_status: ReviewStatus;
+}
+
+export interface BlockVideoQuestion {
+  id: string;
+  video_id: string;
+  stem: string;
+  options: QuestionOption[];
+  correct_option: "A" | "B" | "C" | "D";
+  explanation: string;
+  sort_order: number;
+}
+
+export interface BlockVideoProgress {
+  completed: boolean;
+  questions_correct: number;
+  questions_attempted: number;
+}

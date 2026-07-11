@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { BlockMediaImage } from "@/data/block-media";
+import { hasJinaApiKey, searchJinaImages } from "@/lib/ai/jina-search";
 import { uploadLessonImageFromUrl } from "@/lib/storage/upload-lesson-image";
 
 const openrouter = process.env.OPENROUTER_API_KEY
@@ -392,49 +393,79 @@ export async function findLessonImageFromContent(input: {
   );
 
   let sourceUrl: string | null = null;
+  let resolvedAlt = brief.alt;
+  let resolvedCaption = brief.caption;
 
-  for (const query of queries) {
-    const hits = await searchWikimediaFiles(query);
-    if (!hits.length) continue;
-
-    const ranked = [...hits].sort(
-      (a, b) => scoreHitTitle(b.title, query) - scoreHitTitle(a.title, query),
-    );
-
-    const infoByTitle = await getWikimediaImageInfo(
-      ranked.map((h) => h.title),
-    );
-
-    const bestScore = scoreHitTitle(ranked[0]?.title ?? "", query);
-
-    for (const hit of ranked) {
-      const info = infoByTitle.get(hit.title);
-      if (!info || !isUsableImage(info, excludeUrls)) continue;
-      const score = scoreHitTitle(hit.title, query);
-
-      // For distinctive product terms, require a positive relevance score.
-      // Commons already ranked these results, so score 0 is still acceptable
-      // only when nothing better scored positively.
-      if (bestScore > 0 && score <= 0) continue;
-      if (score < 0) continue;
-
-      sourceUrl = info.thumburl || info.url || null;
+  // Prefer Jina image search (context-aware web images) when configured.
+  if (hasJinaApiKey()) {
+    for (const query of queries) {
+      try {
+        const hits = await searchJinaImages(query, { num: 8, gl: "ca", hl: "en" });
+        for (const hit of hits) {
+          if (excludeUrls.has(hit.url)) continue;
+          sourceUrl = hit.url;
+          if (hit.title && hit.title.length > 3) {
+            resolvedAlt = truncate(hit.title, 120);
+          }
+          if (hit.description && hit.description.length > 12) {
+            resolvedCaption = truncate(hit.description, 200);
+          }
+          break;
+        }
+      } catch {
+        // Fall through to Wikimedia.
+      }
       if (sourceUrl) break;
     }
-    if (sourceUrl) break;
+  }
+
+  // Fallback: Wikimedia Commons search.
+  if (!sourceUrl) {
+    for (const query of queries) {
+      const hits = await searchWikimediaFiles(query);
+      if (!hits.length) continue;
+
+      const ranked = [...hits].sort(
+        (a, b) => scoreHitTitle(b.title, query) - scoreHitTitle(a.title, query),
+      );
+
+      const infoByTitle = await getWikimediaImageInfo(
+        ranked.map((h) => h.title),
+      );
+
+      const bestScore = scoreHitTitle(ranked[0]?.title ?? "", query);
+
+      for (const hit of ranked) {
+        const info = infoByTitle.get(hit.title);
+        if (!info || !isUsableImage(info, excludeUrls)) continue;
+        const score = scoreHitTitle(hit.title, query);
+
+        // For distinctive product terms, require a positive relevance score.
+        // Commons already ranked these results, so score 0 is still acceptable
+        // only when nothing better scored positively.
+        if (bestScore > 0 && score <= 0) continue;
+        if (score < 0) continue;
+
+        sourceUrl = info.thumburl || info.url || null;
+        if (sourceUrl) break;
+      }
+      if (sourceUrl) break;
+    }
   }
 
   if (!sourceUrl) {
     throw new Error(
-      `No Wikimedia image found for “${brief.searchQuery}”. Try again or paste an image URL.`,
+      `No related image found for “${brief.searchQuery}”. ${
+        hasJinaApiKey() ? "" : "Set JINA_API_KEY for better search, or "
+      }try again or paste an image URL.`,
     );
   }
 
   if (input.host === false) {
     return {
       src: sourceUrl,
-      alt: brief.alt,
-      caption: brief.caption,
+      alt: resolvedAlt,
+      caption: resolvedCaption,
     };
   }
 
@@ -456,15 +487,15 @@ export async function findLessonImageFromContent(input: {
 
     return {
       src: hosted,
-      alt: brief.alt,
-      caption: brief.caption,
+      alt: resolvedAlt,
+      caption: resolvedCaption,
     };
   } catch {
-    // Still usable if hosting fails — lesson image component supports Wikimedia URLs.
+    // Still usable if hosting fails — lesson image component supports remote URLs.
     return {
       src: sourceUrl,
-      alt: brief.alt,
-      caption: brief.caption,
+      alt: resolvedAlt,
+      caption: resolvedCaption,
     };
   }
 }

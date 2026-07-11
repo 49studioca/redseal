@@ -9,6 +9,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     lastModified: now,
     changeFrequency:
       route === "/" ? "weekly" : route.startsWith("/trades/") ? "monthly" : "weekly",
-    priority: route === "/" ? 1 : route === "/trades" ? 0.9 : 0.75,
+    priority: route === "/" ? 1 : route === "/trades" || route === "/pricing" ? 0.9 : 0.75,
   }));
 }

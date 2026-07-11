@@ -6,6 +6,10 @@ import {
 } from "@/components/layout/dashboard-shell";
 import { DashboardTradeProvider } from "@/components/layout/dashboard-trade-context";
 import { DashboardPreferencesProvider } from "@/components/layout/dashboard-preferences-context";
+import { DashboardTourProvider } from "@/components/dashboard/dashboard-tour";
+import { UpgradeProvider } from "@/components/subscription/upgrade-provider";
+
+export const dynamic = "force-dynamic";
 
 export default async function DashboardLayout({
   children,
@@ -19,6 +23,8 @@ export default async function DashboardLayout({
     preferredLanguage,
     translationEnabled,
     province,
+    isPremium,
+    translationUsage,
   } = await getDashboardSession();
   const readinessSummary = await getExamReadinessSummaryForTrade(
     trade.id,
@@ -31,23 +37,29 @@ export default async function DashboardLayout({
         preferredLanguage={preferredLanguage}
         translationEnabled={translationEnabled}
         province={province}
+        isPremium={isPremium}
+        translationUsage={translationUsage}
       >
-        <div className="flex h-screen flex-col overflow-hidden bg-[#F1ECE3]">
-          <DashboardHeader
-            trade={trade}
-            userName={userName}
-            isAdmin={isAdmin}
-          />
-          <div className="flex min-h-0 flex-1 overflow-hidden">
-            <DashboardSidebar
-              trade={trade}
-              readinessSummary={readinessSummary}
-            />
-            <main className="scrl min-w-0 flex-1 overflow-y-auto p-6 md:p-8">
-              {children}
-            </main>
-          </div>
-        </div>
+        <DashboardTourProvider>
+          <UpgradeProvider>
+            <div className="flex h-screen flex-col overflow-hidden bg-[#F1ECE3]">
+              <DashboardHeader
+                trade={trade}
+                userName={userName}
+                isAdmin={isAdmin}
+              />
+              <div className="flex min-h-0 flex-1 overflow-hidden">
+                <DashboardSidebar
+                  trade={trade}
+                  readinessSummary={readinessSummary}
+                />
+                <main className="scrl min-w-0 flex-1 overflow-y-auto p-6 md:p-8">
+                  {children}
+                </main>
+              </div>
+            </div>
+          </UpgradeProvider>
+        </DashboardTourProvider>
       </DashboardPreferencesProvider>
     </DashboardTradeProvider>
   );

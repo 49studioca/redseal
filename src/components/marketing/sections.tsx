@@ -7,7 +7,6 @@ import {
   Building2,
   Car,
   Check,
-  ChevronRight,
   ClipboardCheck,
   Cog,
   Droplets,
@@ -17,23 +16,19 @@ import {
   Hammer,
   HardHat,
   Languages,
-  MousePointerClick,
   Smartphone,
   Sparkles,
   Star,
-  Tag,
   Target,
   Wind,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  HeroQuizProvider,
-  HeroQuizCard,
+  HeroGuideCard,
   HeroTradeChips,
   Sparkles as HeroSparkles,
   Zap as HeroZap,
-  PlayCircle as HeroPlayCircle,
   CircleCheck as HeroCircleCheck,
 } from "@/components/marketing/hero-quiz";
 
@@ -65,8 +60,8 @@ export function MarketingHeader() {
         <nav className="ml-3.5 hidden items-center gap-1 md:flex">
           {[
             { href: "/#how", label: "How it works" },
-            { href: "/#trades", label: "Trades" },
-            { href: "/#pricing", label: "Pricing" },
+            { href: "/trades", label: "Trades" },
+            { href: "/pricing", label: "Pricing" },
             { href: "/#faq", label: "FAQ" },
           ].map((item) => (
             <Link
@@ -80,12 +75,12 @@ export function MarketingHeader() {
         </nav>
         <div className="flex-1" />
         <Link
-          href="/auth/login"
+          href="/auth?signin"
           className="hidden shrink-0 rounded-[9px] px-3.5 py-2 text-[14.5px] font-semibold text-[#1F2A37] hover:bg-[#F3EFE8] sm:inline-flex"
         >
           Log in
         </Link>
-        <Link href="/auth/signup" className="shrink-0">
+        <Link href="/auth?signup" className="shrink-0">
           <Button
             size="sm"
             className="h-9 px-3 text-xs sm:h-[42px] sm:px-[18px] sm:text-sm"
@@ -101,86 +96,75 @@ export function MarketingHeader() {
 
 export function HeroSection() {
   return (
-    <HeroQuizProvider>
-      <section id="top" className="relative text-white">
-        <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(1200px_640px_at_82%_-12%,#E23A30_0%,#D8232A_46%,#B81A20_100%)]">
-          <div
-            className="pointer-events-none absolute inset-0 opacity-[0.13]"
-            style={{
-              backgroundImage:
-                "radial-gradient(circle at 1px 1px, #fff 1.5px, transparent 0)",
-              backgroundSize: "26px 26px",
-              maskImage: "linear-gradient(180deg, #000, transparent 92%)",
-            }}
-          />
-          <div className="pointer-events-none absolute bottom-[-120px] right-[-130px] h-[420px] w-[420px] rounded-full border-2 border-dashed border-white/20" />
-          <div className="pointer-events-none absolute right-[-170px] top-[-110px] h-[340px] w-[340px] rounded-full bg-black/10" />
-        </div>
+    <section id="top" className="relative text-white">
+      <div className="absolute inset-0 overflow-hidden bg-[radial-gradient(1200px_640px_at_82%_-12%,#E23A30_0%,#D8232A_46%,#B81A20_100%)]">
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.13]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, #fff 1.5px, transparent 0)",
+            backgroundSize: "26px 26px",
+            maskImage: "linear-gradient(180deg, #000, transparent 92%)",
+          }}
+        />
+        <div className="pointer-events-none absolute bottom-[-120px] right-[-130px] h-[420px] w-[420px] rounded-full border-2 border-dashed border-white/20" />
+        <div className="pointer-events-none absolute right-[-170px] top-[-110px] h-[340px] w-[340px] rounded-full bg-black/10" />
+      </div>
 
-        <div className="relative">
-          <div className="relative mx-auto grid max-w-[1180px] items-center gap-12 px-4 pb-0 pt-12 sm:px-6 sm:pt-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12 md:pb-0 md:pt-16">
-            <div>
-              <div className="flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-white/15 bg-white/[0.07] py-1.5 pl-2 pr-3.5 text-[11px] font-semibold leading-snug text-[#CFE0EE] sm:text-[12.5px]">
-                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F4A11A] px-2 py-0.5 text-[10px] font-extrabold text-[#1F2A37] sm:text-[11px]">
-                  <HeroSparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" />{" "}
-                  AI-built
-                </span>
-                <span className="min-w-0">
-                  Unofficial Red Seal prep, rebuilt for 2026
-                </span>
-              </div>
-              <h1 className="mt-5 text-balance font-[family-name:var(--font-barlow-condensed)] text-[40px] font-bold leading-[0.96] tracking-tight sm:text-[52px] md:text-[64px]">
-                Pass your Red Seal
-                <br />
-                the{" "}
-                <span className="underline decoration-white/50 decoration-2 underline-offset-4 sm:decoration-[3px] sm:underline-offset-[6px]">
-                  first time.
-                </span>
-              </h1>
-              <p className="mt-4 max-w-[440px] text-base leading-normal text-[#FCE3E4] sm:mt-[18px] sm:text-lg">
-                AI builds your study plan around{" "}
-                <b className="text-white">your</b> weak spots. Pick a trade and
-                go.
-              </p>
-              <div className="mt-5 flex flex-wrap gap-2 sm:mt-7 sm:gap-3">
-                <Link href="/auth/signup">
-                  <Button
-                    variant="white"
-                    className="h-10 px-3.5 text-sm sm:h-[52px] sm:px-6 sm:text-base"
-                  >
-                    <HeroZap className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="sm:hidden">Start free</span>
-                    <span className="hidden sm:inline">
-                      Start free — no card
-                    </span>
-                  </Button>
-                </Link>
-                <Link href="/#how">
-                  <Button className="h-10 border-[1.5px] border-white/50 bg-transparent px-3.5 text-sm font-bold text-white hover:bg-white/10 sm:h-[52px] sm:px-[22px] sm:text-base">
-                    <HeroPlayCircle className="h-4 w-4 sm:h-[18px] sm:w-[18px]" />
-                    <span className="sm:hidden">How it works</span>
-                    <span className="hidden sm:inline">See how it works</span>
-                  </Button>
-                </Link>
-              </div>
-              <div className="mt-[26px] flex flex-wrap gap-[18px] text-[13.5px] font-semibold text-[#FCE3E4]">
-                {[
-                  "All 56 Red Seal trades",
-                  "Every province & territory",
-                  "Maple-leaf code, not US",
-                ].map((t) => (
-                  <span key={t} className="flex items-center gap-1.5">
-                    <HeroCircleCheck className="h-4 w-4 text-white" /> {t}
-                  </span>
-                ))}
-              </div>
+      <div className="relative">
+        <div className="relative mx-auto grid max-w-[1180px] items-center gap-12 px-4 pb-0 pt-12 sm:px-6 sm:pt-16 md:grid-cols-[1.05fr_0.95fr] md:gap-12 md:pb-0 md:pt-16">
+          <div>
+            <div className="flex max-w-full flex-wrap items-center gap-x-2 gap-y-1 rounded-full border border-white/15 bg-white/[0.07] py-1.5 pl-2 pr-3.5 text-[11px] font-semibold leading-snug text-[#CFE0EE] sm:text-[12.5px]">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#F4A11A] px-2 py-0.5 text-[10px] font-extrabold text-[#1F2A37] sm:text-[11px]">
+                <HeroSparkles className="h-3 w-3 sm:h-3.5 sm:w-3.5" /> AI-built
+              </span>
+              <span className="min-w-0">
+                Unofficial Red Seal prep, rebuilt for 2026
+              </span>
             </div>
-            <HeroQuizCard />
+            <h1 className="mt-5 text-balance font-[family-name:var(--font-barlow-condensed)] text-[40px] font-bold leading-[0.96] tracking-tight sm:text-[52px] md:text-[64px]">
+              Pass your Red Seal
+              <br />
+              the{" "}
+              <span className="underline decoration-white/50 decoration-2 underline-offset-4 sm:decoration-[3px] sm:underline-offset-[6px]">
+                first time.
+              </span>
+            </h1>
+            <p className="mt-4 max-w-[440px] text-base leading-normal text-[#FCE3E4] sm:mt-[18px] sm:text-lg">
+              Your Red Seal study guide — AI-built lessons, drills, and mock
+              exams for every trade.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2 sm:mt-7 sm:gap-3">
+              <Link href="/auth?signup">
+                <Button
+                  variant="white"
+                  className="h-10 px-3.5 text-sm sm:h-[52px] sm:px-6 sm:text-base"
+                >
+                  <HeroZap className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="sm:hidden">Start free</span>
+                  <span className="hidden sm:inline">
+                    Start free — no credit card needed
+                  </span>
+                </Button>
+              </Link>
+            </div>
+            <div className="mt-[26px] flex flex-col gap-2.5 text-[13.5px] font-semibold text-[#FCE3E4]">
+              {[
+                "All 56 Red Seal trades",
+                "Every province & territory",
+                "Maple-leaf code, not US",
+              ].map((t) => (
+                <span key={t} className="flex items-center gap-1.5">
+                  <HeroCircleCheck className="h-4 w-4 text-white" /> {t}
+                </span>
+              ))}
+            </div>
           </div>
-          <HeroTradeChips />
+          <HeroGuideCard />
         </div>
-      </section>
-    </HeroQuizProvider>
+        <HeroTradeChips />
+      </div>
+    </section>
   );
 }
 
@@ -215,25 +199,22 @@ export function HowItWorks() {
       no: "01",
       title: "Pick your trade",
       body: "All 56 Red Seal trades.",
-      icon: MousePointerClick,
-      bg: "bg-[#FCEBEC]",
-      color: "text-[#C0271E]",
+      icon: HardHat,
+      iconColor: "text-[#C0271E]",
     },
     {
       no: "02",
       title: "AI builds your plan",
       body: "Custom quizzes on your weak blocks.",
       icon: Sparkles,
-      bg: "bg-[#FCEBEC]",
-      color: "text-[#C0271E]",
+      iconColor: "text-[#C0271E]",
     },
     {
       no: "03",
       title: "Drill, mock, pass",
       body: "Climb past 70% readiness.",
       icon: GraduationCap,
-      bg: "bg-[#ECFDF5]",
-      color: "text-[#059669]",
+      iconColor: "text-[#059669]",
     },
   ];
   return (
@@ -249,36 +230,36 @@ export function HowItWorks() {
           Three steps to exam-ready
         </h2>
       </div>
-      <div className="mt-12 flex flex-wrap items-stretch justify-center gap-1.5">
-        {steps.map((st, i) => {
-          const Icon = st.icon;
-          return (
-            <div
-              key={st.no}
-              className="flex min-w-[210px] flex-1 items-center gap-1.5"
-            >
-              <div className="relative flex-1 rounded-2xl border border-[#E5E0D8] bg-white px-[22px] py-[26px] text-center">
-                <div className="absolute right-4 top-3.5 font-[family-name:var(--font-barlow-condensed)] text-[34px] font-bold leading-none text-[#F1ECE3]">
-                  {st.no}
+      <div className="mt-12 rounded-[20px] border border-[#ECE6DC] bg-[#F6F3EE] px-5 py-9 sm:px-8 sm:py-10">
+        <ol className="relative grid select-none gap-9 md:grid-cols-3 md:gap-6">
+          <div
+            className="pointer-events-none absolute inset-x-[12%] top-9 hidden h-px bg-gradient-to-r from-transparent via-[#D8232A]/25 to-transparent md:block"
+            aria-hidden
+          />
+          {steps.map((st) => {
+            const Icon = st.icon;
+            return (
+              <li key={st.no} className="list-none">
+                <div className="flex items-start gap-4 md:flex-col md:items-center md:text-center">
+                  <div className="relative z-10 flex h-14 w-14 shrink-0 flex-col items-center justify-center gap-1 rounded-full border-2 border-white bg-white shadow-[0_2px_10px_rgba(31,42,55,0.07)] md:h-[72px] md:w-[72px]">
+                    <span className="font-[family-name:var(--font-ibm-mono)] text-[10px] font-bold leading-none text-[#94A3B8]">
+                      {st.no}
+                    </span>
+                    <Icon className={`h-5 w-5 ${st.iconColor}`} />
+                  </div>
+                  <div className="min-w-0 pt-0.5 md:pt-4">
+                    <h3 className="font-[family-name:var(--font-barlow-semi)] text-lg font-semibold text-[#1F2A37] sm:text-xl">
+                      {st.title}
+                    </h3>
+                    <p className="mt-1 text-[14px] leading-snug text-[#64748B] sm:text-[14.5px]">
+                      {st.body}
+                    </p>
+                  </div>
                 </div>
-                <div
-                  className={`mx-auto grid h-16 w-16 place-items-center rounded-[18px] ${st.bg} ${st.color}`}
-                >
-                  <Icon className="h-[30px] w-[30px]" />
-                </div>
-                <h3 className="mt-4 font-[family-name:var(--font-barlow-semi)] text-xl font-semibold">
-                  {st.title}
-                </h3>
-                <p className="mt-1 text-[14.5px] leading-snug text-[#64748B]">
-                  {st.body}
-                </p>
-              </div>
-              {i < steps.length - 1 && (
-                <ChevronRight className="hidden h-[22px] w-[22px] shrink-0 text-[#CBD5E1] lg:block" />
-              )}
-            </div>
-          );
-        })}
+              </li>
+            );
+          })}
+        </ol>
       </div>
     </section>
   );
@@ -483,22 +464,13 @@ export function TradesPreview() {
       className="mt-10 border-y border-[#E5E0D8] bg-[#F6F3EE]"
     >
       <div className="mx-auto max-w-[1180px] px-4 py-12 sm:px-6 sm:py-[72px]">
-        <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#D8232A] sm:text-[13px]">
-              Supported trades
-            </div>
-            <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[32px] font-bold leading-none tracking-tight sm:text-[40px] md:text-[46px]">
-              From wire to weld, we&apos;ve got your ticket
-            </h2>
+        <div>
+          <div className="text-[11px] font-bold uppercase tracking-wider text-[#D8232A] sm:text-[13px]">
+            Supported trades
           </div>
-          <Link
-            href="/trades"
-            className="flex items-center gap-1.5 text-sm font-bold text-[#C0271E] sm:text-[15px]"
-          >
-            See all 56 trades
-            <ArrowRight className="h-4 w-4" />
-          </Link>
+          <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[32px] font-bold leading-none tracking-tight sm:text-[40px] md:text-[46px]">
+            From wire to weld, we&apos;ve got your ticket
+          </h2>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-[34px] sm:gap-3.5 md:grid-cols-4">
           {tradeCards.map((t) => {
@@ -506,7 +478,7 @@ export function TradesPreview() {
             return (
               <Link
                 key={t.code}
-                href="/auth/signup"
+                href="/auth?signup"
                 className="flex items-center gap-2 rounded-[14px] border border-[#E5E0D8] bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-[#C0271E] hover:shadow-[0_8px_20px_rgba(31,42,55,0.10)] sm:gap-3 sm:p-[18px]"
               >
                 <span
@@ -525,6 +497,15 @@ export function TradesPreview() {
               </Link>
             );
           })}
+        </div>
+        <div className="mt-6 flex justify-center sm:mt-8">
+          <Link
+            href="/trades"
+            className="flex items-center gap-1.5 text-sm font-bold text-[#C0271E] sm:text-[15px]"
+          >
+            See all 56 trades
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
@@ -572,151 +553,6 @@ export function TestimonialSection() {
   );
 }
 
-export function PricingSection() {
-  const sharedFeatures: ReactNode[] = [
-    "All 56 Red Seal trades",
-    "Unlimited AI quizzes",
-    "Unlimited mock exams",
-    "Weak-spot targeting",
-    "Code-referenced answers",
-    <>
-      <span className="sm:hidden">
-        Click to <b>translate</b> words
-      </span>
-      <span className="hidden sm:inline">
-        Click any word to <b>translate</b> lesson content
-      </span>
-    </>,
-    "Cancel anytime",
-  ];
-
-  const plans = [
-    {
-      name: "Weekly",
-      accent: "text-[#C0271E]",
-      price: "$9.99",
-      per: "first week",
-      sub: "then $19.99 / week",
-      cta: "Start for $9.99",
-      popular: false,
-      dark: false,
-    },
-    {
-      name: "Monthly",
-      accent: "text-white",
-      price: "$7.99",
-      per: "first week",
-      sub: "then $59.99 / month",
-      cta: "Start for $7.99",
-      popular: true,
-      dark: true,
-    },
-    {
-      name: "Quarterly",
-      accent: "text-[#C0271E]",
-      price: "$5.99",
-      per: "first week",
-      sub: "then $99.99 / quarter",
-      cta: "Start for $5.99",
-      popular: false,
-      dark: false,
-    },
-  ];
-
-  return (
-    <section id="pricing" className="border-y border-[#E5E0D8] bg-[#F6F3EE]">
-      <div className="mx-auto max-w-[1180px] px-4 py-12 sm:px-6 sm:py-[78px]">
-        <div className="mx-auto max-w-[600px] text-center">
-          <div className="text-[11px] font-bold uppercase tracking-wider text-[#D8232A] sm:text-[13px]">
-            Pricing
-          </div>
-          <h2 className="mt-2.5 font-[family-name:var(--font-barlow-condensed)] text-[32px] font-bold leading-none tracking-tight sm:text-[40px] md:text-[46px]">
-            Cheaper than rewriting the exam
-          </h2>
-          <p className="mt-3 text-sm text-[#64748B] sm:text-[17px]">
-            A re-test costs hundreds and weeks of your time. Try any plan for
-            your first week, then keep going — or cancel.
-          </p>
-          <div className="mt-4 inline-flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-[#FCEBEC] px-3 py-1.5 text-[11px] font-bold text-[#B6291F] sm:mt-5 sm:gap-2 sm:px-[15px] sm:py-[7px] sm:text-[13.5px]">
-            <Tag className="h-3.5 w-3.5 sm:h-[15px] sm:w-[15px]" />
-            <span className="sm:hidden">
-              Discounted first week · cancel anytime
-            </span>
-            <span className="hidden sm:inline">
-              Every plan: discounted first week · cancel anytime
-            </span>
-          </div>
-        </div>
-
-        <div className="mt-6 grid items-stretch gap-3 sm:mt-10 sm:gap-[18px] md:grid-cols-3">
-          {plans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative flex flex-col rounded-[18px] p-5 sm:p-7 ${
-                plan.dark
-                  ? "border-[1.5px] border-white/40 bg-gradient-to-br from-[#E0392F] to-[#C2151B] text-white shadow-[0_18px_40px_rgba(216,35,42,0.32)]"
-                  : "border border-[#E5E0D8] bg-white text-[#1F2A37] shadow-sm"
-              }`}
-            >
-              {plan.popular && (
-                <div className="absolute right-3 top-3 rounded-[7px] bg-white px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#D8232A] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-[11px]">
-                  Most popular
-                </div>
-              )}
-              <div
-                className={`font-[family-name:var(--font-barlow-semi)] text-xs font-bold uppercase tracking-wide sm:text-sm ${plan.accent}`}
-              >
-                {plan.name}
-              </div>
-              <div className="mt-2.5 flex items-baseline gap-1 sm:mt-3.5">
-                <span
-                  className={`font-[family-name:var(--font-barlow-condensed)] text-[40px] font-bold leading-[0.9] sm:text-[50px] ${plan.dark ? "text-white" : "text-[#1F2A37]"}`}
-                >
-                  {plan.price}
-                </span>
-                <span
-                  className={`text-sm font-semibold sm:text-[15px] ${plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]"}`}
-                >
-                  {plan.per}
-                </span>
-              </div>
-              <div
-                className={`mt-1 text-xs sm:mt-1.5 sm:text-[13.5px] ${plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]"}`}
-              >
-                {plan.sub}
-              </div>
-              <Link href="/auth/signup" className="mt-4 block sm:mt-5">
-                <Button
-                  variant={plan.dark ? "white" : "dark"}
-                  className="h-10 w-full rounded-[11px] text-sm font-extrabold sm:h-[46px] sm:text-[15px]"
-                >
-                  {plan.cta}
-                </Button>
-              </Link>
-              <div
-                className={`my-4 h-px sm:my-5 ${plan.dark ? "bg-white/10" : "bg-[#ECE6DC]"}`}
-              />
-              <div className="flex flex-col gap-2 sm:gap-[11px]">
-                {sharedFeatures.map((f, i) => (
-                  <div
-                    key={i}
-                    className={`flex items-start gap-2 text-xs sm:text-sm ${plan.dark ? "text-[#FCE3E4]" : "text-[#334155]"}`}
-                  >
-                    <Check
-                      className={`mt-0.5 h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${plan.dark ? "text-white" : "text-[#059669]"}`}
-                    />
-                    {f}
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
 export function CtaBand() {
   return (
     <section className="relative overflow-hidden bg-[radial-gradient(1000px_520px_at_50%_115%,#E0392F_0%,#D8232A_45%,#B81A20_100%)] text-white">
@@ -742,7 +578,7 @@ export function CtaBand() {
         <p className="mt-3.5 text-lg text-[#FCE3E4]">
           Start free today — build your first AI quiz in under two minutes.
         </p>
-        <Link href="/auth/signup" className="mt-[26px] inline-block">
+        <Link href="/auth?signup" className="mt-[26px] inline-block">
           <Button
             variant="white"
             className="h-14 rounded-[13px] px-[30px] text-[17.5px] font-extrabold shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
@@ -773,50 +609,58 @@ export function MarketingFooter() {
 
   return (
     <footer className="bg-[#161E27] text-[#9FBBD2]">
-      <div className="mx-auto grid max-w-[1180px] gap-[30px] px-6 pb-[30px] pt-12 md:grid-cols-[1.6fr_1fr_1fr_1fr]">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <Image
-              src="/redseal-logo.svg"
-              alt="RedSeal seal mark"
-              width={34}
-              height={34}
-              className="shrink-0"
-            />
-            <div className="font-[family-name:var(--font-barlow-condensed)] text-[19px] font-bold uppercase tracking-wide text-white">
-              RedSeal AI Prep
+      <div className="mx-auto max-w-[1180px] px-6 pb-6 pt-10 md:pb-[30px] md:pt-12">
+        <div className="grid gap-8 md:grid-cols-[1.6fr_1fr_1fr_1fr] md:gap-[30px]">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <Image
+                src="/redseal-logo.svg"
+                alt="RedSeal seal mark"
+                width={34}
+                height={34}
+                className="shrink-0"
+              />
+              <div className="font-[family-name:var(--font-barlow-condensed)] text-[19px] font-bold uppercase tracking-wide text-white">
+                RedSeal AI Prep
+              </div>
+            </div>
+            <p className="mt-3.5 max-w-[320px] text-[13.5px] leading-relaxed">
+              AI-powered Red Seal exam prep for Canadian tradespeople. Built by
+              trades folks who were tired of dusty study binders.
+            </p>
+            <div className="mt-3.5 font-[family-name:var(--font-ibm-mono)] text-xs text-[#5F87A6]">
+              redsealguide.com
             </div>
           </div>
-          <p className="mt-3.5 max-w-[320px] text-[13.5px] leading-relaxed">
-            AI-powered Red Seal exam prep for Canadian tradespeople. Built by
-            trades folks who were tired of dusty study binders.
-          </p>
-          <div className="mt-3.5 font-[family-name:var(--font-ibm-mono)] text-xs text-[#5F87A6]">
-            redsealguide.com
+          <div className="grid grid-cols-2 gap-x-8 gap-y-6 sm:grid-cols-3 md:contents">
+            {footCols.map((col) => (
+              <div key={col.head}>
+                <div className="text-xs font-bold uppercase tracking-wider text-[#F4564E]">
+                  {col.head}
+                </div>
+                <div className="mt-3 flex flex-col gap-2">
+                  {col.links.map((l) => (
+                    <Link
+                      key={l}
+                      href="/#top"
+                      className="text-sm hover:text-white"
+                    >
+                      {l}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        {footCols.map((col) => (
-          <div key={col.head}>
-            <div className="text-xs font-bold uppercase tracking-wider text-[#F4564E]">
-              {col.head}
-            </div>
-            <div className="mt-3 flex flex-col gap-2">
-              {col.links.map((l) => (
-                <Link key={l} href="/#top" className="text-sm hover:text-white">
-                  {l}
-                </Link>
-              ))}
-            </div>
-          </div>
-        ))}
       </div>
       <div className="border-t border-white/[0.07]">
-        <div className="mx-auto flex max-w-[1180px] flex-wrap justify-between gap-3.5 px-6 py-[18px] text-[12.5px] text-[#5F87A6]">
+        <div className="mx-auto flex max-w-[1180px] flex-col gap-2 px-6 py-4 text-[12.5px] leading-relaxed text-[#5F87A6] sm:flex-row sm:flex-wrap sm:justify-between sm:gap-3.5 sm:py-[18px]">
           <span>
             © 2026 redsealguide.com · Unofficial - not affiliated with the Red
             Seal Program or any provincial authority.
           </span>
-          <span>Made in Canada 🍁</span>
+          <span className="shrink-0">Made in Canada 🍁</span>
         </div>
       </div>
     </footer>

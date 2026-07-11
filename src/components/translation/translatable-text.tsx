@@ -30,7 +30,8 @@ export function TranslatableText({
   lessonId,
   className,
 }: TranslatableTextProps) {
-  const { preferredLanguage, translationEnabled } = useDashboardPreferences();
+  const { preferredLanguage, translationEnabled, setTranslationUsage } =
+    useDashboardPreferences();
   const trade = useDashboardTrade();
   const tokens = tokenizeText(text);
   const [activeWordIndex, setActiveWordIndex] = useState<number | null>(null);
@@ -39,6 +40,7 @@ export function TranslatableText({
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const [saving, setSaving] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const [mounted, setMounted] = useState(false);
   const containerRef = useRef<HTMLSpanElement>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -55,6 +57,7 @@ export function TranslatableText({
     setActiveWordIndex(null);
     setPopupData(null);
     setError(null);
+    setLimitReached(false);
     setLoading(false);
     abortRef.current?.abort();
   }, []);
@@ -89,6 +92,7 @@ export function TranslatableText({
 
       setLoading(true);
       setError(null);
+      setLimitReached(false);
       setPopupData(null);
 
       const top = Math.min(rect.bottom + 8, window.innerHeight - 280);
@@ -105,11 +109,18 @@ export function TranslatableText({
         const res = await fetch(`/api/translate?${params}`, {
           signal: controller.signal,
         });
+        const body = await res.json().catch(() => ({}));
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
+          if (body.code === "translation_limit" && body.usage) {
+            setTranslationUsage(body.usage);
+            setLimitReached(true);
+          }
           throw new Error(body.error ?? "Could not translate word");
         }
-        const data = (await res.json()) as WordTranslationData;
+        const data = body as WordTranslationData;
+        if (data.usage) {
+          setTranslationUsage(data.usage);
+        }
         setPopupData(data);
       } catch (err) {
         if ((err as Error).name === "AbortError") return;
@@ -118,7 +129,7 @@ export function TranslatableText({
         setLoading(false);
       }
     },
-    [preferredLanguage, text, trade.name],
+    [preferredLanguage, text, trade.name, setTranslationUsage],
   );
 
   const handleWordClick = (
@@ -226,6 +237,7 @@ export function TranslatableText({
             data={popupData}
             loading={loading}
             error={error}
+            limitReached={limitReached}
             position={position}
             targetLanguage={preferredLanguage}
             onClose={closePopup}

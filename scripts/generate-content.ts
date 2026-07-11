@@ -3,7 +3,7 @@
  * Usage: npm run db:generate-content
  * Options: --trade=447A --block=A --lessons-only --questions-only
  *          --questions=25 --append-questions --province=ON
- * Per-task lesson blocks (e.g. 442A-B) generate one lesson per RSOS exam task.
+ * Per-task lesson blocks (e.g. 442A, 403A) generate one lesson per RSOS exam task.
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";

@@ -2,9 +2,12 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Headphones, ArrowLeft, ArrowRight, PlayCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UpgradeButton } from "@/components/subscription/upgrade-button";
+import { UpgradePrompt } from "@/components/subscription/upgrade-prompt";
 import { fetchLessons, fetchBlocks } from "@/lib/data";
 import { LessonContent } from "@/components/learn/lesson-content";
 import { getDashboardSession } from "@/lib/dashboard-session";
+import { isFreeLesson } from "@/lib/access/subscription";
 import {
   blockCodeFromLessonSlug,
   prepareLessonBlocks,
@@ -57,7 +60,7 @@ export default async function LessonPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const { trade, province, isAdmin } = await getDashboardSession();
+  const { trade, province, isAdmin, isPremium } = await getDashboardSession();
   const [lessons, blocks] = await Promise.all([
     fetchLessons(trade.id, province),
     fetchBlocks(trade.id),
@@ -79,6 +82,28 @@ export default async function LessonPage({
   }
 
   const blockCode = block?.code ?? blockCodeFromLessonSlug(lesson.slug);
+  const lessonUnlocked =
+    isPremium || isFreeLesson(lesson, trade.code, blockCode);
+
+  if (!lessonUnlocked) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <Link href="/dashboard/learn">
+          <Button variant="secondary" size="sm">
+            <ArrowLeft className="h-4 w-4" /> Back to learning path
+          </Button>
+        </Link>
+        <h1 className="mt-6 font-[family-name:var(--font-barlow-semi)] text-2xl font-bold">
+          {lesson.title}
+        </h1>
+        <UpgradePrompt
+          className="mt-6"
+          description="This lesson is part of the full learning path. Free access includes A-1 only — upgrade to unlock all lessons."
+        />
+      </div>
+    );
+  }
+
   const taskCode =
     lesson.chapter_task_code ?? taskCodeFromLessonSlug(lesson.slug);
   const taskName = taskNameForLesson(lesson, trade.code, block?.code);
@@ -105,6 +130,14 @@ export default async function LessonPage({
           ]),
       )
     : undefined;
+
+  const canAccessLesson = (candidate?: Lesson) => {
+    if (!candidate) return false;
+    const candidateBlock = blockForLesson(blocks, candidate);
+    const candidateBlockCode =
+      candidateBlock?.code ?? blockCodeFromLessonSlug(candidate.slug);
+    return isPremium || isFreeLesson(candidate, trade.code, candidateBlockCode);
+  };
 
   return (
     <div className="mx-auto max-w-3xl">
@@ -174,7 +207,7 @@ export default async function LessonPage({
       </div>
 
       <nav className="mt-10 flex flex-wrap items-center justify-between gap-4 border-t border-[#E5E0D8] pt-6">
-        {prev ? (
+        {prev && canAccessLesson(prev) ? (
           <Link href={`/dashboard/learn/${prev.slug}`}>
             <Button variant="secondary" size="sm">
               <ArrowLeft className="h-4 w-4" />
@@ -198,20 +231,25 @@ export default async function LessonPage({
             </Link>
           )}
 
-          {next ? (
+          {next && canAccessLesson(next) ? (
             <Link href={`/dashboard/learn/${next.slug}`}>
               <Button size="sm">
                 {lessonNavLabel(next, nextBlock)}
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
-          ) : isLastLessonInTrade ? (
+          ) : isLastLessonInTrade && isPremium ? (
             <Link href="/dashboard/mock-exam">
               <Button size="sm">
                 Start mock exam
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
+          ) : !isPremium ? (
+            <UpgradeButton
+              label="Upgrade for more lessons"
+              showLockIcon={false}
+            />
           ) : nextBlock && perTaskBlock ? (
             <Link
               href={`/dashboard/learn/${getFirstLessonForBlock(lessons, nextBlock.id)?.slug ?? "/dashboard/learn"}`}

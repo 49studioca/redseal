@@ -6,6 +6,7 @@ import {
   BarChart3,
   Flag,
   FileText,
+  Play,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
@@ -15,6 +16,12 @@ const adminLinks = [
     label: "AI Generation",
     icon: Sparkles,
     desc: "Generate questions, lessons, flashcards",
+  },
+  {
+    href: "/admin/video-learning",
+    label: "Video Learning",
+    icon: Play,
+    desc: "Generate Jina-curated YouTube videos per block",
   },
   {
     href: "/admin/review",

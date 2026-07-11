@@ -1,16 +1,13 @@
-import { Suspense } from "react";
-import { LoginForm } from "./login-form";
+import { redirect } from "next/navigation";
 
-export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex min-h-screen items-center justify-center text-[#64748B]">
-          Loading...
-        </div>
-      }
-    >
-      <LoginForm />
-    </Suspense>
-  );
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string; error?: string }>;
+}) {
+  const params = await searchParams;
+  const query = new URLSearchParams({ signin: "" });
+  if (params.redirect) query.set("redirect", params.redirect);
+  if (params.error) query.set("error", params.error);
+  redirect(`/auth?${query.toString()}`);
 }

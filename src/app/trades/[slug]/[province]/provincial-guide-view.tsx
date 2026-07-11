@@ -5,6 +5,8 @@ import {
   MarketingFooter,
 } from "@/components/marketing/sections";
 import { getTradeBySlug, PROVINCIAL_GUIDES } from "@/data/seed";
+import { buildSignupHref } from "@/lib/auth/signup-context";
+import { normalizeProvinceCode } from "@/lib/provinces";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
@@ -80,7 +82,14 @@ export function ProvincialGuideView({
           </Card>
         )}
 
-        <Link href="/auth/signup" className="mt-8 inline-block">
+        <Link
+          href={buildSignupHref({
+            tradeSlug: slug,
+            province: normalizeProvinceCode(guide.province_code),
+            redirect: `/trades/${slug}/${province}`,
+          })}
+          className="mt-8 inline-block"
+        >
           <Button size="lg">Start preparing for {trade.code}</Button>
         </Link>
       </div>

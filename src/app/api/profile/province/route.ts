@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { getServerSessionUser } from "@/lib/supabase/server-auth";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { isProvinceCode } from "@/lib/provinces";
 
@@ -16,9 +17,7 @@ export async function PATCH(request: Request) {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

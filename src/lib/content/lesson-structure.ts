@@ -11,6 +11,7 @@ export function enrichLessonWithTaskCode(lesson: Lesson): Lesson {
 /** Blocks that use one lesson per RSOS exam task instead of one lesson per block. */
 export const PER_TASK_LESSON_BLOCKS: Record<string, string[]> = {
   "trade-442a": ["A", "B", "C", "D", "E", "F"],
+  "trade-carpenter": ["A", "B", "C", "D", "E", "F", "G"],
 };
 
 export function usesPerTaskLessons(

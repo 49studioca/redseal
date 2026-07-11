@@ -1,9 +1,11 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { randomUUID } from "crypto";
 import {
   getSupabaseConfig,
   usesSupabaseData,
 } from "@/lib/supabase/config";
+import { DEVICE_COOKIE } from "@/lib/auth/devices";
 
 function withSupabaseCookies(
   target: NextResponse,
@@ -19,9 +21,27 @@ function withSupabaseCookies(
   return target;
 }
 
+function ensureDeviceCookie(
+  request: NextRequest,
+  response: NextResponse,
+): NextResponse {
+  if (request.cookies.get(DEVICE_COOKIE)?.value) {
+    return response;
+  }
+
+  response.cookies.set(DEVICE_COOKIE, randomUUID(), {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365 * 2,
+  });
+  return response;
+}
+
 export async function updateSession(request: NextRequest) {
   if (!usesSupabaseData()) {
-    return NextResponse.next({ request });
+    return ensureDeviceCookie(request, NextResponse.next({ request }));
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -47,10 +67,12 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  // Do not run code between createServerClient and getClaims — session
-  // refresh must happen here or users get randomly logged out.
-  const { data } = await supabase.auth.getClaims();
-  const isAuthenticated = Boolean(data?.claims?.sub);
+  // Do not run code between createServerClient and getUser — session refresh
+  // must happen here or users get randomly logged out.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const isAuthenticated = Boolean(user);
 
   const protectedPaths = [
     "/dashboard",
@@ -64,26 +86,37 @@ export async function updateSession(request: NextRequest) {
 
   if (isProtected && !isAuthenticated) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = "/auth/login";
-    redirectUrl.searchParams.set("redirect", request.nextUrl.pathname);
+    redirectUrl.pathname = "/auth";
+    redirectUrl.searchParams.set("signin", "");
+    redirectUrl.searchParams.set(
+      "redirect",
+      `${request.nextUrl.pathname}${request.nextUrl.search}`,
+    );
     return withSupabaseCookies(
-      NextResponse.redirect(redirectUrl),
+      ensureDeviceCookie(
+        request,
+        NextResponse.redirect(redirectUrl),
+      ),
       supabaseResponse,
     );
   }
 
   if (
     isAuthenticated &&
-    (request.nextUrl.pathname.startsWith("/auth/login") ||
+    (request.nextUrl.pathname === "/auth" ||
+      request.nextUrl.pathname.startsWith("/auth/login") ||
       request.nextUrl.pathname.startsWith("/auth/signup"))
   ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     return withSupabaseCookies(
-      NextResponse.redirect(redirectUrl),
+      ensureDeviceCookie(
+        request,
+        NextResponse.redirect(redirectUrl),
+      ),
       supabaseResponse,
     );
   }
 
-  return supabaseResponse;
+  return ensureDeviceCookie(request, supabaseResponse);
 }

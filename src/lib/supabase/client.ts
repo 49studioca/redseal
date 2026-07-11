@@ -1,5 +1,8 @@
 import { createBrowserClient } from "@supabase/ssr";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { getSupabaseConfig, isSupabaseConfigured } from "@/lib/supabase/config";
+
+let browserClient: SupabaseClient | undefined;
 
 export function createClient() {
   if (!isSupabaseConfigured()) {
@@ -7,6 +10,11 @@ export function createClient() {
       "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL to your project API URL (https://YOUR_PROJECT.supabase.co), not a Postgres connection string."
     );
   }
-  const { url, anonKey } = getSupabaseConfig();
-  return createBrowserClient(url, anonKey);
+
+  if (!browserClient) {
+    const { url, anonKey } = getSupabaseConfig();
+    browserClient = createBrowserClient(url, anonKey);
+  }
+
+  return browserClient;
 }

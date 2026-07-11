@@ -1,5 +1,12 @@
 import { NextResponse } from "next/server";
 import { translateWord } from "@/lib/ai/generate";
+import { isPremiumTier } from "@/lib/access/subscription";
+import {
+  checkTranslationAccess,
+  recordTranslationLookup,
+  translationUsageSummary,
+  type TranslationUsage,
+} from "@/lib/access/translation-usage";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import {
@@ -7,6 +14,17 @@ import {
   normalizeWord,
 } from "@/lib/translation/context-key";
 import { getLanguageLabel } from "@/lib/translation/languages";
+
+function limitResponse(usage: TranslationUsage) {
+  return NextResponse.json(
+    {
+      error: "Free plan includes 5 word translations. Upgrade for unlimited lookups.",
+      code: "translation_limit",
+      usage,
+    },
+    { status: 403 },
+  );
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -35,6 +53,26 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("subscription_tier")
+      .eq("id", user.id)
+      .single();
+
+    const isPremium = isPremiumTier(profile?.subscription_tier ?? "free");
+    const access = await checkTranslationAccess(
+      supabase,
+      user.id,
+      normalized,
+      targetLanguage,
+      contextKey,
+      isPremium,
+    );
+
+    if (!access.allowed) {
+      return limitResponse(access.usage);
+    }
+
     const { data: cached } = await supabase
       .from("translation_cache")
       .select("*")
@@ -45,6 +83,16 @@ export async function GET(request: Request) {
       .maybeSingle();
 
     if (cached) {
+      const usage = isPremium
+        ? access.usage
+        : await recordTranslationLookup(
+            supabase,
+            user.id,
+            normalized,
+            targetLanguage,
+            contextKey,
+          );
+
       const { data: saved } = await supabase
         .from("saved_words")
         .select("id")
@@ -62,6 +110,7 @@ export async function GET(request: Request) {
         cached: true,
         saved: Boolean(saved),
         saved_id: saved?.id ?? null,
+        usage,
       });
     }
 
@@ -92,6 +141,16 @@ export async function GET(request: Request) {
       // Cache write failure should not block the response
     }
 
+    const usage = isPremium
+      ? access.usage
+      : await recordTranslationLookup(
+          supabase,
+          user.id,
+          normalized,
+          targetLanguage,
+          contextKey,
+        );
+
     const { data: saved } = await supabase
       .from("saved_words")
       .select("id")
@@ -109,6 +168,7 @@ export async function GET(request: Request) {
       cached: false,
       saved: Boolean(saved),
       saved_id: saved?.id ?? null,
+      usage,
     });
   }
 
@@ -126,5 +186,6 @@ export async function GET(request: Request) {
     cached: false,
     saved: false,
     saved_id: null,
+    usage: translationUsageSummary(0, true),
   });
 }

@@ -14,9 +14,11 @@
     "db:generate-rsos-seed": "node scripts/generate-rsos-seed.mjs",
     "db:generate-content": "tsx scripts/generate-content.ts",
     "db:backfill-check-answers": "tsx scripts/backfill-check-answers.ts",
-    "db:sync-lesson-images": "tsx scripts/sync-lesson-images.ts"
+    "db:sync-lesson-images": "tsx scripts/sync-lesson-images.ts",
+    "db:sync-trade-card-images": "tsx scripts/sync-trade-card-images.ts"
   },
   "dependencies": {
+    "@stripe/react-stripe-js": "^6.7.0",
     "@stripe/stripe-js": "^9.9.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
@@ -33,6 +35,7 @@
     "react-dom": "19.2.4",
     "react-katex": "^3.1.0",
     "react-markdown": "^10.1.0",
+    "sharp": "^0.34.5",
     "stripe": "^22.3.0",
     "tailwind-merge": "^3.6.0",
     "uuid": "^14.0.1",

@@ -798,6 +798,60 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "403A-A-A-1": {
+    video: {
+      youtubeId: "YdZfUEb9s-o",
+      title: "Carpentry tools — safe use and maintenance basics",
+    },
+    images: [
+      {
+        // Wikimedia Commons: File:Carpentry hand tools.jpg (hosted in storage)
+        src: "https://jxenasjdyzpduklrdfnd.supabase.co/storage/v1/object/public/images/lesson-media/ai/403a-a-a-1/mre8z4xs.jpg",
+        alt: "Carpentry hand tools laid out for use and maintenance",
+        caption:
+          "Inspect, maintain, and use carpentry hand and power tools per manufacturer specs before every task.",
+      },
+    ],
+  },
+  "403A-A-A-2": {
+    video: {
+      youtubeId: "Vm_daEZ-veM",
+      title: "Construction site safety induction",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Jobsite safety awareness",
+        caption: "Safety-related activities include PPE, hazard assessment, and fall protection.",
+      },
+    ],
+  },
+  "403A-A-A-3": {
+    video: {
+      youtubeId: "o5CWnUFsevo",
+      title: "Scaffolding and temporary access structures",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Temporary access structure framing",
+        caption: "Scaffold, ladders, and temporary platforms must be erected and inspected before use.",
+      },
+    ],
+  },
+  "403A-A-A-4": {
+    video: {
+      youtubeId: "fJeRabV5hNU",
+      title: "Jobsite communication and mentoring",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Crew coordination on site",
+        caption: "Clear communication and mentoring keep crews aligned on drawings and safety.",
+      },
+    ],
+  },
   "403A-B": {
     video: {
       youtubeId: "wFdRbiGFx1M",
@@ -808,6 +862,45 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
         src: IMG.tapeMeasure,
         alt: "Tape measure for layout",
         caption: "Accurate layout keeps studs on module and sheathing joints on centre.",
+      },
+    ],
+  },
+  "403A-B-B-5": {
+    video: {
+      youtubeId: "wFdRbiGFx1M",
+      title: "Reading construction drawings and documentation",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Plans and measuring tools",
+        caption: "Interpret drawings, specs, and schedules before cutting or placing materials.",
+      },
+    ],
+  },
+  "403A-B-B-6": {
+    video: {
+      youtubeId: "Vm_daEZ-veM",
+      title: "Organizing carpentry work on site",
+    },
+    images: [
+      {
+        src: IMG.wrench,
+        alt: "Material staging and tools",
+        caption: "Organize materials, sequencing, and crew tasks to reduce rework.",
+      },
+    ],
+  },
+  "403A-B-B-7": {
+    video: {
+      youtubeId: "3fP0LZMEV5w",
+      title: "Building layout and measuring techniques",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Layout with tape measure",
+        caption: "Square, level, and plumb layout controls every framing and finish module.",
       },
     ],
   },
@@ -824,6 +917,32 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "403A-C-C-8": {
+    video: {
+      youtubeId: "tyQCAASaOUM",
+      title: "Concrete formwork before the pour",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Wood formwork for concrete",
+        caption: "Formwork construction includes ties, walers, bracing, and release agents.",
+      },
+    ],
+  },
+  "403A-C-C-9": {
+    video: {
+      youtubeId: "tyQCAASaOUM",
+      title: "Placing and finishing concrete products",
+    },
+    images: [
+      {
+        src: IMG.wrench,
+        alt: "Concrete placement tools",
+        caption: "Install concrete, cement-based, and epoxy products to specified finish and cure.",
+      },
+    ],
+  },
   "403A-D": {
     video: {
       youtubeId: "3fP0LZMEV5w",
@@ -834,6 +953,58 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
         src: IMG.woodFraming,
         alt: "Platform wood framing",
         caption: "Framing members include plates, studs, joists, and rafters.",
+      },
+    ],
+  },
+  "403A-D-D-10": {
+    video: {
+      youtubeId: "3fP0LZMEV5w",
+      title: "Floor framing systems",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Floor joist framing",
+        caption: "Floor systems include joists, beams, rim boards, and subfloor fastening.",
+      },
+    ],
+  },
+  "403A-D-D-11": {
+    video: {
+      youtubeId: "3fP0LZMEV5w",
+      title: "Deck framing and ledger attachment",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Exterior deck framing context",
+        caption: "Deck systems need correct ledger flashing, posts, beams, and guardrails.",
+      },
+    ],
+  },
+  "403A-D-D-12": {
+    video: {
+      youtubeId: "wFdRbiGFx1M",
+      title: "Framing walls — precise stud layout",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Wall stud framing",
+        caption: "Wall systems include plates, studs, headers, and sheathing on layout.",
+      },
+    ],
+  },
+  "403A-D-D-13": {
+    video: {
+      youtubeId: "3fP0LZMEV5w",
+      title: "Roof and ceiling framing",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Roof and ceiling framing members",
+        caption: "Roof and ceiling systems include rafters, trusses, ridges, and ceiling joists.",
       },
     ],
   },
@@ -850,6 +1021,45 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "403A-E-E-14": {
+    video: {
+      youtubeId: "WQU3Qq3p73I",
+      title: "Installing exterior doors and windows",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Exterior opening installation",
+        caption: "Doors and windows need plumb, square, flashed, and sealed installation.",
+      },
+    ],
+  },
+  "403A-E-E-15": {
+    video: {
+      youtubeId: "WQU3Qq3p73I",
+      title: "Roofing installation basics",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Roof layout and measuring",
+        caption: "Roofing includes underlayment, flashing, fasteners, and weather exposure.",
+      },
+    ],
+  },
+  "403A-E-E-16": {
+    video: {
+      youtubeId: "WQU3Qq3p73I",
+      title: "How to install vinyl siding panels",
+    },
+    images: [
+      {
+        src: IMG.outdoorWiring,
+        alt: "Exterior cladding and finishes",
+        caption: "Exterior finishes need correct starter courses, trim, and expansion gaps.",
+      },
+    ],
+  },
   "403A-F": {
     video: {
       youtubeId: "wfsmfJ_tkuk",
@@ -863,6 +1073,58 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
       },
     ],
   },
+  "403A-F-F-17": {
+    video: {
+      youtubeId: "wfsmfJ_tkuk",
+      title: "Wall and ceiling finish installation",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Interior wall and ceiling substrate",
+        caption: "Wall and ceiling finishes depend on flat framing and correct fastener patterns.",
+      },
+    ],
+  },
+  "403A-F-F-18": {
+    video: {
+      youtubeId: "wfsmfJ_tkuk",
+      title: "Flooring installation basics",
+    },
+    images: [
+      {
+        src: IMG.tapeMeasure,
+        alt: "Flooring layout measuring",
+        caption: "Flooring layout starts with square reference lines and expansion gaps.",
+      },
+    ],
+  },
+  "403A-F-F-19": {
+    video: {
+      youtubeId: "wfsmfJ_tkuk",
+      title: "Installing interior doors and trim",
+    },
+    images: [
+      {
+        src: IMG.wrench,
+        alt: "Interior door and trim tools",
+        caption: "Interior doors and windows need plumb jambs, even reveals, and secure hardware.",
+      },
+    ],
+  },
+  "403A-F-F-20": {
+    video: {
+      youtubeId: "wfsmfJ_tkuk",
+      title: "How to install baseboards and finish stairs",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Finish stairs and trim components",
+        caption: "Finish components and stairs require accurate rise/run and tight mitres.",
+      },
+    ],
+  },
   "403A-G": {
     video: {
       youtubeId: "JP4uP5DMGLo",
@@ -873,6 +1135,32 @@ export const BLOCK_MEDIA: Record<string, BlockMediaBundle> = {
         src: IMG.woodFraming,
         alt: "Renovation framing",
         caption: "Renovations often combine selective demolition with new framed partitions.",
+      },
+    ],
+  },
+  "403A-G-G-21": {
+    video: {
+      youtubeId: "JP4uP5DMGLo",
+      title: "Renovation support and protection activities",
+    },
+    images: [
+      {
+        src: IMG.wrench,
+        alt: "Renovation support tools",
+        caption: "Renovation support includes protection, selective demo planning, and temporary support.",
+      },
+    ],
+  },
+  "403A-G-G-22": {
+    video: {
+      youtubeId: "JP4uP5DMGLo",
+      title: "Building a new interior wall during renovation",
+    },
+    images: [
+      {
+        src: IMG.woodFraming,
+        alt: "Renovation construction framing",
+        caption: "Renovation construction ties new work into existing structure safely and squarely.",
       },
     ],
   },
@@ -895,7 +1183,8 @@ export function getBlockMedia(
   taskCode?: string,
 ): BlockMediaBundle | undefined {
   if (taskCode) {
-    return BLOCK_MEDIA[blockMediaKey(tradeCode, blockCode, taskCode)];
+    const taskMedia = BLOCK_MEDIA[blockMediaKey(tradeCode, blockCode, taskCode)];
+    if (taskMedia) return taskMedia;
   }
   return BLOCK_MEDIA[blockMediaKey(tradeCode, blockCode)];
 }

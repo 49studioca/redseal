@@ -129,8 +129,8 @@ export function LessonMediaAdminControls({
           {mediaType === "image" ? (
             <div className="space-y-2">
               <p className="text-xs text-[#64748B]">
-                AI reads this lesson and finds a matching Wikimedia Commons
-                photo, then hosts it in storage.
+                AI reads this lesson, searches with Jina for a matching photo,
+                then hosts it in storage (Wikimedia fallback).
               </p>
               <input
                 value={imageSrc}
@@ -148,8 +148,8 @@ export function LessonMediaAdminControls({
           ) : (
             <div className="space-y-2">
               <p className="text-xs text-[#64748B]">
-                AI reads this lesson and finds a matching YouTube training
-                video.
+                AI reads this lesson and uses Jina to find a matching YouTube
+                training video.
               </p>
               <input
                 value={youtubeId}

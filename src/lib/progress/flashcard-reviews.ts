@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { getServerSessionUser } from "@/lib/supabase/server-auth";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { fetchFlashcards } from "@/lib/data";
 import { sm2Review, type Sm2State } from "@/lib/srs/sm2";
@@ -16,10 +17,7 @@ export type FlashcardWithReview = Flashcard & {
 
 async function getAuthenticatedUserId(): Promise<string | null> {
   if (!usesSupabaseData()) return null;
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerSessionUser();
   return user?.id ?? null;
 }
 

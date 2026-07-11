@@ -12,10 +12,15 @@ export function LanguageSelector() {
     isUpdatingLanguage,
     translationEnabled,
     setTranslationEnabled,
+    isPremium,
+    translationUsage,
   } = useDashboardPreferences();
 
   return (
-    <div className="rounded-[13px] border border-[#E5E0D8] bg-white p-3">
+    <div
+      className="rounded-[13px] border border-[#E5E0D8] bg-white p-3"
+      data-tour="tour-language"
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wide text-[#64748B]">
           <Languages className="h-3.5 w-3.5 text-[#C0271E]" />
@@ -44,7 +49,11 @@ export function LanguageSelector() {
       </div>
       <p className="mt-1 text-[11px] leading-snug text-[#94A3B8]">
         {translationEnabled
-          ? "Click any word in lessons for help in your language"
+          ? isPremium
+            ? "Click any word in lessons for help in your language"
+            : translationUsage
+              ? `${translationUsage.remaining ?? 0} of ${translationUsage.limit} free word lookups left`
+              : "Click any word in lessons for help in your language"
           : "Turn on to translate lesson words"}
       </p>
       <label className="mt-2.5 block text-[10px] font-bold uppercase tracking-wide text-[#94A3B8]">

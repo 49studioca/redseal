@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserDevicesSection } from "@/components/dashboard/user-devices-section";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PLANS } from "@/lib/stripe/config";
@@ -46,6 +47,8 @@ export default function SettingsPage() {
           </Button>
         </Link>
       </Card>
+
+      <UserDevicesSection />
     </div>
   );
 }

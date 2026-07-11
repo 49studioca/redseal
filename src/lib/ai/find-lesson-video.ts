@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { BlockMediaVideo } from "@/data/block-media";
+import { hasJinaApiKey, searchJinaYoutubeVideos } from "@/lib/ai/jina-search";
 
 const openrouter = process.env.OPENROUTER_API_KEY
   ? new OpenAI({
@@ -341,6 +342,23 @@ async function searchVideos(
   query: string,
   excludeId?: string,
 ): Promise<SearchHit[]> {
+  if (hasJinaApiKey()) {
+    try {
+      const fromJina = await searchJinaYoutubeVideos(query, {
+        num: 8,
+        excludeId,
+      });
+      if (fromJina.length) {
+        return fromJina.map((hit) => ({
+          youtubeId: hit.youtubeId,
+          title: hit.title,
+        }));
+      }
+    } catch {
+      // Fall through to YouTube / Piped / Invidious.
+    }
+  }
+
   const fromApi = await searchYouTubeDataApi(query, excludeId);
   if (fromApi.length) return fromApi;
 
@@ -394,7 +412,9 @@ export async function findLessonVideoFromContent(input: {
 
   if (!best) {
     throw new Error(
-      `No YouTube video found for “${brief.searchQuery}”. Try again or paste a YouTube URL.`,
+      `No YouTube video found for “${brief.searchQuery}”. ${
+        hasJinaApiKey() ? "" : "Set JINA_API_KEY for better search, or "
+      }try again or paste a YouTube URL.`,
     );
   }
 

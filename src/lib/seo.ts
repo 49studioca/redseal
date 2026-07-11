@@ -7,7 +7,7 @@ export const SITE_TITLE = "RedSealGuide | AI Red Seal Exam Prep for Canada";
 export const SITE_DESCRIPTION =
   "AI-powered Red Seal exam prep for Canadian trades: RSOS-aligned practice questions, mock exams, province-aware study guidance, and readiness tracking.";
 
-export const INDEXABLE_UTILITY_ROUTES = ["/trades"] as const;
+export const INDEXABLE_UTILITY_ROUTES = ["/trades", "/pricing"] as const;
 
 export function absoluteUrl(path = "/") {
   if (path.startsWith("http")) return path;

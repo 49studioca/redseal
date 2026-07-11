@@ -4,10 +4,12 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { QuestionCard } from "@/components/practice/question-card";
 import { ReferenceViewer } from "@/components/practice/reference-viewer";
 import { Button } from "@/components/ui/button";
+import { UpgradeButton } from "@/components/subscription/upgrade-button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDashboardTrade } from "@/components/layout/dashboard-trade-context";
 import { useDashboardPreferences } from "@/components/layout/dashboard-preferences-context";
+import { FREE_LIMITS } from "@/lib/access/subscription";
 import {
   buildBlueprint,
   sampleQuestionsForMockExam,
@@ -20,7 +22,7 @@ type Phase = "intro" | "exam" | "results";
 
 export default function MockExamPage() {
   const trade = useDashboardTrade();
-  const { province } = useDashboardPreferences();
+  const { province, isPremium } = useDashboardPreferences();
   const [blocks, setBlocks] = useState<RsosBlock[]>([]);
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [phase, setPhase] = useState<Phase>("intro");
@@ -67,13 +69,20 @@ export default function MockExamPage() {
   const startExam = () => {
     const blueprint = buildBlueprint(blocks, trade.exam_question_count);
     const sampled = sampleQuestionsForMockExam(allQuestions, blueprint, blocks);
-    setQuestions(sampled);
+    const examQuestions = isPremium
+      ? sampled
+      : sampled.slice(0, FREE_LIMITS.mockExamQuestions);
+    setQuestions(examQuestions);
     setAnswers({});
     setCurrentIndex(0);
     setReviewing(false);
     setReviewIndex(0);
     setReviewFilter("all");
-    setTimeLeft(trade.exam_time_minutes * 60);
+    setTimeLeft(
+      isPremium
+        ? trade.exam_time_minutes * 60
+        : FREE_LIMITS.mockExamQuestions * 120,
+    );
     setPhase("exam");
   };
 
@@ -152,13 +161,27 @@ export default function MockExamPage() {
             {trade.name}
           </h2>
           <ul className="mt-4 space-y-2 text-sm text-[#64748B]">
-            <li>
-              • {trade.exam_question_count} questions — official exam format
-            </li>
-            <li>
-              • {trade.exam_time_minutes / 60} hour time limit — matches exam
-              day
-            </li>
+            {isPremium ? (
+              <>
+                <li>
+                  • {trade.exam_question_count} questions — official exam format
+                </li>
+                <li>
+                  • {trade.exam_time_minutes / 60} hour time limit — matches
+                  exam day
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  • {FREE_LIMITS.mockExamQuestions} question preview — free tier
+                </li>
+                <li>
+                  • Upgrade for the full {trade.exam_question_count}-question
+                  exam
+                </li>
+              </>
+            )}
             <li>
               • RSOS block weights match the real exam (not the practice bank
               size)
@@ -169,8 +192,19 @@ export default function MockExamPage() {
             )}
           </ul>
           <Button className="mt-8" size="lg" onClick={startExam}>
-            Start mock exam
+            {isPremium ? "Start mock exam" : "Start free preview"}
           </Button>
+          {!isPremium && (
+            <p className="mt-4 text-sm text-[#64748B]">
+              <UpgradeButton
+                label="Upgrade"
+                showLockIcon={false}
+                variant="ghost"
+                className="inline-flex h-auto p-0 align-baseline font-medium text-[#C0271E] hover:bg-transparent hover:underline"
+              />{" "}
+              for unlimited full-length mock exams.
+            </p>
+          )}
         </Card>
       </div>
     );

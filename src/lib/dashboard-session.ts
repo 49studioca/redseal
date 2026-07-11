@@ -1,11 +1,20 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { DEVICE_LIMIT_MESSAGE } from "@/lib/auth/devices";
+import { registerDeviceForSession } from "@/lib/auth/register-device-session";
+import { getServerSessionUser } from "@/lib/supabase/server-auth";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { getTradeById, TRADES } from "@/data/seed";
 import { readDemoPreferences } from "@/lib/demo-preferences";
 import { DEFAULT_PROVINCE, normalizeProvinceCode } from "@/lib/provinces";
-import type { Trade } from "@/types";
+import { isPremiumTier } from "@/lib/access/subscription";
+import {
+  countTranslationUsage,
+  translationUsageSummary,
+  type TranslationUsage,
+} from "@/lib/access/translation-usage";
+import type { Profile, Trade } from "@/types";
 
 export type DashboardSession = {
   trade: Trade;
@@ -14,6 +23,9 @@ export type DashboardSession = {
   preferredLanguage: string;
   translationEnabled: boolean;
   province: string;
+  subscriptionTier: Profile["subscription_tier"];
+  isPremium: boolean;
+  translationUsage: TranslationUsage | null;
 };
 
 async function resolveTrade(tradeId: string): Promise<Trade> {
@@ -48,9 +60,7 @@ export async function resolveUserProvince(): Promise<string> {
 
   if (usesSupabaseData()) {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getServerSessionUser();
     if (user) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -75,28 +85,47 @@ export async function getDashboardSession(): Promise<DashboardSession> {
   let preferredLanguage = demoPrefs.preferredLanguage;
   let translationEnabled = demoPrefs.translationEnabled;
   let province = normalizeProvinceCode(demoPrefs.province ?? DEFAULT_PROVINCE);
+  let subscriptionTier: Profile["subscription_tier"] = "pro_all";
+  let translationUsage: TranslationUsage | null = null;
 
   if (usesSupabaseData()) {
     const supabase = await createClient();
+    const user = await getServerSessionUser();
+    if (!user) {
+      redirect("/auth?signin");
+    }
+
     const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-      if (profile) {
-        if (!profile.onboarding_completed) redirect("/onboarding");
-        tradeId = profile.selected_trade_id ?? tradeId;
-        userName = profile.full_name ?? user.email ?? "User";
-        isAdmin = profile.is_admin ?? false;
-        province = normalizeProvinceCode(profile.province ?? province);
-      }
+      data: { session },
+    } = await supabase.auth.getSession();
+    const deviceResult = await registerDeviceForSession(
+      user.id,
+      session?.access_token,
+    );
+    if (!deviceResult.ok) {
+      redirect(
+        `/auth?signin&error=device_limit&message=${encodeURIComponent(DEVICE_LIMIT_MESSAGE)}`,
+      );
+    }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+    if (profile) {
+      if (!profile.selected_trade_id) redirect("/onboarding");
+      tradeId = profile.selected_trade_id ?? tradeId;
+      userName = profile.full_name ?? user.email ?? "User";
+      isAdmin = profile.is_admin ?? false;
+      province = normalizeProvinceCode(profile.province ?? province);
+      subscriptionTier = profile.subscription_tier ?? "free";
+      const isPremium = isPremiumTier(subscriptionTier);
+      const used = await countTranslationUsage(supabase, user.id);
+      translationUsage = translationUsageSummary(used, isPremium);
     }
   } else {
-    if (!demoPrefs.onboardingCompleted) redirect("/onboarding");
+    if (!demoPrefs.tradeId) redirect("/onboarding");
     tradeId = demoPrefs.tradeId ?? tradeId;
   }
 
@@ -108,5 +137,8 @@ export async function getDashboardSession(): Promise<DashboardSession> {
     preferredLanguage,
     translationEnabled,
     province,
+    subscriptionTier,
+    isPremium: isPremiumTier(subscriptionTier),
+    translationUsage,
   };
 }

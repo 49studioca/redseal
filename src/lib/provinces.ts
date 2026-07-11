@@ -28,6 +28,10 @@ export function getProvinceByCode(code: string) {
   return PROVINCES.find((p) => p.code === code) ?? PROVINCES[0];
 }
 
+export function getProvinceBySlug(slug: string) {
+  return PROVINCES.find((p) => p.slug === slug);
+}
+
 export function normalizeProvinceCode(code?: string | null): ProvinceCode {
   if (code && isProvinceCode(code)) return code;
   return DEFAULT_PROVINCE;

@@ -2,6 +2,7 @@
 
 import { Bookmark, BookmarkCheck, Loader2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { UpgradeButton } from "@/components/subscription/upgrade-button";
 import { isRtlLanguage } from "@/lib/translation/languages";
 import { cn } from "@/lib/utils";
 
@@ -13,12 +14,18 @@ export type WordTranslationData = {
   cached?: boolean;
   saved?: boolean;
   saved_id?: string | null;
+  usage?: {
+    used: number;
+    limit: number | null;
+    remaining: number | null;
+  };
 };
 
 interface WordTranslationPopupProps {
   data: WordTranslationData | null;
   loading: boolean;
   error: string | null;
+  limitReached?: boolean;
   position: { top: number; left: number };
   targetLanguage: string;
   onClose: () => void;
@@ -31,6 +38,7 @@ export function WordTranslationPopup({
   data,
   loading,
   error,
+  limitReached = false,
   position,
   targetLanguage,
   onClose,
@@ -61,7 +69,14 @@ export function WordTranslationPopup({
               Looking up word…
             </div>
           ) : error ? (
-            <p className="text-sm text-[#C0271E]">{error}</p>
+            <div>
+              <p className="text-sm text-[#C0271E]">{error}</p>
+              {limitReached && (
+                <div className="mt-3">
+                  <UpgradeButton label="Upgrade for unlimited" size="sm" />
+                </div>
+              )}
+            </div>
           ) : data ? (
             <>
               <div className="font-[family-name:var(--font-barlow-semi)] text-lg font-bold capitalize text-[#1F2A37]">

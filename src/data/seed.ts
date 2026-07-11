@@ -152,6 +152,21 @@ export const TRADE_GENERATION_PROFILES = {
     calculation_templates: ["voltage_drop", "conductor_ampacity", "transformer_sizing", "power_factor", "motor_current", "open_delta_capacity", "transmitter_scaling"],
     distractor_patterns: ["confused line vs phase voltage in three-phase", "AC vs DC motor maintenance procedure", "analog vs digital VOM test procedure", "delta vs wye transformer connections"],
   },
+  "trade-carpenter": {
+    glossary: {
+      RSOS: "Red Seal Occupational Standard",
+      OBC: "Ontario Building Code",
+      NBC: "National Building Code of Canada",
+      formwork: "Temporary moulds that hold concrete until it cures",
+      ledger: "Horizontal member that supports joists, often attached to a building",
+      on_centre: "Spacing measured from the centre of one member to the centre of the next",
+      plumb: "Perfectly vertical",
+      square: "At a true 90° angle",
+    },
+    code_standards: ["NBC", "WHMIS-2015"],
+    calculation_templates: ["rise_run_stairs", "rafter_length", "stud_layout_oc", "concrete_volume", "board_feet"],
+    distractor_patterns: ["confused on-centre vs clear spacing", "wrong stair rise/run combination", "formwork bracing vs form ties"],
+  },
 };
 
 export const TRADE_DETAIL_OVERRIDES: Record<string, TradeDetailContent> = {

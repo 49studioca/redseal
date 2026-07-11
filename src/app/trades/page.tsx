@@ -6,6 +6,10 @@ import {
 } from "@/components/marketing/sections";
 import { TRADES } from "@/data/seed";
 import { SITE_NAME, absoluteUrl, jsonLd } from "@/lib/seo";
+import {
+  tradeCardImageAlt,
+  tradeCardImageSrc,
+} from "@/lib/storage/trade-card-images";
 
 export const metadata: Metadata = {
   title: `All Red Seal Trades Covered`,
@@ -63,37 +67,58 @@ export default function TradesPage() {
               if (a.status === b.status) return a.name.localeCompare(b.name);
               return a.status === "live" ? -1 : 1;
             })
-            .map((trade) => (
-              <Link
-                key={trade.id}
-                href={`/trades/${trade.slug}`}
-                className="relative rounded-2xl border border-[#E5E0D8] p-6 transition hover:border-[#C0271E] hover:shadow-lg"
-              >
-                {trade.status === "coming_soon" && (
-                  <span className="absolute right-4 top-4 rounded-full bg-[#F6F3EE] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#64748B]">
-                    Coming soon
-                  </span>
-                )}
-                <span className="text-4xl">{trade.icon}</span>
-                <h2 className="mt-3 font-[family-name:var(--font-barlow-semi)] text-xl font-semibold">
-                  {trade.name}
-                </h2>
-                <p className="mt-2 text-sm text-[#64748B] line-clamp-3">
-                  {trade.description}
-                </p>
-                <p className="mt-3 font-[family-name:var(--font-ibm-mono)] text-xs text-[#94A3B8]">
-                  {trade.code} · {trade.exam_question_count} Qs ·{" "}
-                  {trade.pass_percentage}% pass
-                </p>
-              </Link>
-            ))}
+            .map((trade) => {
+              const cardImage = tradeCardImageSrc(trade.slug);
+              const cardAlt =
+                tradeCardImageAlt(trade.slug) ?? `${trade.name} Red Seal trade`;
+
+              return (
+                <Link
+                  key={trade.id}
+                  href={`/trades/${trade.slug}`}
+                  className="group relative flex flex-col overflow-hidden rounded-2xl border border-[#E5E0D8] transition hover:border-[#C0271E] hover:shadow-lg"
+                >
+                  {cardImage ? (
+                    <div className="relative aspect-[16/10] overflow-hidden bg-[#F6F3EE]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={cardImage}
+                        alt={cardAlt}
+                        className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : null}
+                  {trade.status === "coming_soon" && (
+                    <span className="absolute right-4 top-4 z-10 rounded-full bg-white/90 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#64748B] shadow-sm">
+                      Coming soon
+                    </span>
+                  )}
+                  <div className="flex flex-1 flex-col p-6">
+                    <h2 className="flex items-center gap-2 font-[family-name:var(--font-barlow-semi)] text-xl font-semibold">
+                      <span
+                        className={cardImage ? "text-2xl" : "text-4xl"}
+                        aria-hidden="true"
+                      >
+                        {trade.icon}
+                      </span>
+                      {trade.name}
+                    </h2>
+                    <p className="mt-2 flex-1 text-sm leading-snug text-[#64748B] line-clamp-3">
+                      {trade.description}
+                    </p>
+                  </div>
+                  <div className="border-t border-[#E5E0D8] bg-[#FAF8F4] px-6 py-3">
+                    <p className="font-[family-name:var(--font-ibm-mono)] text-xs text-[#94A3B8]">
+                      {trade.code} · {trade.exam_question_count} Qs
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
         </div>
       </div>
       <MarketingFooter />
     </div>
   );
-}
-
-export function generateStaticParams() {
-  return TRADES.map((t) => ({ slug: t.slug }));
 }

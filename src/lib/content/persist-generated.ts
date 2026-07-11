@@ -111,6 +111,7 @@ export async function upsertApprovedLesson(
     sort_order: input.sortOrder,
     code_version: input.codeVersion,
     province: input.province ?? null,
+    chapter_task_code: input.taskCode ?? null,
     review_status: "approved" as const,
   };
 

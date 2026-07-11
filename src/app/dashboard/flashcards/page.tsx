@@ -1,14 +1,29 @@
 import { FlashcardDeck } from "@/components/learn/flashcard-deck";
+import { UpgradePrompt } from "@/components/subscription/upgrade-prompt";
 import { fetchFlashcards } from "@/lib/data";
 import { getDashboardSession } from "@/lib/dashboard-session";
 import { fetchDueFlashcards } from "@/lib/progress/flashcard-reviews";
+import { FREE_LIMITS, limitForFreeTier } from "@/lib/access/subscription";
 
 export default async function FlashcardsPage() {
-  const { trade, province } = await getDashboardSession();
+  const { trade, province, isPremium } = await getDashboardSession();
   const [allCards, dueCards] = await Promise.all([
     fetchFlashcards(trade.id, province),
     fetchDueFlashcards(trade.id, province),
   ]);
+
+  const availableCards = limitForFreeTier(
+    dueCards.length > 0 ? dueCards : allCards,
+    FREE_LIMITS.flashcards,
+    isPremium,
+  );
+  const lockedCount = isPremium
+    ? 0
+    : Math.max(
+        0,
+        (dueCards.length > 0 ? dueCards : allCards).length -
+          FREE_LIMITS.flashcards,
+      );
 
   return (
     <div className="mx-auto max-w-lg">
@@ -28,8 +43,17 @@ export default async function FlashcardsPage() {
             </code>
             .
           </p>
-        ) : dueCards.length > 0 ? (
-          <FlashcardDeck cards={dueCards} />
+        ) : availableCards.length > 0 ? (
+          <>
+            <FlashcardDeck cards={availableCards} />
+            {lockedCount > 0 && (
+              <UpgradePrompt
+                className="mt-6"
+                compact
+                description={`${lockedCount} more flashcard${lockedCount === 1 ? "" : "s"} available with a subscription.`}
+              />
+            )}
+          </>
         ) : (
           <div className="rounded-2xl border border-[#E5E0D8] bg-white px-6 py-10 text-center">
             <p className="font-[family-name:var(--font-barlow-semi)] text-lg font-semibold text-[#334155]">

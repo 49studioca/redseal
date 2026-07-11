@@ -15,6 +15,7 @@ import {
   setDemoTranslationEnabled,
 } from "@/lib/demo-preferences";
 import { getProvinceByCode } from "@/lib/provinces";
+import type { TranslationUsage } from "@/lib/access/translation-usage";
 
 type DashboardPreferencesContextValue = {
   preferredLanguage: string;
@@ -26,6 +27,9 @@ type DashboardPreferencesContextValue = {
   provinceName: string;
   setProvince: (code: string) => Promise<void>;
   isUpdatingProvince: boolean;
+  isPremium: boolean;
+  translationUsage: TranslationUsage | null;
+  setTranslationUsage: (usage: TranslationUsage) => void;
 };
 
 const DashboardPreferencesContext =
@@ -35,11 +39,15 @@ export function DashboardPreferencesProvider({
   preferredLanguage: initialLanguage,
   translationEnabled: initialTranslationEnabled,
   province: initialProvince,
+  isPremium,
+  translationUsage: initialTranslationUsage,
   children,
 }: {
   preferredLanguage: string;
   translationEnabled: boolean;
   province: string;
+  isPremium: boolean;
+  translationUsage: TranslationUsage | null;
   children: ReactNode;
 }) {
   const [preferredLanguage, setLanguageState] = useState(initialLanguage);
@@ -49,6 +57,13 @@ export function DashboardPreferencesProvider({
   );
   const [province, setProvinceState] = useState(initialProvince);
   const [isUpdatingProvince, setIsUpdatingProvince] = useState(false);
+  const [translationUsage, setTranslationUsageState] = useState(
+    initialTranslationUsage,
+  );
+
+  const setTranslationUsage = useCallback((usage: TranslationUsage) => {
+    setTranslationUsageState(usage);
+  }, []);
 
   const setPreferredLanguage = useCallback(async (code: string) => {
     setIsUpdatingLanguage(true);
@@ -112,6 +127,9 @@ export function DashboardPreferencesProvider({
       provinceName: getProvinceByCode(province).name,
       setProvince,
       isUpdatingProvince,
+      isPremium,
+      translationUsage,
+      setTranslationUsage,
     }),
     [
       preferredLanguage,
@@ -122,6 +140,9 @@ export function DashboardPreferencesProvider({
       province,
       setProvince,
       isUpdatingProvince,
+      isPremium,
+      translationUsage,
+      setTranslationUsage,
     ],
   );
 

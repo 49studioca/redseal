@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getServerSessionUser } from "@/lib/supabase/server-auth";
 import { usesSupabaseData } from "@/lib/supabase/config";
 
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
@@ -10,12 +11,10 @@ export async function requireAdmin() {
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerSessionUser();
 
   if (!user) {
-    redirect("/auth/login");
+    redirect("/auth?signin");
   }
 
   const { data: profile } = await supabase
@@ -40,9 +39,7 @@ export async function assertAdminApi(): Promise<
   }
 
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getServerSessionUser();
 
   if (!user) {
     return { ok: false, status: 401, error: "Unauthorized" };
