@@ -22,7 +22,7 @@ export function DashboardGettingStarted({
 
   return (
     <Card className="overflow-hidden border-[#E5E0D8] p-0">
-      <div className="relative overflow-hidden bg-gradient-to-br from-[#D8232A] to-[#B01A1F] px-6 py-7 text-white">
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#D8232A] to-[#B01A1F] px-4 py-6 text-white sm:px-6 sm:py-7">
         <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10" />
         <div className="relative">
           <div className="flex items-center gap-3">
@@ -46,7 +46,7 @@ export function DashboardGettingStarted({
         </div>
       </div>
 
-      <div className="p-6">
+      <div className="p-4 sm:p-6">
         <div className="rounded-[11px] border border-[#E5E0D8] bg-[#FAF8F4] p-5">
           <div className="flex items-start gap-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[11px] bg-[#FCEBEC]">

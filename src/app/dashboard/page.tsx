@@ -90,7 +90,7 @@ export default async function DashboardPage() {
         <>
           <ExamReadinessCard trade={trade} summary={readinessSummary} />
 
-          <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 min-[390px]:grid-cols-2 md:grid-cols-3">
             {[
               {
                 label: "Questions answered",
@@ -119,7 +119,7 @@ export default async function DashboardPage() {
             ))}
           </div>
 
-          <div className="mt-8 flex items-center justify-between">
+          <div className="mt-8 flex flex-col items-start gap-3 min-[480px]:flex-row min-[480px]:items-center min-[480px]:justify-between">
             <h2 className="flex items-center gap-2 font-[family-name:var(--font-barlow-semi)] text-xl font-bold">
               <BookOpen className="h-5 w-5 text-[#C0271E]" /> RSOS Block Mastery
             </h2>
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <Link href="/dashboard/practice">
-              <Card className="cursor-pointer p-6 transition hover:border-[#C0271E] hover:shadow-lg">
+              <Card className="cursor-pointer p-5 transition hover:border-[#C0271E] hover:shadow-lg sm:p-6">
                 <ClipboardCheck className="h-8 w-8 text-[#C0271E]" />
                 <h3 className="mt-3 font-[family-name:var(--font-barlow-semi)] text-lg font-semibold">
                   Start Practice
@@ -198,7 +198,7 @@ export default async function DashboardPage() {
               </Card>
             </Link>
             <Link href="/dashboard/mock-exam">
-              <Card className="cursor-pointer p-6 transition hover:border-[#C0271E] hover:shadow-lg">
+              <Card className="cursor-pointer p-5 transition hover:border-[#C0271E] hover:shadow-lg sm:p-6">
                 <Gauge className="h-8 w-8 text-[#C0271E]" />
                 <h3 className="mt-3 font-[family-name:var(--font-barlow-semi)] text-lg font-semibold">
                   Take Mock Exam

@@ -228,7 +228,7 @@ export function QuestionCard({
           </div>
         )}
 
-        <div className="mt-4 flex gap-2 border-t border-[#E5E0D8] pt-4">
+        <div className="mt-4 flex flex-wrap gap-1 border-t border-[#E5E0D8] pt-4 sm:gap-2">
           {onDiscuss && (
             <Button variant="ghost" size="sm" type="button" onClick={onDiscuss}>
               <MessageSquare className="h-4 w-4" /> Discuss

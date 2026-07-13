@@ -105,7 +105,7 @@ export function UserDevicesSection() {
   };
 
   return (
-    <Card className="mt-4 p-6">
+    <Card className="mt-4 p-4 sm:p-6">
       <h2 className="font-semibold">Signed-in devices</h2>
       <p className="mt-1 text-sm text-[#64748B]">
         You can stay signed in on up to {MAX_USER_DEVICES} devices. Remove one

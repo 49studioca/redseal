@@ -163,7 +163,7 @@ export function ExamReadinessCard({
   const passLine = summary.passThreshold;
 
   return (
-    <Card className="p-6">
+    <Card className="p-4 sm:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-[#C0271E]">
           <Gauge className="h-4 w-4" /> Overall exam readiness
@@ -177,7 +177,7 @@ export function ExamReadinessCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-end gap-6">
-        <div className="min-w-[220px] flex-1">
+        <div className="min-w-0 flex-1 sm:min-w-[220px]">
           {summary.showScore ? (
             <div className="flex items-baseline gap-3">
               <span className="font-[family-name:var(--font-barlow-condensed)] text-5xl font-bold">
@@ -255,7 +255,7 @@ export function ExamReadinessCard({
         </div>
 
         {summary.showScore && (
-          <div className="flex flex-col items-center">
+          <div className="mx-auto flex flex-col items-center sm:mx-0">
             <div className="flex h-[132px] w-[132px] items-center justify-center rounded-full bg-gradient-to-br from-[#F4A11A]/30 to-[#10B981]/30">
               <div className="flex h-[100px] w-[100px] items-center justify-center rounded-full bg-white shadow-inner">
                 <div className="text-center">

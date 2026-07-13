@@ -11,7 +11,7 @@ export default function SettingsPage() {
         Settings
       </h1>
 
-      <Card className="mt-6 p-6">
+      <Card className="mt-5 p-4 sm:mt-6 sm:p-6">
         <h2 className="font-semibold">Subscription</h2>
         <p className="mt-1 text-sm text-[#64748B]">Current plan: Free</p>
         <div className="mt-4 grid gap-3">
@@ -20,7 +20,7 @@ export default function SettingsPage() {
             .map(([key, plan]) => (
               <form key={key} action="/api/stripe/checkout" method="POST">
                 <input type="hidden" name="plan" value={key} />
-                <div className="flex items-center justify-between rounded-lg border border-[#E5E0D8] p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#E5E0D8] p-4">
                   <div>
                     <div className="font-semibold">{plan.name}</div>
                     <div className="text-sm text-[#64748B]">
@@ -36,7 +36,7 @@ export default function SettingsPage() {
         </div>
       </Card>
 
-      <Card className="mt-4 p-6">
+      <Card className="mt-4 p-4 sm:p-6">
         <h2 className="font-semibold">Change trade</h2>
         <p className="mt-1 text-sm text-[#64748B]">
           Switch your primary trade exam

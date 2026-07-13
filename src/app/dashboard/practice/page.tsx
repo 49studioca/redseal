@@ -333,7 +333,7 @@ export default function PracticePage() {
           <select
             value={blockFilter}
             onChange={(e) => setBlockFilter(e.target.value)}
-            className="h-9 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm"
+            className="h-11 min-w-0 flex-1 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm"
           >
             <option value="all">All blocks</option>
             {blocks.map((b) => (
@@ -345,7 +345,7 @@ export default function PracticePage() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="h-9 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm"
+            className="h-11 min-w-0 flex-1 rounded-lg border border-[#E5E0D8] bg-white px-3 text-sm"
           >
             <option value="all">All types</option>
             <option value="recall">Knowledge & Recall</option>

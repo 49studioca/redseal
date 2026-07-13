@@ -3,6 +3,7 @@ import { getExamReadinessSummaryForTrade } from "@/lib/progress/exam-readiness";
 import {
   DashboardHeader,
   DashboardSidebar,
+  DashboardMobileNav,
 } from "@/components/layout/dashboard-shell";
 import { DashboardTradeProvider } from "@/components/layout/dashboard-trade-context";
 import { DashboardPreferencesProvider } from "@/components/layout/dashboard-preferences-context";
@@ -49,13 +50,13 @@ export default async function DashboardLayout({
                 isAdmin={isAdmin}
               />
               <div className="flex min-h-0 flex-1 overflow-hidden">
-                <DashboardSidebar
-                  trade={trade}
-                  readinessSummary={readinessSummary}
-                />
-                <main className="scrl min-w-0 flex-1 overflow-y-auto p-6 md:p-8">
+                <div className="hidden md:block">
+                  <DashboardSidebar trade={trade} readinessSummary={readinessSummary} />
+                </div>
+                <main className="dashboard-mobile-content scrl min-w-0 flex-1 overflow-y-auto px-4 pb-[calc(88px+env(safe-area-inset-bottom))] pt-5 sm:px-6 md:p-8">
                   {children}
                 </main>
+                <DashboardMobileNav />
               </div>
             </div>
           </UpgradeProvider>

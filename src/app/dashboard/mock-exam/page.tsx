@@ -156,7 +156,7 @@ export default function MockExamPage() {
         <h1 className="font-[family-name:var(--font-barlow-semi)] text-2xl font-bold">
           Mock Exam
         </h1>
-        <Card className="mt-6 p-8">
+        <Card className="mt-5 p-5 sm:mt-6 sm:p-8">
           <h2 className="font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold">
             {trade.name}
           </h2>
@@ -287,7 +287,7 @@ export default function MockExamPage() {
               </div>
             </>
           ) : (
-            <Card className="p-8 text-center text-sm text-[#64748B]">
+            <Card className="p-5 text-center text-sm text-[#64748B] sm:p-8">
               No questions match this filter.
             </Card>
           )}
@@ -307,7 +307,7 @@ export default function MockExamPage() {
     return (
       <div className="mx-auto max-w-2xl">
         <Card
-          className={`p-8 text-center ${results.passed ? "border-[#10B981]" : "border-[#EF4444]"}`}
+          className={`p-5 text-center sm:p-8 ${results.passed ? "border-[#10B981]" : "border-[#EF4444]"}`}
         >
           <div className="font-[family-name:var(--font-barlow-condensed)] text-6xl font-bold">
             {results.score.toFixed(1)}%
@@ -386,7 +386,7 @@ export default function MockExamPage() {
           <h3 className="font-[family-name:var(--font-barlow-semi)] text-lg font-bold">
             Question breakdown
           </h3>
-          <div className="mt-3 grid grid-cols-8 gap-2 sm:grid-cols-10 md:grid-cols-12">
+          <div className="mt-3 grid grid-cols-5 gap-2 min-[390px]:grid-cols-6 sm:grid-cols-10 md:grid-cols-12">
             {questions.map((question, index) => {
               const answer = answers[question.id];
               const status = !answer
@@ -427,14 +427,14 @@ export default function MockExamPage() {
   return (
     <div className="mx-auto flex max-w-[1180px] gap-4">
       <div className="min-w-0 flex-1">
-        <div className="mb-4 flex items-center justify-between rounded-lg bg-[#1F2A37] px-4 py-2 text-white">
+        <div className="mb-4 grid grid-cols-2 items-center gap-2 rounded-xl bg-[#1F2A37] px-3 py-3 text-white sm:flex sm:justify-between sm:px-4 sm:py-2">
           <span className="font-[family-name:var(--font-ibm-mono)] text-sm">
             {formatTime(timeLeft)} remaining
           </span>
           <span className="text-sm">
             {Object.keys(answers).length} / {questions.length} answered
           </span>
-          <Button size="sm" variant="white" onClick={finishExam}>
+          <Button className="col-span-2 sm:col-span-1" size="sm" variant="white" onClick={finishExam}>
             Submit exam
           </Button>
         </div>

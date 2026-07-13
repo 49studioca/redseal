@@ -31,6 +31,36 @@ body {
   scroll-behavior: smooth;
 }
 
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (max-width: 767px) {
+  .dashboard-mobile-content h1 {
+    font-size: 1.65rem;
+    line-height: 1.15;
+  }
+
+  .dashboard-mobile-content h2 {
+    line-height: 1.2;
+  }
+
+  .dashboard-mobile-content button,
+  .dashboard-mobile-content a[role="button"] {
+    min-height: 44px;
+  }
+
+  .dashboard-mobile-content input,
+  .dashboard-mobile-content select,
+  .dashboard-mobile-content textarea {
+    font-size: 16px;
+  }
+}
+
 body {
   background: var(--background);
   color: var(--foreground);

@@ -87,12 +87,12 @@ export function HeaderTradeProvinceMenu({ trade }: { trade: Trade }) {
         aria-expanded={menuOpen}
         aria-haspopup="menu"
         onClick={() => setMenuOpen((open) => !open)}
-        className="flex h-[42px] items-center gap-2.5 rounded-[10px] border border-white/15 bg-white/5 px-3.5 text-white transition-colors hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        className="flex h-11 items-center gap-1.5 rounded-[10px] border border-white/15 bg-white/5 px-2 text-white transition-colors hover:border-white/30 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-[42px] sm:gap-2.5 sm:px-3.5"
       >
         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#C0271E] text-sm">
           {trade.icon}
         </span>
-        <div className="flex flex-col items-start leading-tight">
+        <div className="hidden flex-col items-start leading-tight sm:flex">
           <span className="text-[10px] font-semibold uppercase tracking-wide text-[#7DA0BD]">
             Your trade · {province}
           </span>
@@ -109,7 +109,7 @@ export function HeaderTradeProvinceMenu({ trade }: { trade: Trade }) {
       {menuOpen && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+8px)] z-50 w-[280px] overflow-hidden rounded-[10px] border border-white/10 bg-[#1F2A37] p-3 shadow-lg"
+          className="fixed left-3 right-3 top-[68px] z-50 overflow-hidden rounded-[14px] border border-white/10 bg-[#1F2A37] p-4 shadow-xl sm:absolute sm:left-auto sm:right-0 sm:top-[calc(100%+8px)] sm:w-[280px] sm:p-3"
         >
           <label className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[#7DA0BD]">
             <Wrench className="h-3.5 w-3.5 text-[#F4A11A]" />
