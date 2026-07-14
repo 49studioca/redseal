@@ -43,6 +43,7 @@ const navItems = [
     href: "/dashboard/video-learning",
     label: "Video Learning",
     icon: Video,
+    tourId: "tour-nav-video-learning",
   },
   {
     href: "/dashboard/practice",
@@ -284,40 +285,118 @@ export function DashboardHeader({
 export function DashboardMobileNav() {
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
-  const secondaryItems = [...navItems.slice(1, 2), ...navItems.slice(3, 4), ...navItems.slice(5), {
-    href: "/dashboard/settings",
-    label: "Settings",
-    icon: Settings,
-  }];
+  const secondaryItems = [
+    ...navItems.slice(1, 2),
+    ...navItems.slice(3, 4),
+    ...navItems.slice(5),
+    {
+      href: "/dashboard/settings",
+      label: "Settings",
+      icon: Settings,
+    },
+  ];
 
   return (
     <>
       {moreOpen && (
-        <div className="fixed inset-0 z-50 md:hidden" role="dialog" aria-modal="true" aria-label="More navigation">
-          <button className="absolute inset-0 bg-[#0F172A]/45 backdrop-blur-[2px]" onClick={() => setMoreOpen(false)} aria-label="Close menu" />
+        <div
+          className="fixed inset-0 z-50 md:hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="More navigation"
+        >
+          <button
+            className="absolute inset-0 bg-[#0F172A]/45 backdrop-blur-[2px]"
+            onClick={() => setMoreOpen(false)}
+            aria-label="Close menu"
+          />
           <div className="absolute inset-x-0 bottom-0 rounded-t-[24px] bg-white px-4 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-3 shadow-2xl">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#CBD5E1]" />
             <div className="mb-2 flex items-center justify-between px-1">
               <h2 className="text-lg font-bold">More tools</h2>
-              <button onClick={() => setMoreOpen(false)} className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F3EE]" aria-label="Close menu"><X className="h-5 w-5" /></button>
+              <button
+                onClick={() => setMoreOpen(false)}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-[#F6F3EE]"
+                aria-label="Close menu"
+              >
+                <X className="h-5 w-5" />
+              </button>
             </div>
             <nav className="grid grid-cols-2 gap-2">
               {secondaryItems.map((item) => {
                 const Icon = item.icon;
-                const active = pathname === item.href || pathname.startsWith(item.href + "/");
-                return <Link key={item.href} href={item.href} onClick={() => setMoreOpen(false)} className={cn("flex min-h-14 items-center gap-3 rounded-xl border px-4 py-3 font-semibold", active ? "border-[#F3C5C7] bg-[#FCEBEC] text-[#C0271E]" : "border-[#E5E0D8] text-[#334155]")}><Icon className="h-5 w-5" />{item.label}</Link>;
+                const active =
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/");
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setMoreOpen(false)}
+                    className={cn(
+                      "flex min-h-14 items-center gap-3 rounded-xl border px-4 py-3 font-semibold",
+                      active
+                        ? "border-[#F3C5C7] bg-[#FCEBEC] text-[#C0271E]"
+                        : "border-[#E5E0D8] text-[#334155]",
+                    )}
+                  >
+                    <Icon className="h-5 w-5" />
+                    {item.label}
+                  </Link>
+                );
               })}
             </nav>
           </div>
         </div>
       )}
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(64px+env(safe-area-inset-bottom))] grid-cols-5 border-t border-[#E5E0D8] bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(31,42,55,0.08)] backdrop-blur-xl md:hidden" aria-label="Dashboard navigation">
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 grid h-[calc(64px+env(safe-area-inset-bottom))] grid-cols-5 border-t border-[#E5E0D8] bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-6px_24px_rgba(31,42,55,0.08)] backdrop-blur-xl md:hidden"
+        aria-label="Dashboard navigation"
+      >
         {mobilePrimaryItems.map((item) => {
           const Icon = item.icon;
-          const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
-          return <Link key={item.href} href={item.href} className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-bold", active ? "text-[#C0271E]" : "text-[#64748B]")}><Icon className="h-5 w-5" /><span className="truncate">{item.label === "Learning Path" ? "Learn" : item.label === "Mock Exams" ? "Exams" : item.label}</span></Link>;
+          const active =
+            pathname === item.href ||
+            (item.href !== "/dashboard" &&
+              pathname.startsWith(item.href + "/"));
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-bold",
+                active ? "text-[#C0271E]" : "text-[#64748B]",
+              )}
+            >
+              <Icon className="h-5 w-5" />
+              <span className="truncate">
+                {item.label === "Learning Path"
+                  ? "Learn"
+                  : item.label === "Mock Exams"
+                    ? "Exams"
+                    : item.label}
+              </span>
+            </Link>
+          );
         })}
-        <button onClick={() => setMoreOpen(true)} className={cn("flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-bold", moreOpen || secondaryItems.some((item) => pathname === item.href || pathname.startsWith(item.href + "/")) ? "text-[#C0271E]" : "text-[#64748B]")} aria-expanded={moreOpen}><Menu className="h-5 w-5" /><span>More</span></button>
+        <button
+          onClick={() => setMoreOpen(true)}
+          className={cn(
+            "flex min-w-0 flex-col items-center justify-center gap-1 text-[10px] font-bold",
+            moreOpen ||
+              secondaryItems.some(
+                (item) =>
+                  pathname === item.href ||
+                  pathname.startsWith(item.href + "/"),
+              )
+              ? "text-[#C0271E]"
+              : "text-[#64748B]",
+          )}
+          aria-expanded={moreOpen}
+        >
+          <Menu className="h-5 w-5" />
+          <span>More</span>
+        </button>
       </nav>
     </>
   );

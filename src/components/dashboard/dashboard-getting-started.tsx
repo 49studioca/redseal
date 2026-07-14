@@ -40,8 +40,9 @@ export function DashboardGettingStarted({
             </div>
           </div>
           <p className="relative mt-4 max-w-2xl text-[15px] leading-relaxed text-[#FCE3E4]">
-            New here? Take a quick tour to see how lessons, practice, and
-            readiness tracking work — then jump into your first lesson.
+            New here? Take a quick tour to see how lessons, video learning,
+            practice, and readiness tracking work — then jump into your first
+            lesson.
           </p>
         </div>
       </div>
@@ -57,8 +58,8 @@ export function DashboardGettingStarted({
                 Quick platform tour
               </h3>
               <p className="mt-1 text-sm leading-relaxed text-[#64748B]">
-                We&apos;ll walk you through the sidebar, practice tools,
-                translation, and your profile — about 1 minute.
+                We&apos;ll walk you through the sidebar, video learning,
+                practice tools, translation, and your profile — about 1 minute.
               </p>
             </div>
           </div>

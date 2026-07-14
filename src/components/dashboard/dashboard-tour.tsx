@@ -51,6 +51,14 @@ const TOUR_STEPS: TourStep[] = [
     placement: "right",
   },
   {
+    id: "video-learning",
+    target: "tour-nav-video-learning",
+    title: "Video learning",
+    description:
+      "Watch curated trade videos mapped to each RSOS block, then answer check-in questions to reinforce what you learned.",
+    placement: "right",
+  },
+  {
     id: "practice",
     target: "tour-nav-practice",
     title: "Practice questions",
@@ -86,7 +94,7 @@ const TOUR_STEPS: TourStep[] = [
     id: "finish",
     title: "You're all set!",
     description:
-      "Start with your first lesson, then practice questions in that block. Your dashboard will fill in as you go.",
+      "Start with your first lesson or a video in your current block, then practice questions. Your dashboard will fill in as you go.",
     placement: "center",
   },
 ];
