@@ -9,6 +9,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { Loader2 } from "lucide-react";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
+import { trackPurchase } from "@/lib/analytics/track-purchase";
 import { Button } from "@/components/ui/button";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -161,6 +162,7 @@ export function StripeCheckoutPanel({
           options={{
             clientSecret,
             onComplete: () => {
+              trackPurchase({ planId });
               router.refresh();
               onSuccess();
             },

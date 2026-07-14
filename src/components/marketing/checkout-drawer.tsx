@@ -12,7 +12,12 @@ import { X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import { saveSignupPreferences } from "@/lib/auth/save-signup-preferences";
-import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
+import {
+  getPlan,
+  isSubscriptionPlanId,
+  type SubscriptionPlanId,
+} from "@/lib/stripe/plans";
+import { trackPurchase } from "@/lib/analytics/track-purchase";
 import { TRADES } from "@/data/seed";
 import {
   DEFAULT_PROVINCE,
@@ -132,10 +137,16 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
   }, [open, planId, checkAuth]);
 
   useEffect(() => {
-    if (searchParams.get("checkout") === "success") {
-      setStep("success");
+    if (searchParams.get("checkout") !== "success") return;
+    setStep("success");
+    const plan = searchParams.get("plan");
+    const sessionId = searchParams.get("session_id");
+    if (planId && isSubscriptionPlanId(planId)) {
+      trackPurchase({ planId, transactionId: sessionId });
+    } else if (plan && isSubscriptionPlanId(plan)) {
+      trackPurchase({ planId: plan, transactionId: sessionId });
     }
-  }, [searchParams]);
+  }, [searchParams, planId]);
 
   useEffect(() => {
     if (!isRendered) return;
@@ -463,6 +474,9 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
                 options={{
                   clientSecret,
                   onComplete: () => {
+                    if (planId) {
+                      trackPurchase({ planId });
+                    }
                     setStep("success");
                     router.refresh();
                   },

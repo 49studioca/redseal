@@ -75,6 +75,7 @@ export function ProfileForm({
       const res = await fetch("/api/profile/avatar", {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
       const data = (await res.json()) as { avatarUrl?: string; error?: string };
       if (!res.ok) {
@@ -368,8 +369,11 @@ export function ProfileForm({
           <div className="min-w-0 flex-1">
             <h2 className="font-semibold">Change trade</h2>
             <p className="mt-1 text-sm text-[#64748B]">
-              Currently studying {tradeName} ({tradeCode}). Switch your primary
-              trade exam anytime.
+              Currently studying{" "}
+              <span className="font-semibold text-[#0F172A]">
+                {tradeName} ({tradeCode})
+              </span>
+              . Switch your primary trade exam anytime.
             </p>
             <Link href="/onboarding" className="mt-4 inline-block">
               <Button variant="secondary" size="sm">

@@ -6,6 +6,13 @@ import {
   usesSupabaseData,
 } from "@/lib/supabase/config";
 import { DEVICE_COOKIE } from "@/lib/auth/devices";
+import {
+  AD_CLICK_COOKIE_MAX_AGE,
+  AD_CLICK_COOKIE_NAME,
+  AD_CLICK_PARAM_KEYS,
+  appendAdClickParams,
+  getPrimaryAdClickId,
+} from "@/lib/analytics/ad-click-ids";
 
 function withSupabaseCookies(
   target: NextResponse,
@@ -39,9 +46,31 @@ function ensureDeviceCookie(
   return response;
 }
 
+/** Persist Google click IDs so later redirects/SPA navigations don't lose attribution. */
+function persistAdClickIds(
+  request: NextRequest,
+  response: NextResponse,
+): NextResponse {
+  const clickId = getPrimaryAdClickId(request.nextUrl.searchParams);
+  if (!clickId) return response;
+
+  response.cookies.set(AD_CLICK_COOKIE_NAME, clickId, {
+    httpOnly: false, // readable by gtag / client analytics
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: AD_CLICK_COOKIE_MAX_AGE,
+  });
+  return response;
+}
+
+function finalize(request: NextRequest, response: NextResponse): NextResponse {
+  return persistAdClickIds(request, ensureDeviceCookie(request, response));
+}
+
 export async function updateSession(request: NextRequest) {
   if (!usesSupabaseData()) {
-    return ensureDeviceCookie(request, NextResponse.next({ request }));
+    return finalize(request, NextResponse.next({ request }));
   }
 
   let supabaseResponse = NextResponse.next({ request });
@@ -87,16 +116,24 @@ export async function updateSession(request: NextRequest) {
   if (isProtected && !isAuthenticated) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/auth";
+    // Keep gclid / gbraid / wbraid on the auth landing URL for Google Ads.
+    for (const key of [...redirectUrl.searchParams.keys()]) {
+      if (
+        key !== "signin" &&
+        key !== "redirect" &&
+        !(AD_CLICK_PARAM_KEYS as readonly string[]).includes(key)
+      ) {
+        redirectUrl.searchParams.delete(key);
+      }
+    }
     redirectUrl.searchParams.set("signin", "");
     redirectUrl.searchParams.set(
       "redirect",
       `${request.nextUrl.pathname}${request.nextUrl.search}`,
     );
+    appendAdClickParams(redirectUrl.searchParams, request.nextUrl.searchParams);
     return withSupabaseCookies(
-      ensureDeviceCookie(
-        request,
-        NextResponse.redirect(redirectUrl),
-      ),
+      finalize(request, NextResponse.redirect(redirectUrl)),
       supabaseResponse,
     );
   }
@@ -109,14 +146,18 @@ export async function updateSession(request: NextRequest) {
   ) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
+    // Drop auth UI flags, keep ad click IDs for conversion attribution.
+    for (const key of [...redirectUrl.searchParams.keys()]) {
+      if (!(AD_CLICK_PARAM_KEYS as readonly string[]).includes(key)) {
+        redirectUrl.searchParams.delete(key);
+      }
+    }
+    appendAdClickParams(redirectUrl.searchParams, request.nextUrl.searchParams);
     return withSupabaseCookies(
-      ensureDeviceCookie(
-        request,
-        NextResponse.redirect(redirectUrl),
-      ),
+      finalize(request, NextResponse.redirect(redirectUrl)),
       supabaseResponse,
     );
   }
 
-  return ensureDeviceCookie(request, supabaseResponse);
+  return finalize(request, supabaseResponse);
 }

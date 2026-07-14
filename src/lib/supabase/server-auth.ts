@@ -4,8 +4,8 @@ import { usesSupabaseData } from "@/lib/supabase/config";
 
 /**
  * Read the authenticated user in Server Components and route handlers.
- * Uses getSession() — middleware/proxy already refreshed the token via getUser().
- * Calling getUser() here can trigger a second refresh and invalidate the session.
+ * Prefer getSession() after proxy refresh; fall back to getUser() when the
+ * cookie session is missing (e.g. chunked auth cookies mid-refresh).
  */
 export async function getServerSessionUser(): Promise<User | null> {
   if (!usesSupabaseData()) return null;
@@ -15,5 +15,11 @@ export async function getServerSessionUser(): Promise<User | null> {
     data: { session },
   } = await supabase.auth.getSession();
 
-  return session?.user ?? null;
+  if (session?.user) return session.user;
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  return user ?? null;
 }

@@ -18,6 +18,7 @@ import {
   isSubscriptionPlanId,
   type SubscriptionPlanId,
 } from "@/lib/stripe/plans";
+import { trackPurchase } from "@/lib/analytics/track-purchase";
 import { UPGRADE_PLANS } from "@/components/subscription/upgrade-plans";
 
 type UpgradeContextValue = {
@@ -239,14 +240,19 @@ function UpgradeProviderInner({ children }: { children: ReactNode }) {
   }, []);
 
   const handleCheckoutSuccess = useCallback(() => {
+    if (selectedPlan) {
+      trackPurchase({ planId: selectedPlan });
+    }
     setStep("success");
     router.refresh();
-  }, [router]);
+  }, [router, selectedPlan]);
 
   useEffect(() => {
     const checkout = searchParams.get("checkout");
     const plan = searchParams.get("plan");
+    const sessionId = searchParams.get("session_id");
     if (checkout === "success" && plan && isSubscriptionPlanId(plan)) {
+      trackPurchase({ planId: plan, transactionId: sessionId });
       setSelectedPlan(plan);
       setStep("success");
       setModalOpen(true);
