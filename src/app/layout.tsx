@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { GoogleAnalytics } from "@next/third-parties/google";
 import {
   Barlow,
   Barlow_Condensed,
@@ -7,6 +8,8 @@ import {
 } from "next/font/google";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
+
+const GA_MEASUREMENT_ID = "G-FM7SKL3XCY";
 
 const barlow = Barlow({
   subsets: ["latin"],
@@ -105,6 +108,7 @@ export default function RootLayout({
       >
         {children}
       </body>
+      <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
     </html>
   );
 }

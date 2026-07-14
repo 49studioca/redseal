@@ -6,14 +6,14 @@ export async function POST(request: Request) {
   const plan = formData.get("plan") as keyof typeof PLANS;
 
   if (!stripe || !PLANS[plan]?.priceId) {
-    return NextResponse.redirect(new URL("/dashboard/settings?demo=checkout", request.url));
+    return NextResponse.redirect(new URL("/dashboard/profile?demo=checkout", request.url));
   }
 
   const session = await stripe.checkout.sessions.create({
     mode: "subscription",
     line_items: [{ price: PLANS[plan].priceId!, quantity: 1 }],
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?success=1`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?cancel=1`,
+    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile?success=1`,
+    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/profile?cancel=1`,
   });
 
   return NextResponse.redirect(session.url!);

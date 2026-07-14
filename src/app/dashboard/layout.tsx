@@ -20,6 +20,7 @@ export default async function DashboardLayout({
   const {
     trade,
     userName,
+    avatarUrl,
     isAdmin,
     preferredLanguage,
     translationEnabled,
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
               <DashboardHeader
                 trade={trade}
                 userName={userName}
+                avatarUrl={avatarUrl}
                 isAdmin={isAdmin}
               />
               <div className="flex min-h-0 flex-1 overflow-hidden">

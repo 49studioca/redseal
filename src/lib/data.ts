@@ -325,6 +325,7 @@ export async function getUserProfile(userId: string) {
       id: userId,
       email: "demo@redsealguide.com",
       full_name: "Demo User",
+      avatar_url: undefined,
       selected_trade_id: "trade-309a",
       subscription_tier: "free" as const,
       onboarding_completed: true,

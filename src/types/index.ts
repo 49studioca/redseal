@@ -127,6 +127,7 @@ export interface Profile {
   id: string;
   email?: string;
   full_name?: string;
+  avatar_url?: string;
   selected_trade_id?: string;
   subscription_tier: "free" | "pro_trade" | "pro_all" | "org_seat";
   exam_date?: string;

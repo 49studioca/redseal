@@ -19,6 +19,7 @@ import type { Profile, Trade } from "@/types";
 export type DashboardSession = {
   trade: Trade;
   userName: string;
+  avatarUrl: string | null;
   isAdmin: boolean;
   preferredLanguage: string;
   translationEnabled: boolean;
@@ -79,6 +80,7 @@ export async function resolveUserProvince(): Promise<string> {
 export async function getDashboardSession(): Promise<DashboardSession> {
   let tradeId = "trade-309a";
   let userName = "Demo User";
+  let avatarUrl: string | null = null;
   let isAdmin = !usesSupabaseData();
   const cookieStore = await cookies();
   const demoPrefs = readDemoPreferences(cookieStore);
@@ -117,6 +119,7 @@ export async function getDashboardSession(): Promise<DashboardSession> {
       if (!profile.selected_trade_id) redirect("/onboarding");
       tradeId = profile.selected_trade_id ?? tradeId;
       userName = profile.full_name ?? user.email ?? "User";
+      avatarUrl = profile.avatar_url ?? null;
       isAdmin = profile.is_admin ?? false;
       province = normalizeProvinceCode(profile.province ?? province);
       subscriptionTier = profile.subscription_tier ?? "free";
@@ -133,6 +136,7 @@ export async function getDashboardSession(): Promise<DashboardSession> {
   return {
     trade,
     userName,
+    avatarUrl,
     isAdmin,
     preferredLanguage,
     translationEnabled,

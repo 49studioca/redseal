@@ -45,7 +45,7 @@ export default function RefundsPage() {
           <p>
             You can request a full refund within{" "}
             <strong>24 hours of starting your plan</strong>. During this window,
-            you can cancel and be refunded directly from your account settings.
+            you can cancel and be refunded directly from your profile.
             After the first 24 hours — including once your intro week has begun
             — payments are non-refundable.
           </p>
@@ -70,7 +70,7 @@ export default function RefundsPage() {
 
         <ContentSection heading="How to request a refund">
           <p>
-            If you&apos;re within the 24-hour window, open your account settings
+            If you&apos;re within the 24-hour window, open your profile
             and use the refund option to be refunded and cancelled instantly. If
             you run into any trouble, email{" "}
             <a

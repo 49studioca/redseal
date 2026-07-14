@@ -19,6 +19,7 @@
     "db:sync-trade-card-images": "tsx scripts/sync-trade-card-images.ts"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.10",
     "@stripe/react-stripe-js": "^6.7.0",
     "@stripe/stripe-js": "^9.9.0",
     "@supabase/ssr": "^0.12.0",

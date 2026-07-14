@@ -18,6 +18,7 @@ import {
   Menu,
   X,
   Home,
+  User,
 } from "lucide-react";
 import { ProvinceSelector } from "@/components/dashboard/province-selector";
 import { HeaderTradeProvinceMenu } from "@/components/dashboard/header-trade-province-menu";
@@ -145,10 +146,12 @@ export function DashboardSidebar({
 export function DashboardHeader({
   trade,
   userName,
+  avatarUrl,
   isAdmin,
 }: {
   trade: Trade;
   userName?: string;
+  avatarUrl?: string | null;
   isAdmin?: boolean;
 }) {
   const pathname = usePathname();
@@ -187,6 +190,14 @@ export function DashboardHeader({
   };
 
   const menuItems = [
+    {
+      href: "/dashboard/profile",
+      label: "Profile",
+      icon: User,
+      active:
+        pathname === "/dashboard/profile" ||
+        pathname.startsWith("/dashboard/profile/"),
+    },
     {
       href: "/dashboard/settings",
       label: "Settings",
@@ -233,9 +244,18 @@ export function DashboardHeader({
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           onClick={() => setMenuOpen((open) => !open)}
-          className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-white/20 bg-gradient-to-br from-[#D8232A] to-[#A81A1F] text-sm font-bold text-white transition-colors hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-[38px] sm:w-[38px]"
+          className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border-2 border-white/20 bg-gradient-to-br from-[#D8232A] to-[#A81A1F] text-sm font-bold text-white transition-colors hover:border-white/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:h-[38px] sm:w-[38px]"
         >
-          {(userName ?? "U").slice(0, 2).toUpperCase()}
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={avatarUrl}
+              alt=""
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            (userName ?? "U").slice(0, 2).toUpperCase()
+          )}
         </button>
 
         {menuOpen && (
@@ -289,6 +309,11 @@ export function DashboardMobileNav() {
     ...navItems.slice(1, 2),
     ...navItems.slice(3, 4),
     ...navItems.slice(5),
+    {
+      href: "/dashboard/profile",
+      label: "Profile",
+      icon: User,
+    },
     {
       href: "/dashboard/settings",
       label: "Settings",
