@@ -235,3 +235,65 @@ export interface BlockVideoProgress {
   questions_correct: number;
   questions_attempted: number;
 }
+
+export interface BlogFaqItem {
+  question: string;
+  answer: string;
+}
+
+export type BlogPostStatus = "draft" | "published";
+
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string | null;
+  content_html: string;
+  content_json: Record<string, unknown> | null;
+  cover_image_url: string | null;
+  cover_image_alt: string | null;
+  seo_title: string | null;
+  seo_description: string | null;
+  keywords: string[];
+  tags: string[];
+  category: string | null;
+  trade_id: string | null;
+  trade_slug: string | null;
+  trade_name: string | null;
+  canonical_url: string | null;
+  og_image_url: string | null;
+  faq: BlogFaqItem[];
+  author_name: string;
+  reading_minutes: number;
+  status: BlogPostStatus;
+  featured: boolean;
+  published_at: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Shape accepted when creating/updating a blog post from the admin editor. */
+export interface BlogPostInput {
+  slug: string;
+  title: string;
+  excerpt?: string | null;
+  content_html?: string;
+  content_json?: Record<string, unknown> | null;
+  cover_image_url?: string | null;
+  cover_image_alt?: string | null;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  keywords?: string[];
+  tags?: string[];
+  category?: string | null;
+  /** Trade slug from admin picker; omit or empty string = general Red Seal. */
+  trade_slug?: string | null;
+  canonical_url?: string | null;
+  og_image_url?: string | null;
+  faq?: BlogFaqItem[];
+  author_name?: string;
+  reading_minutes?: number;
+  status?: BlogPostStatus;
+  featured?: boolean;
+}

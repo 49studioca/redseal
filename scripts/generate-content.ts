@@ -73,6 +73,9 @@ async function main() {
   const { computePracticeQuestionCount } = await import(
     "../src/lib/content/practice-questions"
   );
+  const { retrieveReferenceChunks } = await import(
+    "../src/lib/reference/retrieve-chunks"
+  );
 
   if (!url || !key) {
     console.error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY");
@@ -114,20 +117,35 @@ async function main() {
   for (const block of blocks) {
     const trade = TRADES.find((t) => t.id === block.trade_id)!;
     const codeVersion = DEFAULT_CODE_VERSIONS[trade.id];
-    const chunks = REFERENCE_CHUNKS.filter(
-      (c) => !codeVersion || c.code_version === codeVersion,
-    );
     const profile =
       TRADE_GENERATION_PROFILES[
         trade.id as keyof typeof TRADE_GENERATION_PROFILES
       ];
 
     const chapterTasks = getChapterTasksForBlock(block.id);
+
+    // RAG: pull relevant chunks from ingested reference PDFs for this trade;
+    // fall back to the static seed chunks when retrieval isn't available.
+    const queryText = [block.name, ...chapterTasks.map((t) => t.name)].join(". ");
+    const retrieved = await retrieveReferenceChunks(supabase, {
+      tradeCode: trade.code,
+      queryText,
+      matchCount: 10,
+    });
+    const chunks =
+      retrieved.length > 0
+        ? retrieved
+        : REFERENCE_CHUNKS.filter(
+            (c) => !codeVersion || c.code_version === codeVersion,
+          );
     const practiceTarget =
       questionCount ??
       computePracticeQuestionCount(chapterTasks, block.exam_question_count);
 
     console.log(`\n▶ ${trade.code} Block ${block.code}: ${block.name}`);
+    console.log(
+      `  reference chunks: ${chunks.length} (${retrieved.length > 0 ? "RAG/DB" : "seed fallback"})`,
+    );
     if (!lessonsOnly) {
       console.log(
         `  practice bank: ${practiceTarget} questions (exam uses ${block.exam_question_count})`,

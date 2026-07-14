@@ -8,7 +8,7 @@
  *   npm run db:ingest-cec-full -- --no-embed
  *
  * Requires: NEXT_PUBLIC_SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY
- * Optional: OPENAI_API_KEY (skipped with --no-embed; recommended for first full run)
+ * Optional: OPENAI_API_KEY or OPENROUTER_API_KEY (skipped with --no-embed)
  */
 import { createHash } from "crypto";
 import {
@@ -25,29 +25,8 @@ import { pipeline } from "stream/promises";
 import { pathToFileURL } from "url";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { REFERENCE_DOC_CEC_ID, REFERENCE_DOCS } from "../src/data/seed";
-
-function loadEnvFile() {
-  try {
-    const envPath = resolve(process.cwd(), ".env");
-    for (const line of readFileSync(envPath, "utf8").split("\n")) {
-      const trimmed = line.trim();
-      if (!trimmed || trimmed.startsWith("#")) continue;
-      const eq = trimmed.indexOf("=");
-      if (eq === -1) continue;
-      const key = trimmed.slice(0, eq).trim();
-      let value = trimmed.slice(eq + 1).trim();
-      if (
-        (value.startsWith('"') && value.endsWith('"')) ||
-        (value.startsWith("'") && value.endsWith("'"))
-      ) {
-        value = value.slice(1, -1);
-      }
-      if (key && process.env[key] === undefined) process.env[key] = value;
-    }
-  } catch {
-    // optional
-  }
-}
+import { embedTextIfAvailable } from "../src/lib/ai/embeddings";
+import { loadEnvFile } from "./load-env";
 
 loadEnvFile();
 
@@ -349,32 +328,6 @@ function parsePageChunks(
   return chunks;
 }
 
-async function embedText(text: string): Promise<number[]> {
-  const key = process.env.OPENAI_API_KEY?.trim();
-  if (!key) {
-    return Array(1536)
-      .fill(0)
-      .map((_, i) => Math.sin(i + text.length) * 0.1);
-  }
-  const res = await fetch("https://api.openai.com/v1/embeddings", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${key}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "text-embedding-3-small",
-      input: text.slice(0, 7000),
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Embedding failed: ${res.status} ${body}`);
-  }
-  const json = (await res.json()) as { data: { embedding: number[] }[] };
-  return json.data[0]?.embedding ?? [];
-}
-
 async function ensureReferenceDoc(supabase: SupabaseClient) {
   const doc = REFERENCE_DOCS[0]!;
   const { error } = await supabase.from("reference_docs").upsert({
@@ -405,7 +358,7 @@ async function upsertChunks(
           : `cec-2024:page:${chunk.page_number}`,
       );
       const embedding = embed
-        ? await embedText(`${chunk.rule_number}\n${chunk.content}`)
+        ? await embedTextIfAvailable(`${chunk.rule_number}\n${chunk.content}`)
         : null;
       rows.push({
         id,

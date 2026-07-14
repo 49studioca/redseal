@@ -4,8 +4,9 @@ import {
   MarketingHeader,
   MarketingFooter,
 } from "@/components/marketing/sections";
-import { getTradeBySlug, PROVINCIAL_GUIDES } from "@/data/seed";
+import { getTradeBySlug } from "@/data/seed";
 import { buildSignupHref } from "@/lib/auth/signup-context";
+import { resolveProvincialGuide } from "@/lib/provincial-guide";
 import { normalizeProvinceCode } from "@/lib/provinces";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -20,9 +21,7 @@ export function ProvincialGuideView({
   const trade = getTradeBySlug(slug);
   if (!trade) notFound();
 
-  const guide = PROVINCIAL_GUIDES.find(
-    (g) => g.trade_id === trade.id && g.slug === province,
-  );
+  const guide = resolveProvincialGuide(trade, province);
   if (!guide) notFound();
 
   const sections =
@@ -30,7 +29,7 @@ export function ProvincialGuideView({
       .sections ?? [];
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="app-mobile-content min-h-screen bg-white">
       <MarketingHeader />
       <div className="mx-auto max-w-3xl px-6 py-16">
         <Link

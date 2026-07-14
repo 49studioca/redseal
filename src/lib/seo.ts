@@ -161,6 +161,94 @@ export function tradeSchema(trade: Trade) {
   };
 }
 
+export function breadcrumbSchema(
+  items: { name: string; url: string }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.name,
+      item: absoluteUrl(item.url),
+    })),
+  };
+}
+
+export function faqSchema(items: { question: string; answer: string }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+export function blogPostingSchema(post: {
+  slug: string;
+  title: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
+  excerpt?: string | null;
+  cover_image_url?: string | null;
+  author_name: string;
+  keywords?: string[];
+  published_at?: string | null;
+  updated_at?: string | null;
+  wordCount?: number;
+  trade_slug?: string | null;
+  trade_name?: string | null;
+}) {
+  const url = absoluteUrl(`/blog/${post.slug}`);
+  const about = post.trade_slug
+    ? [
+        {
+          "@type": "LearningResource",
+          name: `${post.trade_name} Red Seal exam prep`,
+          url: absoluteUrl(`/trades/${post.trade_slug}`),
+        },
+      ]
+    : [
+        {
+          "@type": "Thing",
+          name: "Red Seal Program exam preparation",
+          description:
+            "Canadian interprovincial trade certification exam prep for all Red Seal trades.",
+        },
+      ];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    headline: post.seo_title || post.title,
+    description: post.seo_description || post.excerpt || undefined,
+    image: post.cover_image_url ? [post.cover_image_url] : undefined,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    url,
+    inLanguage: "en-CA",
+    datePublished: post.published_at || undefined,
+    dateModified: post.updated_at || post.published_at || undefined,
+    keywords: post.keywords?.length ? post.keywords.join(", ") : undefined,
+    wordCount: post.wordCount,
+    about,
+    author: {
+      "@type": "Organization",
+      name: post.author_name,
+      url: SITE_URL,
+    },
+    publisher: { "@id": `${SITE_URL}/#organization` },
+    isAccessibleForFree: true,
+  };
+}
+
 export function allPublicSitemapRoutes() {
   const staticRoutes = ["/", ...INDEXABLE_UTILITY_ROUTES];
   const tradeRoutes = TRADES.map((trade) => `/trades/${trade.slug}`);

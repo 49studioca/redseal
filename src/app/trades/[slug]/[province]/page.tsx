@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { TRADES, PROVINCIAL_GUIDES, getTradeBySlug } from "@/data/seed";
+import { TRADES, getTradeBySlug } from "@/data/seed";
+import { PROVINCES } from "@/lib/provinces";
+import { resolveProvincialGuide } from "@/lib/provincial-guide";
 import { SITE_NAME, absoluteUrl, jsonLd } from "@/lib/seo";
 import { ProvincialGuideView } from "./provincial-guide-view";
 
@@ -8,9 +10,7 @@ export async function generateMetadata(
 ): Promise<Metadata> {
   const { slug, province } = await props.params;
   const trade = getTradeBySlug(slug);
-  const guide = PROVINCIAL_GUIDES.find(
-    (g) => g.trade_id === trade?.id && g.slug === province,
-  );
+  const guide = trade ? resolveProvincialGuide(trade, province) : null;
   if (!guide) return {};
   const canonical = `/trades/${slug}/${province}`;
 
@@ -34,9 +34,7 @@ export default async function ProvincialGuidePage(
 ) {
   const { slug, province } = await props.params;
   const trade = getTradeBySlug(slug);
-  const guide = PROVINCIAL_GUIDES.find(
-    (item) => item.trade_id === trade?.id && item.slug === province,
-  );
+  const guide = trade ? resolveProvincialGuide(trade, province) : null;
   const schema =
     trade && guide
       ? {
@@ -72,8 +70,10 @@ export default async function ProvincialGuidePage(
 }
 
 export function generateStaticParams() {
-  return PROVINCIAL_GUIDES.flatMap((g) => {
-    const trade = TRADES.find((t) => t.id === g.trade_id);
-    return trade ? [{ slug: trade.slug, province: g.slug }] : [];
-  });
+  return TRADES.flatMap((trade) =>
+    PROVINCES.map((province) => ({
+      slug: trade.slug,
+      province: province.slug,
+    })),
+  );
 }

@@ -24,6 +24,7 @@ import {
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarketingMobileNav } from "@/components/marketing/mobile-nav";
 import {
   HeroGuideCard,
   HeroTradeChips,
@@ -31,6 +32,7 @@ import {
   Zap as HeroZap,
   CircleCheck as HeroCircleCheck,
 } from "@/components/marketing/hero-quiz";
+import { getTradeBySlug } from "@/data/seed";
 
 export function MarketingHeader() {
   return (
@@ -312,7 +314,10 @@ export function FeatureHighlight() {
   ];
 
   return (
-    <section className="mx-auto max-w-[1180px] px-4 pb-[30px] pt-[54px] sm:px-6">
+    <section
+      id="features"
+      className="mx-auto max-w-[1180px] px-4 pb-[30px] pt-[54px] sm:px-6"
+    >
       <div className="grid gap-[18px] md:grid-cols-[1.4fr_1fr]">
         <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-br from-[#E0392F] to-[#C2151B] p-5 text-white sm:p-8">
           <div className="absolute bottom-[-40px] right-[-30px] h-[200px] w-[200px] rounded-full bg-black/10" />
@@ -403,13 +408,15 @@ export function TradesPreview() {
     {
       name: "Electrician",
       code: "309A",
+      slug: "construction-electrician",
       icon: Zap,
       bg: "bg-[#FCEBEC]",
       color: "text-[#C0271E]",
     },
     {
       name: "Plumber",
-      code: "306A",
+      code: "447A",
+      slug: "plumber",
       icon: Droplets,
       bg: "bg-[#FCEBEC]",
       color: "text-[#C0271E]",
@@ -417,13 +424,15 @@ export function TradesPreview() {
     {
       name: "Carpenter",
       code: "403A",
+      slug: "carpenter",
       icon: Hammer,
       bg: "bg-[#FCEBEC]",
       color: "text-[#C0271E]",
     },
     {
       name: "Welder",
-      code: "456A",
+      code: "276A",
+      slug: "welder",
       icon: Flame,
       bg: "bg-[#FEF2F2]",
       color: "text-[#DC2626]",
@@ -431,6 +440,7 @@ export function TradesPreview() {
     {
       name: "HVAC/R Tech",
       code: "313A",
+      slug: "refrigeration-ac-mechanic",
       icon: Wind,
       bg: "bg-[#F6F3EE]",
       color: "text-[#1F2A37]",
@@ -438,6 +448,7 @@ export function TradesPreview() {
     {
       name: "Auto Service",
       code: "310S",
+      slug: "automotive-service-technician",
       icon: Car,
       bg: "bg-[#F0FDF4]",
       color: "text-[#16A34A]",
@@ -445,13 +456,15 @@ export function TradesPreview() {
     {
       name: "Millwright",
       code: "433A",
+      slug: "millwright",
       icon: Cog,
       bg: "bg-[#F6F3EE]",
       color: "text-[#1F2A37]",
     },
     {
       name: "Ironworker",
-      code: "420A",
+      code: "420G",
+      slug: "ironworker-structural",
       icon: Building2,
       bg: "bg-[#F3EFE8]",
       color: "text-[#475569]",
@@ -473,30 +486,45 @@ export function TradesPreview() {
           </h2>
         </div>
         <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-[34px] sm:gap-3.5 md:grid-cols-4">
-          {tradeCards.map((t) => {
-            const Icon = t.icon;
-            return (
-              <Link
-                key={t.code}
-                href="/auth?signup"
-                className="flex items-center gap-2 rounded-[14px] border border-[#E5E0D8] bg-white p-3 transition-all hover:-translate-y-0.5 hover:border-[#C0271E] hover:shadow-[0_8px_20px_rgba(31,42,55,0.10)] sm:gap-3 sm:p-[18px]"
-              >
-                <span
-                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] sm:h-11 sm:w-11 ${t.bg} ${t.color}`}
+          {[...tradeCards]
+            .map((t) => ({
+              ...t,
+              isLive: getTradeBySlug(t.slug)?.status === "live",
+            }))
+            .sort((a, b) => Number(b.isLive) - Number(a.isLive))
+            .map((t) => {
+              const Icon = t.icon;
+              return (
+                <Link
+                  key={t.code}
+                  href={`/trades/${t.slug}`}
+                  className={`relative flex items-center gap-2 rounded-[14px] border bg-white p-3 transition-all hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(31,42,55,0.10)] sm:gap-3 sm:p-[18px] ${
+                    t.isLive
+                      ? "border-[#E5E0D8] hover:border-[#C0271E]"
+                      : "border-[#E5E0D8] opacity-90 hover:border-[#94A3B8]"
+                  }`}
                 >
-                  <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
-                </span>
-                <span className="min-w-0">
-                  <span className="block truncate font-[family-name:var(--font-barlow-semi)] text-sm font-semibold text-[#1F2A37] sm:text-base">
-                    {t.name}
+                  {!t.isLive && (
+                    <span className="absolute right-2 top-2 rounded-full bg-[#F1ECE3] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-[#64748B] sm:right-2.5 sm:top-2.5 sm:text-[10px]">
+                      Soon
+                    </span>
+                  )}
+                  <span
+                    className={`grid h-9 w-9 shrink-0 place-items-center rounded-[11px] sm:h-11 sm:w-11 ${t.bg} ${t.color}`}
+                  >
+                    <Icon className="h-[18px] w-[18px] sm:h-[22px] sm:w-[22px]" />
                   </span>
-                  <span className="mt-px block font-[family-name:var(--font-ibm-mono)] text-[10px] text-[#94A3B8] sm:text-[11px]">
-                    {t.code}
+                  <span className="min-w-0 pr-8 sm:pr-10">
+                    <span className="block truncate font-[family-name:var(--font-barlow-semi)] text-sm font-semibold text-[#1F2A37] sm:text-base">
+                      {t.name}
+                    </span>
+                    <span className="mt-px block font-[family-name:var(--font-ibm-mono)] text-[10px] text-[#94A3B8] sm:text-[11px]">
+                      {t.code}
+                    </span>
                   </span>
-                </span>
-              </Link>
-            );
-          })}
+                </Link>
+              );
+            })}
         </div>
         <div className="mt-6 flex justify-center sm:mt-8">
           <Link
@@ -571,9 +599,9 @@ export function CtaBand() {
           <HardHat className="h-[30px] w-[30px]" />
         </div>
         <h2 className="mt-[22px] text-balance font-[family-name:var(--font-barlow-condensed)] text-[52px] font-bold leading-none tracking-tight">
-          Your ticket is waiting.
+          Your Red Seal is waiting.
           <br />
-          Go earn it.
+          Let&apos;s pass it.
         </h2>
         <p className="mt-3.5 text-lg text-[#FCE3E4]">
           Start free today — build your first AI quiz in under two minutes.
@@ -595,15 +623,31 @@ export function MarketingFooter() {
   const footCols = [
     {
       head: "Product",
-      links: ["Features", "Trades", "Pricing", "Mock exams", "Mobile app"],
+      links: [
+        { label: "Features", href: "/#features" },
+        { label: "Trades", href: "/trades" },
+        { label: "Pricing", href: "/pricing" },
+        { label: "Mock exams", href: "/#features" },
+        { label: "Mobile app", href: "/#features" },
+      ],
     },
     {
       head: "Company",
-      links: ["About", "Blog", "Careers", "Contact"],
+      links: [
+        { label: "About", href: "/about" },
+        { label: "Blog", href: "/blog" },
+        { label: "Careers", href: "/careers" },
+        { label: "Contact", href: "/contact" },
+      ],
     },
     {
       head: "Legal",
-      links: ["Privacy", "Terms", "Disclaimer", "Refunds"],
+      links: [
+        { label: "Privacy", href: "/privacy" },
+        { label: "Terms", href: "/terms" },
+        { label: "Disclaimer", href: "/disclaimer" },
+        { label: "Refunds", href: "/refunds" },
+      ],
     },
   ];
 
@@ -641,11 +685,11 @@ export function MarketingFooter() {
                 <div className="mt-3 flex flex-col gap-2">
                   {col.links.map((l) => (
                     <Link
-                      key={l}
-                      href="/#top"
+                      key={l.label}
+                      href={l.href}
                       className="text-sm hover:text-white"
                     >
-                      {l}
+                      {l.label}
                     </Link>
                   ))}
                 </div>
@@ -654,7 +698,7 @@ export function MarketingFooter() {
           </div>
         </div>
       </div>
-      <div className="border-t border-white/[0.07]">
+      <div className="border-t border-white/[0.07] pb-[calc(64px+env(safe-area-inset-bottom))] md:pb-0">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-2 px-6 py-4 text-[12.5px] leading-relaxed text-[#5F87A6] sm:flex-row sm:flex-wrap sm:justify-between sm:gap-3.5 sm:py-[18px]">
           <span>
             © 2026 redsealguide.com · Unofficial - not affiliated with the Red
@@ -663,6 +707,7 @@ export function MarketingFooter() {
           <span className="shrink-0">Made in Canada 🍁</span>
         </div>
       </div>
+      <MarketingMobileNav />
     </footer>
   );
 }

@@ -5,6 +5,9 @@ import { normalizeContentBlocks } from "@/lib/content/normalize-content-blocks";
 import { hasCheckAnswer } from "@/lib/content/check-question-meta";
 import { formatProvincePromptForTrade } from "@/lib/content/province-content";
 import { formatBlockMediaForPrompt } from "@/data/block-media";
+import { embedText, hasEmbeddingProvider } from "@/lib/ai/embeddings";
+
+export { embedText, hasEmbeddingProvider };
 
 // Chat generation goes through OpenRouter (OpenAI-compatible API).
 const openrouter = process.env.OPENROUTER_API_KEY
@@ -15,11 +18,6 @@ const openrouter = process.env.OPENROUTER_API_KEY
   : null;
 
 const CHAT_MODEL = process.env.OPENROUTER_MODEL ?? "openai/gpt-4o-mini";
-
-// OpenRouter has no embeddings endpoint, so embeddings still use OpenAI directly.
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  : null;
 
 export interface GenerateQuestionInput {
   tradeCode: string;
@@ -587,17 +585,6 @@ function mockTranslateWord(input: {
     definition: `A technical term used in Red Seal trade lessons.`,
     context_explanation: `In this context, "${input.word}" refers to a concept covered in your trade training.`,
   };
-}
-
-export async function embedText(text: string): Promise<number[]> {
-  if (!openai) {
-    return Array(1536).fill(0).map((_, i) => Math.sin(i + text.length) * 0.1);
-  }
-  const response = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: text,
-  });
-  return response.data[0]?.embedding ?? [];
 }
 
 function mockGenerateChapterLesson(input: {

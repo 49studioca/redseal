@@ -111,9 +111,7 @@ export async function generateAndPersistBlockContent(
     if (perTask) {
       await removeLegacyBlockLesson(input.supabase, {
         tradeId,
-        tradeCode: input.trade.code,
-        blockCode: input.block.code,
-        province: input.province,
+        blockId,
       });
 
       for (let i = 0; i < input.chapterTasks.length; i++) {

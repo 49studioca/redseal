@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { TRADES, getTradeBySlug, getTradeDetailContent } from "@/data/seed";
 import { SITE_NAME, jsonLd, tradeSchema, tradeUrl } from "@/lib/seo";
 import { TradeDetailView } from "./trade-detail-view";
+import { TradeBlogPosts } from "@/components/blog/trade-posts";
 
 export async function generateMetadata(
   props: PageProps<"/trades/[slug]">,
@@ -43,6 +44,7 @@ export default async function TradeDetailPage(
         />
       )}
       <TradeDetailView slug={slug} />
+      {trade ? <TradeBlogPosts tradeSlug={trade.slug} /> : null}
     </>
   );
 }

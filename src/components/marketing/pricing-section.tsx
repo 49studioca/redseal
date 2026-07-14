@@ -161,29 +161,30 @@ function PricingSectionInner() {
                 <Button
                   type="button"
                   variant={plan.dark ? "white" : "dark"}
-                  className="mt-4 h-10 w-full rounded-[11px] text-sm font-extrabold sm:mt-5 sm:h-[46px] sm:text-[15px]"
+                  className="mt-auto h-10 w-full rounded-[11px] text-sm font-extrabold sm:h-[46px] sm:text-[15px]"
                   onClick={() => openCheckout(plan.id)}
                 >
                   {plan.cta}
                 </Button>
-                <div
-                  className={`my-4 h-px sm:my-5 ${plan.dark ? "bg-white/10" : "bg-[#ECE6DC]"}`}
-                />
-                <div className="flex flex-col gap-2 sm:gap-[11px]">
-                  {sharedFeatures.map((f, i) => (
-                    <div
-                      key={i}
-                      className={`flex items-start gap-2 text-xs sm:text-sm ${plan.dark ? "text-[#FCE3E4]" : "text-[#334155]"}`}
-                    >
-                      <Check
-                        className={`mt-0.5 h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4 ${plan.dark ? "text-white" : "text-[#059669]"}`}
-                      />
-                      {f}
-                    </div>
-                  ))}
-                </div>
               </div>
             ))}
+          </div>
+
+          <div className="mx-auto mt-6 max-w-[760px] rounded-[18px] border border-[#E5E0D8] bg-white p-5 sm:mt-8 sm:p-7">
+            <div className="text-center font-[family-name:var(--font-barlow-semi)] text-sm font-bold uppercase tracking-wide text-[#1F2A37] sm:text-base">
+              Every plan includes
+            </div>
+            <div className="mt-4 grid gap-2.5 sm:mt-5 sm:grid-cols-2 sm:gap-x-8 sm:gap-y-3">
+              {sharedFeatures.map((f, i) => (
+                <div
+                  key={i}
+                  className="flex items-start gap-2 text-xs text-[#334155] sm:text-sm"
+                >
+                  <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#059669] sm:h-4 sm:w-4" />
+                  {f}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

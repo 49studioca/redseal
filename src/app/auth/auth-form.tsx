@@ -164,6 +164,12 @@ function buildSwitchHref(
   return `/auth?${params.toString()}`;
 }
 
+function safeRedirectPath(value: string | null, fallback: string) {
+  if (!value) return fallback;
+  if (!value.startsWith("/") || value.startsWith("//")) return fallback;
+  return value;
+}
+
 function buildOAuthCallbackUrl(
   origin: string,
   tradeSlug: string,
@@ -197,7 +203,10 @@ export function AuthForm() {
     [searchParams],
   );
   const redirectTo =
-    searchParams.get("redirect") ?? (isSignup ? "/onboarding" : "/dashboard");
+    safeRedirectPath(
+      searchParams.get("redirect"),
+      isSignup ? "/onboarding" : "/dashboard",
+    );
   const authError = searchParams.get("error");
   const deviceLimitMessage = searchParams.get("message");
   const [email, setEmail] = useState("");
@@ -227,6 +236,7 @@ export function AuthForm() {
     }
     return null;
   });
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     if (isSignup) {
@@ -248,6 +258,7 @@ export function AuthForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNotice(null);
 
     if (!isSupabaseConfigured()) {
       router.push(redirectTo);
@@ -281,6 +292,7 @@ export function AuthForm() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setNotice(null);
 
     if (!tradeSlug) {
       setError("Please select your trade.");
@@ -337,7 +349,11 @@ export function AuthForm() {
         router.push(postSignupPath);
       }
     } else {
-      router.push(postSignupPath);
+      setNotice(
+        "Check your email to confirm your account, then log in to continue.",
+      );
+      setLoading(false);
+      return;
     }
     router.refresh();
   };
@@ -345,6 +361,7 @@ export function AuthForm() {
   const handleOAuth = async (provider: "google" | "apple") => {
     setOauthLoading(provider);
     setError(null);
+    setNotice(null);
 
     if (isSignup && !tradeSlug) {
       setError("Please select your trade before continuing.");
@@ -433,6 +450,11 @@ export function AuthForm() {
           )}
 
           {error && <p className="mt-3 text-xs text-[#B91C1C]">{error}</p>}
+          {notice && (
+            <p className="mt-3 rounded-[10px] border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-xs font-semibold text-[#047857]">
+              {notice}
+            </p>
+          )}
 
           <div className={`grid gap-2 ${isSignup ? "mt-4" : "mt-5 sm:mt-6"}`}>
             <Button
@@ -486,6 +508,7 @@ export function AuthForm() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="h-9 px-3 text-sm"
+                  autoComplete="name"
                   required
                 />
               </div>
@@ -497,6 +520,7 @@ export function AuthForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="h-9 px-3 text-sm"
+                autoComplete="email"
                 required
               />
             </div>
@@ -510,6 +534,7 @@ export function AuthForm() {
                 onChange={(e) => setPassword(e.target.value)}
                 minLength={isSignup ? 8 : undefined}
                 className="h-9 px-3 text-sm"
+                autoComplete={isSignup ? "new-password" : "current-password"}
                 required
               />
             </div>

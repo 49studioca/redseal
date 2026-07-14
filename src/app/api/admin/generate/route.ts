@@ -25,6 +25,7 @@ import {
   resolveTradeId,
 } from "@/lib/content/persist-generated";
 import { createServiceClient } from "@/lib/supabase/server";
+import { retrieveReferenceChunks } from "@/lib/reference/retrieve-chunks";
 import { isProvinceCode } from "@/lib/provinces";
 import type { ContentBlock } from "@/types";
 
@@ -65,10 +66,30 @@ export async function POST(request: Request) {
   const resolvedCodeVersion =
     code_version ?? getDefaultCodeVersion(trade_id);
   const profile = await getTradeGenerationProfile(trade_id);
-  const chunks = REFERENCE_CHUNKS.filter(
-    (c) => !resolvedCodeVersion || c.code_version === resolvedCodeVersion,
-  );
   const chapterTasks = getChapterTasksForBlock(block.id);
+
+  // RAG: retrieve relevant chunks from ingested reference PDFs for this trade,
+  // falling back to the static seed chunks when retrieval isn't available.
+  const chunks = await (async () => {
+    try {
+      const supabase = await createServiceClient();
+      const queryText = [
+        block_name ?? block.name,
+        ...chapterTasks.map((t) => t.name),
+      ].join(". ");
+      const retrieved = await retrieveReferenceChunks(supabase, {
+        tradeCode: trade.code,
+        queryText,
+        matchCount: 10,
+      });
+      if (retrieved.length > 0) return retrieved;
+    } catch {
+      // fall through to seed chunks
+    }
+    return REFERENCE_CHUNKS.filter(
+      (c) => !resolvedCodeVersion || c.code_version === resolvedCodeVersion,
+    );
+  })();
   const resolvedBlockName = block_name ?? block.name;
   const resolvedSubtask =
     subtask_name ?? chapterTasks[0]?.name ?? "General subtask";

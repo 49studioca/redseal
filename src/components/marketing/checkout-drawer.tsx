@@ -11,7 +11,14 @@ import { loadStripe } from "@stripe/stripe-js";
 import { X, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { saveSignupPreferences } from "@/lib/auth/save-signup-preferences";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
+import { TRADES } from "@/data/seed";
+import {
+  DEFAULT_PROVINCE,
+  PROVINCES,
+  type ProvinceCode,
+} from "@/lib/provinces";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +26,9 @@ import { AppleIcon, GoogleIcon } from "@/components/auth/oauth-icons";
 import { getOAuthErrorMessage } from "@/lib/auth/oauth-errors";
 
 const DRAWER_ANIM_MS = 300;
+const SIGNUP_TRADES = [...TRADES]
+  .filter((trade) => trade.status !== "coming_soon")
+  .sort((a, b) => a.name.localeCompare(b.name));
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
   ? loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
@@ -45,8 +55,11 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(true);
+  const [tradeSlug, setTradeSlug] = useState("");
+  const [province, setProvince] = useState<ProvinceCode>(DEFAULT_PROVINCE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [checkingSession, setCheckingSession] = useState(true);
 
@@ -113,6 +126,7 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
     setStep("auth");
     setClientSecret(null);
     setError(null);
+    setNotice(null);
     setCheckingSession(true);
     void checkAuth();
   }, [open, planId, checkAuth]);
@@ -138,6 +152,14 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
 
   const handleEmailAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setNotice(null);
+
+    if (isSignUp && !tradeSlug) {
+      setError("Please select your trade before continuing.");
+      return;
+    }
+
     if (!isSupabaseConfigured()) {
       await fetchCheckoutSession();
       return;
@@ -151,9 +173,35 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
       const { error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            trade_slug: tradeSlug,
+            province,
+          },
+        },
       });
       if (signUpError) {
         setError(signUpError.message);
+        setLoading(false);
+        return;
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        try {
+          await saveSignupPreferences(supabase, user.id, {
+            tradeSlug,
+            province,
+          });
+        } catch {
+          // Dashboard onboarding is the fallback if preferences cannot be saved.
+        }
+      } else {
+        setNotice(
+          "Check your email to confirm your account, then return to finish checkout.",
+        );
         setLoading(false);
         return;
       }
@@ -174,6 +222,13 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
   };
 
   const handleOAuth = async (provider: "google" | "apple") => {
+    setError(null);
+    setNotice(null);
+    if (isSignUp && !tradeSlug) {
+      setError("Please select your trade before continuing.");
+      return;
+    }
+
     if (!isSupabaseConfigured()) {
       setError("Sign-in is not configured yet.");
       return;
@@ -181,10 +236,17 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
     const supabase = createClient();
     const origin = window.location.origin;
     const next = planId ? `/?checkout=resume&plan=${planId}` : "/";
+    const callbackParams = new URLSearchParams({
+      next,
+    });
+    if (isSignUp) {
+      callbackParams.set("trade", tradeSlug);
+      callbackParams.set("province", province);
+    }
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(next)}`,
+        redirectTo: `${origin}/auth/callback?${callbackParams.toString()}`,
       },
     });
     if (oauthError)
@@ -290,6 +352,47 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
               </div>
 
               <form onSubmit={handleEmailAuth} className="space-y-3">
+                {isSignUp && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="mb-1.5 block text-sm font-semibold">
+                        Trade
+                      </label>
+                      <select
+                        value={tradeSlug}
+                        onChange={(e) => setTradeSlug(e.target.value)}
+                        className="h-10 w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 text-sm"
+                        required
+                      >
+                        <option value="">Select trade</option>
+                        {SIGNUP_TRADES.map((trade) => (
+                          <option key={trade.id} value={trade.slug}>
+                            {trade.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-1.5 block text-sm font-semibold">
+                        Province
+                      </label>
+                      <select
+                        value={province}
+                        onChange={(e) =>
+                          setProvince(e.target.value as ProvinceCode)
+                        }
+                        className="h-10 w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 text-sm"
+                        required
+                      >
+                        {PROVINCES.map((entry) => (
+                          <option key={entry.code} value={entry.code}>
+                            {entry.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold">
                     Email
@@ -318,10 +421,15 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
                   />
                 </div>
                 {error && <p className="text-sm text-[#B91C1C]">{error}</p>}
+                {notice && (
+                  <p className="rounded-[10px] border border-[#BBF7D0] bg-[#F0FDF4] px-3 py-2 text-sm font-semibold text-[#047857]">
+                    {notice}
+                  </p>
+                )}
                 <Button
                   type="submit"
                   className="h-11 w-full"
-                  disabled={loading}
+                  disabled={loading || (isSignUp && !tradeSlug)}
                 >
                   {loading ? (
                     <>

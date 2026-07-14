@@ -102,17 +102,16 @@ export function VideoLearningList({ blocks, videos }: VideoLearningListProps) {
 
 function VideoCard({ video }: { video: VideoWithMeta }) {
   const completed = video.progress?.completed;
-  const questionCount = video.questions.length;
   const displayTitle = cleanYoutubeTitle(video.title);
   const watchHref = completed
     ? `/dashboard/video-learning/${video.id}?rewatch=1`
     : `/dashboard/video-learning/${video.id}`;
 
   return (
-    <Card className="overflow-hidden transition hover:border-[#C0271E]/40 hover:shadow-md">
+    <Card className="flex h-full flex-col overflow-hidden transition hover:border-[#C0271E]/40 hover:shadow-md">
       <Link
         href={watchHref}
-        className="group relative block aspect-video bg-[#1F2A37]"
+        className="group relative block aspect-video shrink-0 bg-[#1F2A37]"
         aria-label={
           completed ? `Watch again: ${displayTitle}` : `Watch: ${displayTitle}`
         }
@@ -134,7 +133,7 @@ function VideoCard({ video }: { video: VideoWithMeta }) {
           </span>
         )}
       </Link>
-      <div className="p-4">
+      <div className="flex flex-1 flex-col p-4">
         {video.topic_label && (
           <p className="text-[10px] font-semibold uppercase tracking-wide text-[#F4A11A]">
             {video.topic_label}
@@ -143,11 +142,8 @@ function VideoCard({ video }: { video: VideoWithMeta }) {
         <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-[#1F2A37]">
           {displayTitle}
         </h3>
-        <p className="mt-2 text-xs text-[#64748B]">
-          {questionCount} check-in question{questionCount === 1 ? "" : "s"}
-        </p>
         {completed ? (
-          <div className="mt-3 flex gap-2">
+          <div className="mt-auto flex gap-2 pt-3">
             <Link
               href={watchHref}
               className={cn(
@@ -167,7 +163,7 @@ function VideoCard({ video }: { video: VideoWithMeta }) {
         ) : (
           <Link
             href={watchHref}
-            className={cn(buttonVariants({ size: "sm" }), "mt-3 w-full")}
+            className={cn(buttonVariants({ size: "sm" }), "mt-auto w-full")}
           >
             Watch & learn
           </Link>

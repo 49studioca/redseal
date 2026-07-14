@@ -7,15 +7,36 @@ import {
   Flag,
   FileText,
   Play,
+  Newspaper,
+  Wrench,
+  Users,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 const adminLinks = [
   {
+    href: "/admin/users",
+    label: "Users",
+    icon: Users,
+    desc: "Manage plans, subscriptions, refunds, and view progress",
+  },
+  {
+    href: "/admin/trades",
+    label: "Trades",
+    icon: Wrench,
+    desc: "Set trades active or draft",
+  },
+  {
     href: "/admin/generate",
     label: "AI Generation",
     icon: Sparkles,
     desc: "Generate questions, lessons, flashcards",
+  },
+  {
+    href: "/admin/blog",
+    label: "Blog",
+    icon: Newspaper,
+    desc: "Write SEO posts with TipTap + AI content & images",
   },
   {
     href: "/admin/video-learning",

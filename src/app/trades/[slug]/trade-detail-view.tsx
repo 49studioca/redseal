@@ -1,15 +1,18 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   ArrowRight,
   BookOpen,
   Check,
+  ChevronDown,
   ChevronRight,
   ClipboardCheck,
   GraduationCap,
   MapPin,
   Sparkles,
   Target,
+  Video,
   Zap,
 } from "lucide-react";
 import {
@@ -22,28 +25,17 @@ import {
   getTradeBySlug,
   getTradeDetailContent,
   getBlocksForTrade,
-  PROVINCIAL_GUIDES,
 } from "@/data/seed";
-import { fetchQuestions, fetchTradeBySlug } from "@/lib/data";
+import { provinceDifferencePanels } from "@/lib/provincial-guide";
+import { getTradeImageSrc } from "@/lib/trade-images";
+import { ProvinceTabs } from "@/components/trades/province-tabs";
+import { ComingSoonNotify } from "@/components/trades/coming-soon-notify";
 import { buildSignupHref } from "@/lib/auth/signup-context";
 import { jsonLd } from "@/lib/seo";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import type { Trade } from "@/types";
 import type { TradeDetailContent } from "@/types";
-
-const QUESTION_TYPE_LABELS: Record<string, string> = {
-  recall: "Knowledge & recall",
-  application: "Procedural & application",
-  critical: "Critical thinking",
-};
-
-const QUESTION_TYPE_DESCRIPTIONS: Record<string, string> = {
-  recall: "Remember facts, definitions, code rules, and standard procedures.",
-  application: "Apply step-by-step procedures to complete a task correctly.",
-  critical:
-    "Analyze scenarios, troubleshoot problems, and choose the best solution.",
-};
 
 function tradeFaq(trade: Trade, detail: TradeDetailContent | undefined) {
   const bookType = trade.is_open_book
@@ -92,39 +84,43 @@ function TradeCta({
 
   if (trade.status === "coming_soon") {
     return (
-      <Link href={signupHref} className={className}>
-        <Button variant={variant === "primary" ? "white" : "primary"}>
+      <a href="#notify" className={className}>
+        <Button
+          variant={variant === "primary" ? "white" : "primary"}
+          className="whitespace-nowrap"
+        >
           Get notified — sign up free
           <ArrowRight className="h-4 w-4" />
         </Button>
-      </Link>
+      </a>
     );
   }
 
   return (
     <Link href={signupHref} className={className}>
-      <Button variant={variant === "primary" ? "white" : "primary"}>
-        <Zap className="h-4 w-4" />
+      <Button
+        variant={variant === "primary" ? "white" : "primary"}
+        className="whitespace-nowrap"
+      >
+        <Zap className="h-4 w-4 shrink-0" />
         Start free {trade.short_name} prep
-        <ArrowRight className="h-4 w-4" />
+        <ArrowRight className="h-4 w-4 shrink-0" />
       </Button>
     </Link>
   );
 }
 
-export async function TradeDetailView({ slug }: { slug: string }) {
+export function TradeDetailView({ slug }: { slug: string }) {
   const trade = getTradeBySlug(slug);
   if (!trade) notFound();
 
   const detail = getTradeDetailContent(trade.id);
   const blocks = getBlocksForTrade(trade.id);
-  const provinces = PROVINCIAL_GUIDES.filter((g) => g.trade_id === trade.id);
-  const dbTrade = await fetchTradeBySlug(slug);
-  const questions = dbTrade ? await fetchQuestions(dbTrade.id) : [];
-  const sampleQ = questions[0];
+  const provincePanels = provinceDifferencePanels(trade);
   const faq = tradeFaq(trade, detail);
   const examHours = trade.exam_time_minutes / 60;
   const isLive = trade.status === "live";
+  const tradeImage = getTradeImageSrc(trade.slug);
 
   const features = [
     {
@@ -149,6 +145,13 @@ export async function TradeDetailView({ slug }: { slug: string }) {
       bg: "bg-[#EFF6FF]",
     },
     {
+      icon: Video,
+      title: "Video learning",
+      body: `Watch curated trade videos mapped to each RSOS block, then answer check-in questions to lock it in.`,
+      color: "text-[#7C3AED]",
+      bg: "bg-[#F5F3FF]",
+    },
+    {
       icon: GraduationCap,
       title: "Readiness tracking",
       body: "See your score climb block by block until you hit 70%+ exam readiness.",
@@ -168,7 +171,7 @@ export async function TradeDetailView({ slug }: { slug: string }) {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="app-mobile-content min-h-screen bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(faqSchema) }}
@@ -204,7 +207,9 @@ export async function TradeDetailView({ slug }: { slug: string }) {
             <span className="text-white">{trade.name}</span>
           </nav>
 
-          <div className="mt-8 grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+          <div
+            className={`mt-8 grid items-center gap-10 ${tradeImage ? "lg:grid-cols-[1.1fr_0.9fr]" : ""}`}
+          >
             <div>
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-xs font-bold text-[#FCE3E4]">
                 <span className="text-2xl leading-none">{trade.icon}</span>
@@ -215,17 +220,21 @@ export async function TradeDetailView({ slug }: { slug: string }) {
                   </span>
                 )}
               </div>
-              <h1 className="mt-5 font-[family-name:var(--font-barlow-condensed)] text-[38px] font-bold leading-[0.98] tracking-tight sm:text-[52px]">
-                {trade.name} Red Seal
-                <br />
-                <span className="underline decoration-white/45 decoration-2 underline-offset-4">
-                  exam prep
+              <h1 className="mt-5 font-[family-name:var(--font-barlow-condensed)] font-bold leading-[0.98] tracking-tight">
+                <span className="block text-[38px] sm:text-[52px]">
+                  {trade.name}
+                </span>
+                <span className="mt-1 block text-[22px] sm:text-[28px]">
+                  Red Seal{" "}
+                  <span className="underline decoration-white/45 decoration-2 underline-offset-4">
+                    exam prep
+                  </span>
                 </span>
               </h1>
               <p className="mt-4 max-w-xl text-base leading-relaxed text-[#FCE3E4] sm:text-lg">
                 {isLive
-                  ? `AI-built practice questions, RSOS block drills, and timed mock exams for the ${trade.code} interprovincial Red Seal exam — built for Canadian apprentices and journeypersons.`
-                  : `${trade.description} Full AI exam prep for this trade is coming soon — sign up to get notified.`}
+                  ? `AI practice questions, RSOS block drills, and timed mock exams for the ${trade.code} exam.`
+                  : `${trade.description} Full AI prep coming soon.`}
               </p>
               <ul className="mt-6 space-y-2.5 text-sm font-semibold text-[#FCE3E4]">
                 {[
@@ -252,52 +261,23 @@ export async function TradeDetailView({ slug }: { slug: string }) {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-white/15 bg-white/[0.08] p-6 backdrop-blur-sm">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#FCE3E4]/70">
-                {trade.code} exam at a glance
-              </p>
-              <dl className="mt-4 grid grid-cols-2 gap-4">
-                {[
-                  {
-                    label: "Questions",
-                    value: String(trade.exam_question_count),
-                  },
-                  { label: "Time limit", value: `${examHours} hrs` },
-                  { label: "Pass mark", value: `${trade.pass_percentage}%` },
-                  {
-                    label: "Format",
-                    value: trade.is_open_book ? "Open-book" : "Closed-book",
-                  },
-                ].map((stat) => (
-                  <div key={stat.label}>
-                    <dt className="text-xs text-[#FCE3E4]/70">{stat.label}</dt>
-                    <dd className="mt-0.5 font-[family-name:var(--font-barlow-condensed)] text-2xl font-bold">
-                      {stat.value}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
-              {detail?.question_type_breakdown && (
-                <div className="mt-5 border-t border-white/10 pt-5">
-                  <p className="text-xs font-semibold text-[#FCE3E4]/70">
-                    Question types (% of exam)
-                  </p>
-                  <ul className="mt-2 space-y-1.5">
-                    {detail.question_type_breakdown.map((qt) => (
-                      <li
-                        key={qt.type}
-                        className="flex justify-between gap-3 text-sm"
-                      >
-                        <span className="text-[#FCE3E4]">{qt.label}</span>
-                        <span className="shrink-0 font-[family-name:var(--font-ibm-mono)] text-xs font-medium">
-                          {qt.range} of exam
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
+            {tradeImage && (
+              <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-white/15 shadow-[0_18px_40px_rgba(0,0,0,0.28)]">
+                <Image
+                  src={tradeImage}
+                  alt={`${trade.name} on the job`}
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 40vw, 100vw"
+                  className="object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-transparent to-transparent" />
+                <div className="absolute bottom-3 left-3 inline-flex items-center gap-1.5 rounded-full bg-black/45 px-3 py-1 text-xs font-semibold text-white backdrop-blur-sm">
+                  <span className="text-base leading-none">{trade.icon}</span>
+                  {trade.name}
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -327,6 +307,15 @@ export async function TradeDetailView({ slug }: { slug: string }) {
       </section>
 
       <div className="mx-auto max-w-[1180px] px-6 py-14 sm:py-16">
+        {/* Coming soon — notify me (draft trades only) */}
+        {!isLive && (
+          <ComingSoonNotify
+            tradeSlug={trade.slug}
+            tradeCode={trade.code}
+            tradeName={trade.name}
+          />
+        )}
+
         {/* Platform features */}
         <section>
           <div className="max-w-2xl">
@@ -336,12 +325,6 @@ export async function TradeDetailView({ slug }: { slug: string }) {
             <h2 className="mt-2 font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold tracking-tight sm:text-4xl">
               The smartest way to prep for your {trade.code} Red Seal exam
             </h2>
-            <p className="mt-3 text-[#64748B]">
-              Stop flipping dusty binders. Drill RSOS-aligned{" "}
-              {trade.name.toLowerCase()} practice questions, run full mock
-              exams, translate lesson words in your language, and track
-              readiness — all in one platform built for Canadian tradespeople.
-            </p>
           </div>
 
           <TranslateFeatureShowcase
@@ -349,7 +332,7 @@ export async function TradeDetailView({ slug }: { slug: string }) {
             tradeCode={trade.code}
           />
 
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {features.map((f) => {
               const Icon = f.icon;
               return (
@@ -389,11 +372,6 @@ export async function TradeDetailView({ slug }: { slug: string }) {
                 <p className="mt-3 max-w-3xl text-sm leading-relaxed text-[#64748B] sm:text-base">
                   {detail.trade_scope}
                 </p>
-                {detail.red_seal_summary && (
-                  <p className="mt-4 max-w-3xl text-sm leading-relaxed text-[#475569]">
-                    {detail.red_seal_summary}
-                  </p>
-                )}
               </div>
             </div>
           </section>
@@ -442,208 +420,21 @@ export async function TradeDetailView({ slug }: { slug: string }) {
           </div>
         )}
 
-        {/* Exam format */}
-        <section className="mt-16">
-          <h2 className="font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold tracking-tight">
-            {trade.code} Red Seal exam format
-          </h2>
-          <p className="mt-2 max-w-2xl text-[#64748B]">
-            Everything you need to know about the interprovincial{" "}
-            {trade.name.toLowerCase()} examination — and how RedSealGuide
-            mirrors it.
-          </p>
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <Card className="p-6">
-              <h3 className="font-semibold">Official exam structure</h3>
-              <ul className="mt-4 space-y-2.5 text-sm text-[#64748B]">
-                <li className="flex gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C0271E]" />
-                  {trade.exam_question_count} multiple-choice questions
-                </li>
-                <li className="flex gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C0271E]" />
-                  {examHours}-hour time limit
-                </li>
-                <li className="flex gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C0271E]" />
-                  {trade.pass_percentage}% required to pass
-                </li>
-                <li className="flex gap-2">
-                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C0271E]" />
-                  {trade.is_open_book ? "Open-book" : "Closed-book"}
-                  {trade.is_open_book
-                    ? ` (${trade.reference_doc_types.join(", ")} permitted)`
-                    : ""}
-                </li>
-                {detail?.exam_notes?.map((note) => (
-                  <li key={note} className="flex gap-2">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#C0271E]" />
-                    {note}
-                  </li>
-                ))}
-              </ul>
-            </Card>
-
-            {detail?.question_type_breakdown && (
-              <Card className="p-6">
-                <h3 className="font-semibold">Question types on the exam</h3>
-                <p className="mt-2 text-sm text-[#64748B]">
-                  The Red Seal Program groups every exam question into three
-                  cognitive levels. The percentage is how much of the{" "}
-                  {trade.exam_question_count}-question exam falls in that
-                  category — not your personal score.
-                </p>
-                <ul className="mt-5 space-y-4">
-                  {detail.question_type_breakdown.map((qt) => (
-                    <li
-                      key={qt.type}
-                      className="border-b border-[#ECE6DC] pb-4 last:border-0 last:pb-0"
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-[#475569]">
-                            {qt.label}
-                          </p>
-                          <p className="mt-1 text-xs leading-relaxed text-[#64748B]">
-                            {QUESTION_TYPE_DESCRIPTIONS[qt.type] ??
-                              "Questions at this cognitive level on the official exam."}
-                          </p>
-                        </div>
-                        <span className="shrink-0 font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
-                          {qt.range} of exam
-                        </span>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </Card>
-            )}
-          </div>
-        </section>
-
-        {/* RSOS blueprint */}
-        {blocks.length > 0 && (
-          <section className="mt-16">
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold tracking-tight">
-                  {trade.name} RSOS exam blueprint
-                </h2>
-                <p className="mt-2 max-w-2xl text-sm text-[#64748B]">
-                  Each block shows how many exam questions come from that RSOS
-                  major work activity, and what share of the full{" "}
-                  {trade.exam_question_count}-question exam it represents.
-                </p>
-              </div>
-              {isLive && (
-                <TradeCta trade={trade} variant="inline" className="shrink-0" />
-              )}
-            </div>
-            <div className="mt-8 space-y-3">
-              {blocks.map((block) => (
-                <div
-                  key={block.id}
-                  className="rounded-xl border border-[#E5E0D8] px-4 py-3.5 transition hover:border-[#C0271E]/40 hover:shadow-sm"
-                >
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="min-w-0">
-                      <span className="font-[family-name:var(--font-ibm-mono)] text-xs font-medium text-[#C0271E]">
-                        Block {block.code}
-                      </span>
-                      <p className="truncate text-sm font-medium">
-                        {block.name}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-right font-[family-name:var(--font-ibm-mono)] text-sm text-[#64748B]">
-                      {block.exam_question_count} Qs
-                      {block.exam_percentage != null && (
-                        <>
-                          <span className="text-[#CBD5E1]"> · </span>
-                          {block.exam_percentage}% of exam
-                        </>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Sample question */}
-        {sampleQ && (
-          <section className="mt-16">
-            <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <p className="text-[13px] font-bold uppercase tracking-wider text-[#D8232A]">
-                  Try a question
-                </p>
-                <h2 className="mt-1 font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold tracking-tight">
-                  Sample {trade.code} practice question
-                </h2>
-              </div>
-              <TradeCta trade={trade} variant="inline" className="shrink-0" />
-            </div>
-            <Card className="p-6 sm:p-8">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[#FEF2F2] px-2.5 py-0.5 text-xs font-medium text-[#C0271E]">
-                  {QUESTION_TYPE_LABELS[sampleQ.question_type] ??
-                    sampleQ.question_type}
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-relaxed sm:text-base">
-                {sampleQ.stem}
-              </p>
-              <ol className="mt-5 space-y-2">
-                {sampleQ.options.map((opt) => (
-                  <li
-                    key={opt.key}
-                    className={`rounded-lg border px-4 py-2.5 text-sm ${
-                      opt.key === sampleQ.correct_option
-                        ? "border-[#C0271E]/30 bg-[#FEF2F2] font-medium"
-                        : "border-[#E5E0D8]"
-                    }`}
-                  >
-                    <span className="font-[family-name:var(--font-ibm-mono)] text-xs text-[#94A3B8]">
-                      {opt.key}.
-                    </span>{" "}
-                    {opt.text}
-                  </li>
-                ))}
-              </ol>
-              <p className="mt-5 text-sm text-[#64748B]">
-                <span className="font-medium text-[#475569]">
-                  Explanation:{" "}
-                </span>
-                {sampleQ.explanation}
-              </p>
-            </Card>
-          </section>
-        )}
-
         {/* Provincial guides */}
-        {provinces.length > 0 && (
+        {provincePanels.length > 0 && (
           <section className="mt-16">
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5 text-[#C0271E]" />
               <h2 className="font-[family-name:var(--font-barlow-semi)] text-xl font-semibold sm:text-2xl">
-                {trade.name} Red Seal guides by province
+                {trade.name} by province
               </h2>
             </div>
             <p className="mt-2 text-sm text-[#64748B]">
-              Registration steps, apprenticeship requirements, and
-              province-specific exam info for the {trade.code} Red Seal.
+              The {trade.code} Red Seal exam is national, but code adoption and
+              the apprenticeship path differ by province. Select yours to see
+              what&apos;s specific.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
-              {provinces.map((p) => (
-                <Link key={p.id} href={`/trades/${slug}/${p.slug}`}>
-                  <Button variant="secondary" size="sm">
-                    {p.province_name}
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </Button>
-                </Link>
-              ))}
-            </div>
+            <ProvinceTabs provinces={provincePanels} tradeCode={trade.code} />
           </section>
         )}
 
@@ -657,63 +448,20 @@ export async function TradeDetailView({ slug }: { slug: string }) {
               {trade.name} Red Seal exam — common questions
             </h2>
           </div>
-          <dl className="mt-8 divide-y divide-[#E5E0D8] rounded-2xl border border-[#E5E0D8]">
+          <div className="mt-8 divide-y divide-[#E5E0D8] overflow-hidden rounded-2xl border border-[#E5E0D8]">
             {faq.map((item) => (
-              <div key={item.q} className="p-5 sm:p-6">
-                <dt className="font-[family-name:var(--font-barlow-semi)] text-base font-semibold text-[#1F2A37]">
-                  {item.q}
-                </dt>
-                <dd className="mt-2 text-sm leading-relaxed text-[#64748B]">
+              <details key={item.q} className="group">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 font-[family-name:var(--font-barlow-semi)] text-base font-semibold text-[#1F2A37] transition hover:bg-[#FAF8F4] sm:p-6 [&::-webkit-details-marker]:hidden">
+                  <span>{item.q}</span>
+                  <ChevronDown className="h-5 w-5 shrink-0 text-[#94A3B8] transition-transform duration-200 group-open:rotate-180" />
+                </summary>
+                <p className="px-5 pb-5 text-sm leading-relaxed text-[#64748B] sm:px-6 sm:pb-6">
                   {item.a}
-                </dd>
-              </div>
+                </p>
+              </details>
             ))}
-          </dl>
+          </div>
         </section>
-
-        {/* Official resources */}
-        {detail?.official_links && detail.official_links.length > 0 && (
-          <section className="mt-16">
-            <h2 className="font-[family-name:var(--font-barlow-semi)] text-xl font-semibold sm:text-2xl">
-              Official Red Seal resources
-            </h2>
-            <p className="mt-2 text-sm text-[#64748B]">
-              Source material from the{" "}
-              <a
-                href="https://red-seal.ca/eng/welcome.shtml"
-                className="text-[#C0271E] underline-offset-2 hover:underline"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Red Seal Program
-              </a>{" "}
-              — administered by the Canadian Council of Directors of
-              Apprenticeship (CCDA). RedSealGuide is unofficial and not
-              affiliated with the Red Seal Program.
-            </p>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-              {detail.official_links.map((link) => (
-                <li key={link.href}>
-                  <a
-                    href={link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block h-full rounded-xl border border-[#E5E0D8] p-4 transition hover:border-[#C0271E] hover:shadow-sm"
-                  >
-                    <span className="text-sm font-medium text-[#C0271E]">
-                      {link.label} →
-                    </span>
-                    {link.description && (
-                      <p className="mt-1 text-xs leading-relaxed text-[#64748B]">
-                        {link.description}
-                      </p>
-                    )}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
       </div>
 
       <PricingSection />
@@ -727,9 +475,7 @@ export async function TradeDetailView({ slug }: { slug: string }) {
                 Pass your {trade.code} Red Seal exam the first time
               </h2>
               <p className="mt-3 max-w-lg text-sm leading-relaxed text-[#94A3B8] sm:text-base">
-                Join apprentices and journeypersons across Canada using
-                RedSealGuide to drill RSOS-aligned {trade.name.toLowerCase()}{" "}
-                practice questions, run timed mock exams, and track exam
+                Drill RSOS-aligned questions, run timed mock exams, and track
                 readiness — free to start.
               </p>
               <ul className="mt-5 space-y-2 text-sm font-semibold text-[#CBD5E1]">

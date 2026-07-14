@@ -15,7 +15,7 @@ import { homepageSchema, jsonLd } from "@/lib/seo";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white">
+    <div className="app-mobile-content min-h-screen overflow-x-hidden bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(homepageSchema()) }}

@@ -48,7 +48,7 @@ export default function TradesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="app-mobile-content min-h-screen bg-white">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLd(schema) }}

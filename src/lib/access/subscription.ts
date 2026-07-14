@@ -18,17 +18,21 @@ export function isFreeLesson(
   tradeCode: string,
   blockCode?: string,
 ): boolean {
+  // Only Block A is part of the free tier.
+  if (blockCode !== "A") return false;
+
   const taskCode =
     lesson.chapter_task_code ?? taskCodeFromLessonSlug(lesson.slug);
-  const perTask = blockCode
-    ? usesPerTaskLessons(tradeCode, blockCode)
-    : false;
+  const perTask = usesPerTaskLessons(tradeCode, blockCode);
 
-  if (perTask) {
+  // Per-task Block A lessons: keep only Task 1 (A-1) free.
+  if (perTask && taskCode) {
     return taskCode === FREE_LIMITS.learningTaskCode;
   }
 
-  return blockCode === "A";
+  // Block-level Block A lesson (no per-task split, or missing task code):
+  // this is the Block A intro/first task, free for all trades.
+  return true;
 }
 
 export function limitForFreeTier<T>(items: T[], limit: number, isPremium: boolean): T[] {

@@ -19,21 +19,19 @@ export async function removeLegacyBlockLesson(
   supabase: SupabaseClient,
   input: {
     tradeId: string;
-    tradeCode: string;
-    blockCode: string;
-    province?: string;
+    blockId: string;
   },
 ) {
-  const slug = stableLessonSlug(
-    input.tradeCode,
-    input.blockCode,
-    input.province,
-  );
+  // Per-task generation replaces the single block-level lesson with one lesson
+  // per RSOS task. Remove any legacy block-level lessons (no task code) for this
+  // block across every province so they don't shadow the per-task lessons in the
+  // province-resolved learning path.
   await supabase
     .from("lessons")
     .delete()
     .eq("trade_id", input.tradeId)
-    .eq("slug", slug);
+    .eq("block_id", input.blockId)
+    .is("chapter_task_code", null);
 }
 
 export async function resolveTradeId(
