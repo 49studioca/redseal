@@ -1,7 +1,16 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, TrendingUp, ClipboardCheck } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Instructor Dashboard",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 const roster = [
   { name: "Marcus R.", trade: "309A", readiness: 62, mocks: 3, streak: 7 },

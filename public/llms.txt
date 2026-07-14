@@ -14,6 +14,14 @@ Important URLs:
 - Industrial Electrician prep: https://www.redsealguide.com/trades/industrial-electrician
 - Carpenter prep: https://www.redsealguide.com/trades/carpenter
 - Sitemap: https://www.redsealguide.com/sitemap.xml
+- Blog: https://www.redsealguide.com/blog
+- Pricing: https://www.redsealguide.com/pricing
+- About: https://www.redsealguide.com/about
+- Contact: https://www.redsealguide.com/contact
+- Disclaimer: https://www.redsealguide.com/disclaimer
+- Privacy: https://www.redsealguide.com/privacy
+- Terms: https://www.redsealguide.com/terms
+- Refund policy: https://www.redsealguide.com/refunds
 
 Entity notes:
 

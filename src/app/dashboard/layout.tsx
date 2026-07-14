@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getDashboardSession } from "@/lib/dashboard-session";
 import { getExamReadinessSummaryForTrade } from "@/lib/progress/exam-readiness";
 import {
@@ -11,6 +12,13 @@ import { DashboardTourProvider } from "@/components/dashboard/dashboard-tour";
 import { UpgradeProvider } from "@/components/subscription/upgrade-provider";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 export default async function DashboardLayout({
   children,

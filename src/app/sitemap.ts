@@ -8,18 +8,30 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
 
   const staticEntries: MetadataRoute.Sitemap = allPublicSitemapRoutes().map(
-    (route) => ({
-      url: absoluteUrl(route),
-      lastModified: now,
-      changeFrequency:
-        route === "/"
-          ? "weekly"
+    (route) => {
+      const isCoreMarketing = ["/", "/trades", "/pricing"].includes(route);
+      const isLegal = ["/privacy", "/terms", "/refunds", "/disclaimer"].includes(
+        route,
+      );
+
+      return {
+        url: absoluteUrl(route),
+        lastModified: now,
+        changeFrequency: isLegal
+          ? "yearly"
           : route.startsWith("/trades/")
             ? "monthly"
             : "weekly",
-      priority:
-        route === "/" ? 1 : route === "/trades" || route === "/pricing" ? 0.9 : 0.75,
-    }),
+        priority:
+          route === "/"
+            ? 1
+            : isCoreMarketing
+              ? 0.9
+              : route.startsWith("/trades/")
+                ? 0.75
+                : 0.6,
+      };
+    },
   );
 
   const posts = await getPublishedPosts(200);

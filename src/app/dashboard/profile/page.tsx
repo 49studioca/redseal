@@ -29,7 +29,7 @@ export default async function ProfilePage() {
         Profile
       </h1>
       <p className="mt-1 text-sm text-[#64748B]">
-        Manage your photo, email, password, and account
+        Manage your photo, email, password, billing, and account
       </p>
 
       <ProfileForm

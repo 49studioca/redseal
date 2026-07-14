@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   BookOpen,
   ClipboardCheck,
+  CreditCard,
   Layers,
   Headphones,
   Settings,
@@ -199,6 +200,14 @@ export function DashboardHeader({
         pathname.startsWith("/dashboard/profile/"),
     },
     {
+      href: "/dashboard/billing",
+      label: "Billing",
+      icon: CreditCard,
+      active:
+        pathname === "/dashboard/billing" ||
+        pathname.startsWith("/dashboard/billing/"),
+    },
+    {
       href: "/dashboard/settings",
       label: "Settings",
       icon: Settings,
@@ -313,6 +322,11 @@ export function DashboardMobileNav() {
       href: "/dashboard/profile",
       label: "Profile",
       icon: User,
+    },
+    {
+      href: "/dashboard/billing",
+      label: "Billing",
+      icon: CreditCard,
     },
     {
       href: "/dashboard/settings",

@@ -12,6 +12,7 @@ import {
   Trash2,
   Wrench,
 } from "lucide-react";
+import { UpgradeButton } from "@/components/subscription/upgrade-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -322,42 +323,26 @@ export function ProfileForm({
               <CreditCard className="mt-0.5 h-4 w-4 shrink-0 text-[#C0271E]" />
               <div className="min-w-0 flex-1">
                 <div className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
-                  Subscription
+                  Subscription & billing
                 </div>
                 <div className="mt-0.5 font-semibold text-[#1F2A37]">
                   Current plan: {plan.name}
                 </div>
+                <p className="mt-1 text-sm text-[#64748B]">
+                  Update cards, view invoices, or cancel with access through
+                  your paid period.
+                </p>
               </div>
             </div>
-            <div className="mt-4 grid gap-3">
-              {Object.entries(PLANS)
-                .filter(([key]) => key !== "free")
-                .map(([key, upgradePlan]) => {
-                  const isCurrent = key === subscriptionTier;
-                  return (
-                    <form key={key} action="/api/stripe/checkout" method="POST">
-                      <input type="hidden" name="plan" value={key} />
-                      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#E5E0D8] p-4">
-                        <div>
-                          <div className="font-semibold">
-                            {upgradePlan.name}
-                          </div>
-                          <div className="text-sm text-[#64748B]">
-                            ${upgradePlan.price}/mo
-                          </div>
-                        </div>
-                        <Button
-                          type="submit"
-                          size="sm"
-                          disabled={isCurrent}
-                          variant={isCurrent ? "secondary" : "primary"}
-                        >
-                          {isCurrent ? "Current plan" : "Upgrade"}
-                        </Button>
-                      </div>
-                    </form>
-                  );
-                })}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link href="/dashboard/billing">
+                <Button size="sm" variant="secondary">
+                  Manage billing
+                </Button>
+              </Link>
+              {subscriptionTier === "free" && (
+                <UpgradeButton label="Upgrade to Pro" size="sm" />
+              )}
             </div>
           </div>
         </div>

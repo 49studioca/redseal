@@ -7,7 +7,17 @@ export const SITE_TITLE = "RedSealGuide | AI Red Seal Exam Prep for Canada";
 export const SITE_DESCRIPTION =
   "AI-powered Red Seal exam prep for Canadian trades: RSOS-aligned practice questions, mock exams, province-aware study guidance, and readiness tracking.";
 
-export const INDEXABLE_UTILITY_ROUTES = ["/trades", "/pricing"] as const;
+export const INDEXABLE_UTILITY_ROUTES = [
+  "/trades",
+  "/pricing",
+  "/about",
+  "/contact",
+  "/careers",
+  "/privacy",
+  "/terms",
+  "/refunds",
+  "/disclaimer",
+] as const;
 
 export function absoluteUrl(path = "/") {
   if (path.startsWith("http")) return path;
@@ -42,7 +52,22 @@ export function organizationSchema() {
       "Apprenticeship exam practice",
       "Interprovincial Red Seal exams",
     ],
-    sameAs: ["https://red-seal.ca/eng/welcome.shtml"],
+    contactPoint: [
+      {
+        "@type": "ContactPoint",
+        contactType: "customer support",
+        email: "support@redsealguide.com",
+        areaServed: "CA",
+        availableLanguage: ["en-CA"],
+      },
+      {
+        "@type": "ContactPoint",
+        contactType: "billing support",
+        email: "billing@redsealguide.com",
+        areaServed: "CA",
+        availableLanguage: ["en-CA"],
+      },
+    ],
   };
 }
 
@@ -57,11 +82,11 @@ export function websiteSchema() {
     publisher: {
       "@id": `${SITE_URL}/#organization`,
     },
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${SITE_URL}/trades?query={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
+    about: [
+      "Red Seal exam preparation",
+      "Canadian apprenticeship exam practice",
+      "RSOS-aligned study plans",
+    ],
   };
 }
 

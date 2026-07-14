@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { OnboardingForm } from "@/app/onboarding/onboarding-form";
@@ -7,6 +8,14 @@ import { readDemoPreferences } from "@/lib/demo-preferences";
 import { isProvinceCode, normalizeProvinceCode } from "@/lib/provinces";
 import { createClient } from "@/lib/supabase/server";
 import { usesSupabaseData } from "@/lib/supabase/config";
+
+export const metadata: Metadata = {
+  title: "Choose your Red Seal trade",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
 
 async function redirectIfTradeAssigned() {
   if (usesSupabaseData()) {
