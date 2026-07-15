@@ -1,15 +1,9 @@
 "use client";
 
-import { sendGAEvent } from "@next/third-parties/google";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
+import { trackEvent } from "@/lib/analytics/track-event";
 
 const STORAGE_PREFIX = "ga_purchase_tx_";
-
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
 
 export type PurchaseAnalytics = {
   planId: SubscriptionPlanId;
@@ -55,20 +49,13 @@ function emitPurchase(data: PurchaseAnalytics): void {
     ],
   };
 
-  const subscriptionPayload = {
+  trackEvent("purchase", payload);
+  trackEvent("subscribe", {
     ...payload,
     subscription_id: data.subscriptionId ?? undefined,
     plan_id: plan.id,
     plan_name: plan.name,
-  };
-
-  try {
-    sendGAEvent("event", "purchase", payload);
-    sendGAEvent("event", "subscribe", subscriptionPayload);
-  } catch {
-    window.gtag?.("event", "purchase", payload);
-    window.gtag?.("event", "subscribe", subscriptionPayload);
-  }
+  });
 }
 
 /**

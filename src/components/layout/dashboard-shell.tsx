@@ -33,6 +33,7 @@ import {
 import { LanguageSelector } from "@/components/translation/language-selector";
 import { createClient } from "@/lib/supabase/client";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { flushPendingAuthEvent, trackEvent } from "@/lib/analytics/track-event";
 
 const navItems = [
   {
@@ -174,6 +175,10 @@ export function DashboardHeader({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [menuOpen]);
 
+  useEffect(() => {
+    flushPendingAuthEvent();
+  }, []);
+
   const handleLogout = async () => {
     setMenuOpen(false);
     setIsLoggingOut(true);
@@ -183,6 +188,7 @@ export function DashboardHeader({
         const supabase = createClient();
         await supabase.auth.signOut();
       }
+      trackEvent("logout");
       router.push("/auth?signin");
       router.refresh();
     } finally {

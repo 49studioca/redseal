@@ -23,6 +23,7 @@ import type {
   BillingPaymentMethod,
   BillingSubscription,
 } from "@/lib/stripe/billing-types";
+import { trackEvent } from "@/lib/analytics/track-event";
 
 type BillingPayload = {
   demo?: boolean;
@@ -157,6 +158,10 @@ export function BillingPanel() {
         subscription?: BillingSubscription;
       };
       if (!res.ok) throw new Error(json.error ?? "Could not reactivate");
+      trackEvent("reactivate_subscription", {
+        plan_name: data?.subscription?.planName ?? undefined,
+        plan_interval: data?.subscription?.planInterval ?? undefined,
+      });
       setData((prev) =>
         prev
           ? { ...prev, subscription: json.subscription ?? prev.subscription }

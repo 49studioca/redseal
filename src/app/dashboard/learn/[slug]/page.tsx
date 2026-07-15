@@ -6,6 +6,7 @@ import { UpgradeButton } from "@/components/subscription/upgrade-button";
 import { UpgradePrompt } from "@/components/subscription/upgrade-prompt";
 import { fetchLessons, fetchBlocks } from "@/lib/data";
 import { LessonContent } from "@/components/learn/lesson-content";
+import { TrackOnMount } from "@/components/analytics/track-on-mount";
 import { getDashboardSession } from "@/lib/dashboard-session";
 import { isFreeLesson } from "@/lib/access/subscription";
 import {
@@ -141,6 +142,18 @@ export default async function LessonPage({
 
   return (
     <div className="mx-auto max-w-3xl">
+      <TrackOnMount
+        event="start_lesson"
+        onceKey={`lesson_${lesson.slug}`}
+        params={{
+          lesson_slug: lesson.slug,
+          lesson_id: lesson.id,
+          trade_id: trade.id,
+          trade_slug: trade.slug,
+          block_code: blockCode ?? undefined,
+          task_code: taskCode ?? undefined,
+        }}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link href="/dashboard/learn">
           <Button variant="secondary" size="sm">

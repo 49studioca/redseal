@@ -11,6 +11,7 @@ import { useDashboardPreferences } from "@/components/layout/dashboard-preferenc
 import { ProvincialStudyBanner } from "@/components/dashboard/provincial-study-banner";
 import { getProvincialStudyContext } from "@/lib/content/province-content";
 import { validateDiscussionComment } from "@/lib/moderation/comment-content";
+import { trackEvent } from "@/lib/analytics/track-event";
 import type { Question, ReferenceChunk, RsosBlock } from "@/types";
 
 type QuestionComment = {
@@ -140,9 +141,24 @@ export default function PracticePage() {
         } else {
           setCurrentIndex(0);
         }
+        if (loaded.length > 0) {
+          trackEvent("start_practice", {
+            trade_id: trade.id,
+            trade_slug: trade.slug,
+            block_id: blockFilter === "all" ? undefined : blockFilter,
+            question_count: loaded.length,
+          });
+        }
       })
       .finally(() => setLoading(false));
-  }, [blockFilter, typeFilter, trade.id, initialQuestion, province]);
+  }, [
+    blockFilter,
+    typeFilter,
+    trade.id,
+    trade.slug,
+    initialQuestion,
+    province,
+  ]);
 
   const handleSearch = useCallback(async (query: string) => {
     if (!query.trim()) {
@@ -267,6 +283,13 @@ export default function PracticePage() {
     (_option: string, isCorrect: boolean) => {
       const q = questions[currentIndex];
       if (!q?.block_id) return;
+      trackEvent("practice_answer", {
+        trade_id: trade.id,
+        trade_slug: trade.slug,
+        block_id: q.block_id,
+        question_id: q.id,
+        is_correct: isCorrect,
+      });
       void fetch("/api/progress/answer", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -277,7 +300,7 @@ export default function PracticePage() {
         }),
       });
     },
-    [currentIndex, questions, trade.id],
+    [currentIndex, questions, trade.id, trade.slug],
   );
 
   const handleBookmarkToggle = useCallback(async () => {
@@ -300,12 +323,19 @@ export default function PracticePage() {
         else next.delete(q.id);
         return next;
       });
+      if (data.bookmarked) {
+        trackEvent("save_question", {
+          question_id: q.id,
+          trade_id: trade.id,
+          trade_slug: trade.slug,
+        });
+      }
     } catch {
       // Keep UI unchanged on failure
     } finally {
       setBookmarkingId(null);
     }
-  }, [bookmarkingId, currentIndex, questions]);
+  }, [bookmarkingId, currentIndex, questions, trade.id, trade.slug]);
 
   const currentQuestion = questions[currentIndex];
 

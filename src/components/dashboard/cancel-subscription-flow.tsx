@@ -15,6 +15,7 @@ import {
   type CancelReasonId,
   type BillingSubscription,
 } from "@/lib/stripe/billing-types";
+import { trackEvent } from "@/lib/analytics/track-event";
 
 type CancelFlowProps = {
   open: boolean;
@@ -81,6 +82,11 @@ export function CancelSubscriptionFlow({
         subscription?: BillingSubscription;
       };
       if (!res.ok) throw new Error(data.error ?? "Could not apply offer");
+      trackEvent("retain_subscription", {
+        plan_name: subscription.planName ?? undefined,
+        plan_interval: subscription.planInterval ?? undefined,
+        reason: reason ?? undefined,
+      });
       if (data.subscription) onKept(data.subscription);
       resetAndClose();
     } catch (err) {
@@ -112,6 +118,11 @@ export function CancelSubscriptionFlow({
       if (!res.ok) throw new Error(data.error ?? "Could not cancel");
       const until = data.accessUntil ?? subscription.currentPeriodEnd;
       setAccessUntil(until);
+      trackEvent("cancel_subscription", {
+        plan_name: subscription.planName ?? undefined,
+        plan_interval: subscription.planInterval ?? undefined,
+        reason,
+      });
       if (data.subscription) onCanceled(data.subscription, until);
       setStep("done");
     } catch (err) {

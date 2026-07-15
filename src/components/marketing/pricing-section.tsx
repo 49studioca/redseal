@@ -16,6 +16,8 @@ import {
   isSubscriptionPlanId,
   type SubscriptionPlanId,
 } from "@/lib/stripe/plans";
+import { planCheckoutItems } from "@/lib/analytics/checkout-items";
+import { flushPendingAuthEvent, trackEvent } from "@/lib/analytics/track-event";
 import { TRADES } from "@/data/seed";
 import { cn } from "@/lib/utils";
 
@@ -109,8 +111,17 @@ function PricingSectionInner({
       : null);
 
   const openCheckout = useCallback((planId: SubscriptionPlanId) => {
+    trackEvent("begin_checkout", {
+      ...planCheckoutItems(planId),
+      plan_id: planId,
+      source: "pricing",
+    });
     setSelectedPlan(planId);
     setDrawerOpen(true);
+  }, []);
+
+  useEffect(() => {
+    flushPendingAuthEvent();
   }, []);
 
   useEffect(() => {

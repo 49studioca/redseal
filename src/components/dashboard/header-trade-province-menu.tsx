@@ -7,6 +7,7 @@ import { TRADES } from "@/data/seed";
 import { useDashboardPreferences } from "@/components/layout/dashboard-preferences-context";
 import { setDemoPreferences } from "@/lib/demo-preferences";
 import { PROVINCES } from "@/lib/provinces";
+import { trackEvent } from "@/lib/analytics/track-event";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { cn } from "@/lib/utils";
 import type { Trade } from "@/types";
@@ -69,6 +70,13 @@ export function HeaderTradeProvinceMenu({ trade }: { trade: Trade }) {
       } else {
         setDemoPreferences(seedTrade.id, province);
       }
+
+      trackEvent("select_content", {
+        content_type: "trade",
+        item_id: seedTrade.id,
+        trade_slug: tradeSlug,
+        source: "header_menu",
+      });
 
       setMenuOpen(false);
       router.push("/dashboard");

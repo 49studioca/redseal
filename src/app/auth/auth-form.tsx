@@ -21,6 +21,7 @@ import {
   PROVINCES,
   type ProvinceCode,
 } from "@/lib/provinces";
+import { markPendingAuthEvent, trackEvent } from "@/lib/analytics/track-event";
 
 const SIGNUP_TRADES = [...TRADES]
   .filter((trade) => trade.status !== "coming_soon")
@@ -202,11 +203,10 @@ export function AuthForm() {
     () => parseSignupContext(searchParams),
     [searchParams],
   );
-  const redirectTo =
-    safeRedirectPath(
-      searchParams.get("redirect"),
-      isSignup ? "/onboarding" : "/dashboard",
-    );
+  const redirectTo = safeRedirectPath(
+    searchParams.get("redirect"),
+    isSignup ? "/onboarding" : "/dashboard",
+  );
   const authError = searchParams.get("error");
   const deviceLimitMessage = searchParams.get("message");
   const [email, setEmail] = useState("");
@@ -261,6 +261,7 @@ export function AuthForm() {
     setNotice(null);
 
     if (!isSupabaseConfigured()) {
+      trackEvent("login", { method: "email" });
       router.push(redirectTo);
       return;
     }
@@ -284,6 +285,7 @@ export function AuthForm() {
       return;
     }
 
+    trackEvent("login", { method: "email" });
     router.push(redirectTo);
     router.refresh();
   };
@@ -307,6 +309,7 @@ export function AuthForm() {
       if (trade) {
         setDemoPreferences(trade.id, province);
       }
+      trackEvent("sign_up", { method: "email", trade_slug: tradeSlug });
       router.push(postSignupPath);
       return;
     }
@@ -338,6 +341,8 @@ export function AuthForm() {
         return;
       }
 
+      trackEvent("sign_up", { method: "email", trade_slug: tradeSlug });
+
       try {
         const { onboardingComplete } = await saveSignupPreferences(
           supabase,
@@ -349,6 +354,12 @@ export function AuthForm() {
         router.push(postSignupPath);
       }
     } else {
+      // Account created; confirmation still pending — count as signup intent.
+      trackEvent("sign_up", {
+        method: "email",
+        trade_slug: tradeSlug,
+        pending_confirmation: true,
+      });
       setNotice(
         "Check your email to confirm your account, then log in to continue.",
       );
@@ -373,6 +384,8 @@ export function AuthForm() {
       router.push(redirectTo);
       return;
     }
+
+    markPendingAuthEvent(isSignup ? "sign_up" : "login", provider);
 
     const supabase = createClient();
     const origin = window.location.origin;

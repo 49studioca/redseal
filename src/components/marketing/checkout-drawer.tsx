@@ -18,6 +18,7 @@ import {
   type SubscriptionPlanId,
 } from "@/lib/stripe/plans";
 import { trackPurchaseFromSession } from "@/lib/analytics/track-purchase";
+import { markPendingAuthEvent, trackEvent } from "@/lib/analytics/track-event";
 import { TRADES } from "@/data/seed";
 import {
   DEFAULT_PROVINCE,
@@ -235,6 +236,11 @@ export function CheckoutDrawer({
         data: { user },
       } = await supabase.auth.getUser();
       if (user) {
+        trackEvent("sign_up", {
+          method: "email",
+          trade_slug: tradeSlug,
+          source: "checkout_drawer",
+        });
         try {
           await saveSignupPreferences(supabase, user.id, {
             tradeSlug,
@@ -244,6 +250,12 @@ export function CheckoutDrawer({
           // Dashboard onboarding is the fallback if preferences cannot be saved.
         }
       } else {
+        trackEvent("sign_up", {
+          method: "email",
+          trade_slug: tradeSlug,
+          source: "checkout_drawer",
+          pending_confirmation: true,
+        });
         setNotice(
           "Check your email to confirm your account, then return to finish checkout.",
         );
@@ -260,6 +272,7 @@ export function CheckoutDrawer({
         setLoading(false);
         return;
       }
+      trackEvent("login", { method: "email", source: "checkout_drawer" });
     }
 
     router.refresh();
@@ -278,6 +291,7 @@ export function CheckoutDrawer({
       setError("Sign-in is not configured yet.");
       return;
     }
+    markPendingAuthEvent(isSignUp ? "sign_up" : "login", provider);
     const supabase = createClient();
     const origin = window.location.origin;
     const next = planId ? `/?checkout=resume&plan=${planId}` : "/";

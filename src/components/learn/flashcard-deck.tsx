@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { qualityFromSwipe } from "@/lib/srs/sm2";
+import { trackEvent } from "@/lib/analytics/track-event";
 import type { FlashcardWithReview } from "@/lib/progress/flashcard-reviews";
 
 interface FlashcardDeckProps {
@@ -22,10 +23,19 @@ export function FlashcardDeck({ cards }: FlashcardDeckProps) {
     [cards],
   );
 
+  const startedRef = useRef(false);
+
   useEffect(() => {
     setQueue(cards.map((card) => card.id));
     setFlipped(false);
     setReviewed(0);
+    startedRef.current = false;
+  }, [cards]);
+
+  useEffect(() => {
+    if (startedRef.current || cards.length === 0) return;
+    startedRef.current = true;
+    trackEvent("start_flashcards", { card_count: cards.length });
   }, [cards]);
 
   const currentId = queue[0];
@@ -54,6 +64,12 @@ export function FlashcardDeck({ cards }: FlashcardDeckProps) {
       } finally {
         setSaving(false);
       }
+
+      trackEvent("flashcard_review", {
+        flashcard_id: card.id,
+        quality,
+        direction,
+      });
 
       setReviewed((count) => count + 1);
       setQueue((current) => {

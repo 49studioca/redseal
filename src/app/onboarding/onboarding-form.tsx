@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { usesSupabaseData } from "@/lib/supabase/config";
 import { setDemoPreferences, setDemoProvince } from "@/lib/demo-preferences";
 import { PROVINCES, type ProvinceCode } from "@/lib/provinces";
+import { trackEvent } from "@/lib/analytics/track-event";
 
 const SORTED_TRADES = [...TRADES].sort((a, b) => {
   if (a.status === "live" && b.status !== "live") return -1;
@@ -99,6 +100,18 @@ export function OnboardingForm({
     } else {
       setDemoPreferences(selected, province);
     }
+
+    const trade = TRADES.find((t) => t.id === selected);
+    trackEvent("tutorial_complete", {
+      trade_id: selected,
+      trade_slug: trade?.slug,
+      province,
+    });
+    trackEvent("select_content", {
+      content_type: "trade",
+      item_id: selected,
+      trade_slug: trade?.slug,
+    });
 
     router.push("/dashboard");
   };

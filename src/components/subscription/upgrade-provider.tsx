@@ -19,6 +19,8 @@ import {
   type SubscriptionPlanId,
 } from "@/lib/stripe/plans";
 import { trackPurchaseFromSession } from "@/lib/analytics/track-purchase";
+import { planCheckoutItems } from "@/lib/analytics/checkout-items";
+import { trackEvent } from "@/lib/analytics/track-event";
 import { UPGRADE_PLANS } from "@/components/subscription/upgrade-plans";
 
 type UpgradeContextValue = {
@@ -239,6 +241,11 @@ function UpgradeProviderInner({ children }: { children: ReactNode }) {
   }, [resetModal]);
 
   const handleSelectPlan = useCallback((planId: SubscriptionPlanId) => {
+    trackEvent("begin_checkout", {
+      ...planCheckoutItems(planId),
+      plan_id: planId,
+      source: "upgrade_modal",
+    });
     setSelectedPlan(planId);
     setStep("checkout");
   }, []);

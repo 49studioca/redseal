@@ -15,6 +15,7 @@ import {
   sampleQuestionsForMockExam,
   calculateExamScore,
 } from "@/lib/mock-exam/engine";
+import { trackEvent } from "@/lib/analytics/track-event";
 import { cn } from "@/lib/utils";
 import type { Question, ReferenceChunk, RsosBlock } from "@/types";
 
@@ -84,6 +85,12 @@ export default function MockExamPage() {
         : FREE_LIMITS.mockExamQuestions * 120,
     );
     setPhase("exam");
+    trackEvent("start_mock_exam", {
+      trade_id: trade.id,
+      trade_slug: trade.slug,
+      is_premium: isPremium,
+      question_count: examQuestions.length,
+    });
   };
 
   const reviewStats = useMemo(() => {
@@ -121,6 +128,14 @@ export default function MockExamPage() {
     const res = calculateExamScore(questions, answers);
     setResults(res);
     setPhase("results");
+    trackEvent("complete_mock_exam", {
+      trade_id: trade.id,
+      trade_slug: trade.slug,
+      score: res.score,
+      passed: res.passed,
+      question_count: questions.length,
+      is_premium: isPremium,
+    });
     void fetch("/api/progress/mock-exam", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -129,7 +144,7 @@ export default function MockExamPage() {
         block_scores: res.blockScores,
       }),
     });
-  }, [questions, answers, trade.id]);
+  }, [questions, answers, trade.id, trade.slug, isPremium]);
 
   const formatTime = (seconds: number) => {
     const h = Math.floor(seconds / 3600);
@@ -434,7 +449,12 @@ export default function MockExamPage() {
           <span className="text-sm">
             {Object.keys(answers).length} / {questions.length} answered
           </span>
-          <Button className="col-span-2 sm:col-span-1" size="sm" variant="white" onClick={finishExam}>
+          <Button
+            className="col-span-2 sm:col-span-1"
+            size="sm"
+            variant="white"
+            onClick={finishExam}
+          >
             Submit exam
           </Button>
         </div>
