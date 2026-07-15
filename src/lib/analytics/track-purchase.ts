@@ -1,5 +1,6 @@
 "use client";
 
+import { readAdClickParamsFromDocument } from "@/lib/analytics/ad-click-ids";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
 import { trackEvent } from "@/lib/analytics/track-event";
 
@@ -29,14 +30,21 @@ function markTracked(transactionId: string): void {
   }
 }
 
+function attributionParams(): Record<string, string> {
+  const params: Record<string, string> = {};
+  readAdClickParamsFromDocument().forEach((value, key) => {
+    params[key] = value;
+  });
+  return params;
+}
+
 function emitPurchase(data: PurchaseAnalytics): void {
   const plan = getPlan(data.planId);
   const payload = {
     transaction_id: data.transactionId,
     value: data.value,
     currency: data.currency,
-    // GA4 / Ads commonly use `value` as the conversion fee amount.
-    fee: data.value,
+    ...attributionParams(),
     items: [
       {
         item_id: plan.id,
@@ -133,7 +141,18 @@ export async function trackPurchaseFromSession(opts: {
       throw new Error("Checkout session missing plan");
     }
 
-    // Still track unpaid/open only if we somehow reached success UI; prefer paid.
+    // Only fire conversion events for paid / no_payment_required sessions.
+    const paid =
+      data.paymentStatus === "paid" ||
+      data.paymentStatus === "no_payment_required";
+    if (!paid) {
+      console.warn(
+        "[analytics] Skipping purchase event until payment succeeds",
+        data.paymentStatus,
+      );
+      return;
+    }
+
     trackPurchase({
       planId,
       transactionId: data.transactionId ?? sessionId,

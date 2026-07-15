@@ -142,12 +142,25 @@ export default function PracticePage() {
           setCurrentIndex(0);
         }
         if (loaded.length > 0) {
-          trackEvent("start_practice", {
-            trade_id: trade.id,
-            trade_slug: trade.slug,
-            block_id: blockFilter === "all" ? undefined : blockFilter,
-            question_count: loaded.length,
-          });
+          try {
+            const onceKey = `ga_start_practice_${trade.id}`;
+            if (!sessionStorage.getItem(onceKey)) {
+              sessionStorage.setItem(onceKey, "1");
+              trackEvent("start_practice", {
+                trade_id: trade.id,
+                trade_slug: trade.slug,
+                block_id: blockFilter === "all" ? undefined : blockFilter,
+                question_count: loaded.length,
+              });
+            }
+          } catch {
+            trackEvent("start_practice", {
+              trade_id: trade.id,
+              trade_slug: trade.slug,
+              block_id: blockFilter === "all" ? undefined : blockFilter,
+              question_count: loaded.length,
+            });
+          }
         }
       })
       .finally(() => setLoading(false));

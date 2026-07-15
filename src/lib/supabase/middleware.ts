@@ -11,7 +11,8 @@ import {
   AD_CLICK_COOKIE_NAME,
   AD_CLICK_PARAM_KEYS,
   appendAdClickParams,
-  getPrimaryAdClickId,
+  mergeAdClickParams,
+  serializeAdClickCookie,
 } from "@/lib/analytics/ad-click-ids";
 
 function withSupabaseCookies(
@@ -51,10 +52,20 @@ function persistAdClickIds(
   request: NextRequest,
   response: NextResponse,
 ): NextResponse {
-  const clickId = getPrimaryAdClickId(request.nextUrl.searchParams);
-  if (!clickId) return response;
+  const fromUrl = serializeAdClickCookie(
+    mergeAdClickParams(request.nextUrl.searchParams, null),
+  );
+  if (!fromUrl) return response;
 
-  response.cookies.set(AD_CLICK_COOKIE_NAME, clickId, {
+  const serialized = serializeAdClickCookie(
+    mergeAdClickParams(
+      request.nextUrl.searchParams,
+      request.cookies.get(AD_CLICK_COOKIE_NAME)?.value,
+    ),
+  );
+  if (!serialized) return response;
+
+  response.cookies.set(AD_CLICK_COOKIE_NAME, serialized, {
     httpOnly: false, // readable by gtag / client analytics
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
@@ -62,6 +73,20 @@ function persistAdClickIds(
     maxAge: AD_CLICK_COOKIE_MAX_AGE,
   });
   return response;
+}
+
+/** Restore click IDs onto redirect URLs from the request URL and first-party cookie. */
+function restoreAdClickParams(
+  target: URLSearchParams,
+  request: NextRequest,
+): void {
+  appendAdClickParams(
+    target,
+    mergeAdClickParams(
+      request.nextUrl.searchParams,
+      request.cookies.get(AD_CLICK_COOKIE_NAME)?.value,
+    ),
+  );
 }
 
 function finalize(request: NextRequest, response: NextResponse): NextResponse {
@@ -131,7 +156,7 @@ export async function updateSession(request: NextRequest) {
       "redirect",
       `${request.nextUrl.pathname}${request.nextUrl.search}`,
     );
-    appendAdClickParams(redirectUrl.searchParams, request.nextUrl.searchParams);
+    restoreAdClickParams(redirectUrl.searchParams, request);
     return withSupabaseCookies(
       finalize(request, NextResponse.redirect(redirectUrl)),
       supabaseResponse,
@@ -152,7 +177,7 @@ export async function updateSession(request: NextRequest) {
         redirectUrl.searchParams.delete(key);
       }
     }
-    appendAdClickParams(redirectUrl.searchParams, request.nextUrl.searchParams);
+    restoreAdClickParams(redirectUrl.searchParams, request);
     return withSupabaseCookies(
       finalize(request, NextResponse.redirect(redirectUrl)),
       supabaseResponse,

@@ -102,7 +102,7 @@ export function OnboardingForm({
     }
 
     const trade = TRADES.find((t) => t.id === selected);
-    trackEvent("tutorial_complete", {
+    trackEvent("complete_onboarding", {
       trade_id: selected,
       trade_slug: trade?.slug,
       province,

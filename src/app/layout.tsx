@@ -107,8 +107,8 @@ export default function RootLayout({
         className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemi.variable} ${ibmMono.variable} antialiased`}
       >
         {children}
+        <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
       </body>
-      <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
     </html>
   );
 }

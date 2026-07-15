@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { appendAdClickParams } from "@/lib/analytics/ad-click-ids";
+import {
+  AD_CLICK_COOKIE_NAME,
+  appendAdClickParams,
+  mergeAdClickParams,
+} from "@/lib/analytics/ad-click-ids";
 
 export const metadata: Metadata = {
   title: "Sign up",
@@ -22,7 +27,11 @@ export default async function SignupPage({
   for (const [key, value] of Object.entries(params)) {
     if (typeof value === "string") source.set(key, value);
   }
-  appendAdClickParams(query, source);
+  const cookieStore = await cookies();
+  appendAdClickParams(
+    query,
+    mergeAdClickParams(source, cookieStore.get(AD_CLICK_COOKIE_NAME)?.value),
+  );
 
   redirect(`/auth?${query.toString()}`);
 }

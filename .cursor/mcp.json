@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "analytics-mcp": {
+      "command": "python",
+      "args": ["-m", "pipx", "run", "analytics-mcp"],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\rezah\\AppData\\Roaming\\gcloud\\application_default_credentials.json",
+        "GOOGLE_PROJECT_ID": "redseal-guide",
+        "GOOGLE_CLOUD_PROJECT": "redseal-guide"
+      }
+    }
+  }
+}

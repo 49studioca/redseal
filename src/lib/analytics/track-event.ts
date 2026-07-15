@@ -19,7 +19,7 @@ export type AnalyticsEventName =
   | "cancel_subscription"
   | "retain_subscription"
   | "reactivate_subscription"
-  | "tutorial_complete"
+  | "complete_onboarding"
   | "select_content"
   | "start_lesson"
   | "start_practice"

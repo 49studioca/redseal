@@ -46,4 +46,59 @@ export function getPrimaryAdClickId(
   );
 }
 
-export { COOKIE_NAME as AD_CLICK_COOKIE_NAME, COOKIE_MAX_AGE as AD_CLICK_COOKIE_MAX_AGE };
+/** Serialize picked click IDs for the first-party cookie (`gclid=…&gbraid=…`). */
+export function serializeAdClickCookie(params: URLSearchParams): string | null {
+  const picked = pickAdClickParams(params);
+  const value = picked.toString();
+  return value || null;
+}
+
+/**
+ * Parse cookie value. Supports legacy bare IDs (gclid-only) and
+ * `application/x-www-form-urlencoded` param strings.
+ */
+export function parseAdClickCookie(
+  value: string | undefined | null,
+): URLSearchParams {
+  const raw = value?.trim();
+  if (!raw) return new URLSearchParams();
+
+  if (!raw.includes("=")) {
+    const legacy = new URLSearchParams();
+    legacy.set("gclid", raw);
+    return legacy;
+  }
+
+  try {
+    return pickAdClickParams(new URLSearchParams(raw));
+  } catch {
+    return new URLSearchParams();
+  }
+}
+
+/** Merge URL + cookie click IDs (URL wins on conflicts). */
+export function mergeAdClickParams(
+  urlParams: URLSearchParams | { get(name: string): string | null },
+  cookieValue: string | undefined | null,
+): URLSearchParams {
+  const merged = parseAdClickCookie(cookieValue);
+  pickAdClickParams(urlParams).forEach((value, key) => {
+    merged.set(key, value);
+  });
+  return merged;
+}
+
+/** Read stored click IDs from `document.cookie` (client only). */
+export function readAdClickParamsFromDocument(): URLSearchParams {
+  if (typeof document === "undefined") return new URLSearchParams();
+  const match = document.cookie
+    .split("; ")
+    .find((row) => row.startsWith(`${COOKIE_NAME}=`));
+  if (!match) return new URLSearchParams();
+  return parseAdClickCookie(decodeURIComponent(match.slice(COOKIE_NAME.length + 1)));
+}
+
+export {
+  COOKIE_NAME as AD_CLICK_COOKIE_NAME,
+  COOKIE_MAX_AGE as AD_CLICK_COOKIE_MAX_AGE,
+};
