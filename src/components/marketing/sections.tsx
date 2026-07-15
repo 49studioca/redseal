@@ -32,12 +32,16 @@ import { TestimonialRoll } from "@/components/marketing/testimonial-roll";
 import { StoryAvatar } from "@/components/marketing/story-avatar";
 import { APPRENTICE_STORIES } from "@/components/marketing/apprentice-stories";
 import { getTradeBySlug, TRADES } from "@/data/seed";
+import { getServerSessionUser } from "@/lib/supabase/server-auth";
 
 const ACTIVE_TRADE_COUNT = TRADES.filter(
   (trade) => trade.status === "live",
 ).length;
 
-export function MarketingHeader() {
+export async function MarketingHeader() {
+  const user = await getServerSessionUser();
+  const loggedIn = Boolean(user);
+
   return (
     <header className="sticky top-0 z-50 border-b border-[#F1ECE3] bg-white/[0.88] backdrop-blur-[10px]">
       <div className="mx-auto flex h-[60px] max-w-[1180px] items-center gap-2 px-4 sm:h-[70px] sm:gap-[26px] sm:px-6">
@@ -79,18 +83,23 @@ export function MarketingHeader() {
           ))}
         </nav>
         <div className="flex-1" />
+        {!loggedIn && (
+          <Link
+            href="/auth?signin"
+            className="hidden shrink-0 rounded-[9px] px-3.5 py-2 text-[14.5px] font-semibold text-[#1F2A37] hover:bg-[#F3EFE8] sm:inline-flex"
+          >
+            Log in
+          </Link>
+        )}
         <Link
-          href="/auth?signin"
-          className="hidden shrink-0 rounded-[9px] px-3.5 py-2 text-[14.5px] font-semibold text-[#1F2A37] hover:bg-[#F3EFE8] sm:inline-flex"
+          href={loggedIn ? "/dashboard" : "/auth?signup"}
+          className="shrink-0"
         >
-          Log in
-        </Link>
-        <Link href="/auth?signup" className="shrink-0">
           <Button
             size="sm"
             className="h-9 px-3 text-xs sm:h-[42px] sm:px-[18px] sm:text-sm"
           >
-            Start free
+            {loggedIn ? "Dashboard" : "Start free"}
             <ArrowRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </Button>
         </Link>
@@ -738,7 +747,10 @@ export function CtaBand() {
   );
 }
 
-export function MarketingFooter() {
+export async function MarketingFooter() {
+  const user = await getServerSessionUser();
+  const loggedIn = Boolean(user);
+
   const footCols = [
     {
       head: "Product",
@@ -826,7 +838,7 @@ export function MarketingFooter() {
           <span className="shrink-0">Made in Canada 🍁</span>
         </div>
       </div>
-      <MarketingMobileNav />
+      <MarketingMobileNav isLoggedIn={loggedIn} />
     </footer>
   );
 }
