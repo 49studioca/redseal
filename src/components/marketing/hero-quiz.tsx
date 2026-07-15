@@ -2,23 +2,22 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowRight,
   BookOpen,
+  Check,
   ClipboardCheck,
   Gauge,
   MapPin,
-  PlayCircle,
   Sparkles,
-  Zap,
-  CircleCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ALL_TRADES } from "@/data/all-trades";
 
 const MARQUEE_TRADES = [...ALL_TRADES, ...ALL_TRADES];
 
-const GUIDE_FEATURES = [
+const GUIDE_STEPS = [
   {
     icon: BookOpen,
     title: "RSOS block lessons",
@@ -39,64 +38,241 @@ const GUIDE_FEATURES = [
     title: "Readiness score",
     body: "One number tells you when to book the real thing.",
   },
-];
+] as const;
+
+const DEMO_TRADES = [
+  { name: "Electrician", code: "309A", province: "ON" },
+  { name: "Plumber", code: "447A", province: "AB" },
+  { name: "Welder", code: "276A", province: "BC" },
+] as const;
+
+const STATUS: Record<string, string> = {
+  pick: "Selecting…",
+  build0: "Lessons…",
+  build1: "Drills…",
+  build2: "Mocks…",
+  build3: "Score…",
+  score: "Scoring…",
+  ready: "Ready",
+  hold: "Ready",
+};
 
 export function HeroGuideCard() {
+  const [tradeIndex, setTradeIndex] = useState(0);
+  const [completedCount, setCompletedCount] = useState(0);
+  const [activeStep, setActiveStep] = useState(-1);
+  const [readiness, setReadiness] = useState(38);
+  const [statusKey, setStatusKey] = useState("pick");
+  const [showStamp, setShowStamp] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const trade = DEMO_TRADES[tradeIndex];
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(mq.matches);
+    const onChange = () => setReduceMotion(mq.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  useEffect(() => {
+    const clearAll = () => {
+      timersRef.current.forEach(clearTimeout);
+      timersRef.current = [];
+    };
+
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => {
+        const id = setTimeout(resolve, ms);
+        timersRef.current.push(id);
+      });
+
+    if (reduceMotion) {
+      setCompletedCount(GUIDE_STEPS.length);
+      setActiveStep(-1);
+      setReadiness(93);
+      setStatusKey("ready");
+      setShowStamp(true);
+      return;
+    }
+
+    let cancelled = false;
+
+    const runCycle = async () => {
+      while (!cancelled) {
+        setCompletedCount(0);
+        setActiveStep(-1);
+        setReadiness(38);
+        setShowStamp(false);
+        setStatusKey("pick");
+        await wait(1100);
+        if (cancelled) break;
+
+        for (let i = 0; i < GUIDE_STEPS.length; i++) {
+          setActiveStep(i);
+          setStatusKey(`build${i}`);
+          await wait(650);
+          if (cancelled) break;
+          setCompletedCount(i + 1);
+          setActiveStep(-1);
+          await wait(180);
+          if (cancelled) break;
+        }
+        if (cancelled) break;
+
+        setStatusKey("score");
+        const scores = [45, 54, 68, 81, 93];
+        for (const s of scores) {
+          setReadiness(s);
+          await wait(220);
+          if (cancelled) break;
+        }
+        if (cancelled) break;
+
+        setStatusKey("ready");
+        setReadiness(93);
+        // Brief beat, then stamp drops
+        await wait(280);
+        if (cancelled) break;
+        setShowStamp(true);
+        await wait(2400);
+        if (cancelled) break;
+
+        setTradeIndex((n) => (n + 1) % DEMO_TRADES.length);
+        await wait(250);
+      }
+    };
+
+    void runCycle();
+
+    return () => {
+      cancelled = true;
+      clearAll();
+    };
+  }, [reduceMotion]);
+
+  const statusLabel = showStamp ? "Passed" : (STATUS[statusKey] ?? "Ready");
+
   return (
     <div className="relative">
-      <div className="relative overflow-hidden rounded-[18px] border border-white/20 bg-white text-[#1F2A37] shadow-[0_24px_48px_rgba(0,0,0,0.28)]">
-        <div className="relative border-b border-[#E5E0D8] bg-[#FAF8F4] px-4 py-4 sm:px-5 sm:py-5">
-          <div
-            className="pointer-events-none absolute right-3 top-1/2 z-0 -translate-y-1/2 rotate-[14deg] opacity-[0.88] mix-blend-multiply sm:right-5"
-            aria-hidden
-          >
-            <Image
-              src="/red-seal-logo.png"
-              alt=""
-              width={112}
-              height={112}
-              className="h-[88px] w-[88px] object-contain drop-shadow-[0_2px_6px_rgba(192,39,30,0.18)] sm:h-[104px] sm:w-[104px]"
-            />
-          </div>
-          <div className="relative z-10 max-w-[calc(100%-72px)] sm:max-w-[calc(100%-88px)]">
-            <div className="font-[family-name:var(--font-ibm-mono)] text-[10px] font-semibold uppercase tracking-wider text-[#D8232A] sm:text-[11px]">
-              Red Seal exam guide
+      <div className="relative flex h-[560px] flex-col overflow-hidden rounded-[20px] border border-white/25 bg-white text-[#1F2A37] shadow-[0_28px_56px_rgba(0,0,0,0.28)] sm:h-[580px]">
+        <div className="relative shrink-0 border-b border-[#E5E0D8] bg-[#FAF8F4] px-4 py-4 sm:px-5 sm:py-5">
+          <div className="relative z-10">
+            <div className="flex items-center gap-2">
+              <span className="font-[family-name:var(--font-ibm-mono)] text-[10px] font-semibold uppercase tracking-wider text-[#D8232A] sm:text-[11px]">
+                Red Seal exam guide
+              </span>
+              {!reduceMotion ? (
+                <span className="inline-flex items-center gap-1 rounded-full bg-[#D8232A]/10 px-2 py-0.5 text-[10px] font-bold text-[#C0271E]">
+                  <span className="hero-guide-pulse h-1.5 w-1.5 rounded-full bg-[#D8232A]" />
+                  Live
+                </span>
+              ) : null}
             </div>
-            <h2 className="mt-0.5 font-[family-name:var(--font-barlow-condensed)] text-[22px] font-bold leading-none tracking-tight sm:text-[26px]">
+            <h2 className="mt-1 font-[family-name:var(--font-barlow-condensed)] text-[22px] font-bold leading-none tracking-tight sm:text-[26px]">
               Your path to the ticket
             </h2>
-            <p className="mt-1.5 text-[13px] leading-snug text-[#64748B] sm:text-sm">
-              Unofficial prep built for Canada&apos;s interprovincial standard —
-              every province and territory.
-            </p>
+
+            <div className="mt-2.5 rounded-[10px] border border-[#E5E0D8] bg-white px-2.5 py-2">
+              <div className="flex items-center justify-between gap-3">
+                <div className="min-w-0">
+                  <div
+                    key={trade.code}
+                    className="hero-guide-fade truncate font-[family-name:var(--font-barlow-semi)] text-[13px] font-semibold text-[#1F2A37]"
+                  >
+                    {trade.name}
+                  </div>
+                  <div className="font-[family-name:var(--font-ibm-mono)] text-[10px] text-[#94A3B8]">
+                    {trade.code} · {trade.province}
+                  </div>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2 py-1 text-[10px] font-bold uppercase tracking-wide ${
+                    showStamp
+                      ? "bg-[#D8232A] text-white"
+                      : "bg-[#FCEBEC] text-[#C0271E]"
+                  }`}
+                >
+                  {statusLabel}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2.5 p-4 sm:space-y-3 sm:p-5">
-          {GUIDE_FEATURES.map((item) => {
+        <div className="relative flex min-h-0 flex-1 flex-col justify-center gap-2.5 p-4 sm:gap-3 sm:p-5">
+          {GUIDE_STEPS.map((item, idx) => {
             const Icon = item.icon;
+            const done = idx < completedCount;
+            const active = idx === activeStep;
             return (
               <div
                 key={item.title}
-                className="flex items-start gap-3 rounded-[12px] border border-[#E5E0D8] bg-white px-3 py-3 sm:px-3.5"
+                className={`flex h-[52px] items-center gap-3 rounded-[12px] border px-3 transition-colors duration-200 sm:h-[56px] sm:px-3.5 ${
+                  done
+                    ? "border-[#D8232A]/30 bg-[#FCEBEC]"
+                    : active
+                      ? "border-[#D8232A]/45 bg-white"
+                      : "border-[#E5E0D8] bg-white"
+                }`}
               >
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-[#FCEBEC] text-[#C0271E]">
-                  <Icon className="h-[18px] w-[18px]" />
+                <span
+                  className={`grid h-9 w-9 shrink-0 place-items-center rounded-[10px] transition-colors duration-200 ${
+                    done
+                      ? "bg-[#D8232A] text-white"
+                      : "bg-[#FCEBEC] text-[#C0271E]"
+                  }`}
+                >
+                  {done ? (
+                    <Check className="h-[18px] w-[18px]" strokeWidth={2.5} />
+                  ) : (
+                    <Icon className="h-[18px] w-[18px]" />
+                  )}
                 </span>
-                <div className="min-w-0 pt-0.5">
-                  <div className="font-[family-name:var(--font-barlow-semi)] text-sm font-semibold sm:text-[15px]">
-                    {item.title}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-[family-name:var(--font-barlow-semi)] text-sm font-semibold sm:text-[15px]">
+                      {item.title}
+                    </div>
+                    {active ? (
+                      <span className="hero-guide-pulse shrink-0 text-[10px] font-bold uppercase tracking-wide text-[#D8232A]">
+                        Building
+                      </span>
+                    ) : null}
                   </div>
-                  <div className="mt-0.5 text-[12.5px] leading-snug text-[#64748B] sm:text-[13px]">
+                  <div className="mt-0.5 truncate text-[12.5px] leading-snug text-[#64748B] sm:text-[13px]">
                     {item.body}
                   </div>
                 </div>
               </div>
             );
           })}
+
+          {/* Red Seal stamp — drops after pass score */}
+          {showStamp ? (
+            <div
+              className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center"
+              aria-hidden
+            >
+              <div className="hero-seal-stamp relative">
+                <Image
+                  src="/red-seal-logo.png"
+                  alt=""
+                  width={160}
+                  height={160}
+                  className="h-[132px] w-[132px] object-contain drop-shadow-[0_8px_20px_rgba(192,39,30,0.35)] sm:h-[150px] sm:w-[150px]"
+                />
+                <div className="absolute -bottom-1 left-1/2 w-max -translate-x-1/2 rounded-full bg-[#D8232A] px-3 py-1 text-[10px] font-extrabold uppercase tracking-[0.14em] text-white shadow-md">
+                  Pass · {readiness}%
+                </div>
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        <div className="border-t border-[#E5E0D8] bg-[#F6F3EE] px-4 py-4 sm:px-5 sm:py-5">
+        <div className="relative shrink-0 border-t border-[#E5E0D8] bg-[#F6F3EE] px-4 py-4 sm:px-5 sm:py-5">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[#64748B]">
@@ -108,21 +284,28 @@ export function HeroGuideCard() {
               </div>
             </div>
             <div className="shrink-0 text-right">
-              <div className="font-[family-name:var(--font-barlow-condensed)] text-[28px] font-bold leading-none text-[#059669]">
-                70%
+              <div className="font-[family-name:var(--font-barlow-condensed)] text-[28px] font-bold leading-none text-[#059669] tabular-nums">
+                {readiness}%
               </div>
               <div className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
-                Pass mark
+                {readiness >= 70 ? "Exam-ready" : "Building"}
               </div>
             </div>
           </div>
 
           <div className="mt-4 h-2 overflow-hidden rounded-full bg-[#E5E0D8]">
-            <div className="h-full w-[73%] rounded-full bg-gradient-to-r from-[#D8232A] to-[#F4A11A]" />
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#D8232A] to-[#F4A11A] transition-[width] duration-200 ease-out"
+              style={{ width: `${readiness}%` }}
+            />
           </div>
-          <div className="mt-1.5 flex items-center justify-between text-[11px] font-semibold text-[#64748B]">
+          <div className="mt-1.5 flex h-[16px] items-center justify-between text-[11px] font-semibold text-[#64748B]">
             <span>Sample readiness</span>
-            <span className="text-[#C0271E]">73% exam-ready</span>
+            <span className="tabular-nums text-[#C0271E]">
+              {readiness >= 70
+                ? `${readiness}% exam-ready`
+                : `Pass mark 70% · ${readiness}%`}
+            </span>
           </div>
 
           <Link href="/auth?signup" className="mt-4 block">
@@ -148,9 +331,9 @@ function TradeMarqueeChip({ name, icon }: { name: string; icon: string }) {
 
 export function HeroTradeChips() {
   return (
-    <div className="relative pb-10">
+    <div className="relative pb-12 pt-2">
       <div className="mx-auto max-w-[1180px] px-4 sm:px-6">
-        <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-[#FCE3E4] sm:mb-3 sm:text-xs">
+        <div className="mb-2.5 text-[10px] font-bold uppercase tracking-wider text-[#FCE3E4]/90 sm:mb-3 sm:text-xs">
           All 56 Red Seal trades
         </div>
       </div>
@@ -168,5 +351,3 @@ export function HeroTradeChips() {
     </div>
   );
 }
-
-export { Sparkles, Zap, PlayCircle, CircleCheck };

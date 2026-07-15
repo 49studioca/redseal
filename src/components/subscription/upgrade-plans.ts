@@ -8,34 +8,37 @@ export type UpgradePlanCard = {
   sub: string;
   cta: string;
   popular: boolean;
+  badge?: string;
 };
 
 export const UPGRADE_PLANS: UpgradePlanCard[] = [
   {
-    id: "weekly",
-    name: "Weekly",
-    price: "$9.99",
-    per: "first week",
-    sub: "then $19.99 / week",
-    cta: "Start for $9.99",
-    popular: false,
-  },
-  {
     id: "monthly",
     name: "Monthly",
-    price: "$7.99",
-    per: "first week",
-    sub: "then $59.99 / month",
-    cta: "Start for $7.99",
-    popular: true,
+    price: "$59.99",
+    per: "CAD / month",
+    sub: "Flexible · cancel anytime",
+    cta: "Choose Monthly",
+    popular: false,
   },
   {
     id: "quarterly",
-    name: "Quarterly",
-    price: "$5.99",
-    per: "first week",
-    sub: "then $99.99 / quarter",
-    cta: "Start for $5.99",
+    name: "Exam Prep",
+    price: "$99.99",
+    per: "CAD / 3 months",
+    sub: "$33/mo · Save 44% vs monthly",
+    cta: "Choose Exam Prep",
+    popular: true,
+    badge: "Save 44%",
+  },
+  {
+    id: "annual",
+    name: "Annual",
+    price: "$199.99",
+    per: "CAD / year",
+    sub: "$17/mo · Save 72% vs monthly",
+    cta: "Choose Annual",
     popular: false,
+    badge: "Save 72%",
   },
 ];

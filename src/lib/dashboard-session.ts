@@ -14,6 +14,10 @@ import {
   translationUsageSummary,
   type TranslationUsage,
 } from "@/lib/access/translation-usage";
+import {
+  defaultAvatarUrlForUser,
+  resolveAvatarUrl,
+} from "@/lib/avatars/options";
 import type { Profile, Trade } from "@/types";
 
 export type DashboardSession = {
@@ -119,7 +123,13 @@ export async function getDashboardSession(): Promise<DashboardSession> {
       if (!profile.selected_trade_id) redirect("/onboarding");
       tradeId = profile.selected_trade_id ?? tradeId;
       userName = profile.full_name ?? user.email ?? "User";
-      avatarUrl = profile.avatar_url ?? null;
+      avatarUrl = resolveAvatarUrl(profile.avatar_url, user.id);
+      if (!profile.avatar_url) {
+        await supabase
+          .from("profiles")
+          .update({ avatar_url: avatarUrl })
+          .eq("id", user.id);
+      }
       isAdmin = profile.is_admin ?? false;
       province = normalizeProvinceCode(profile.province ?? province);
       subscriptionTier = profile.subscription_tier ?? "free";
@@ -130,6 +140,7 @@ export async function getDashboardSession(): Promise<DashboardSession> {
   } else {
     if (!demoPrefs.tradeId) redirect("/onboarding");
     tradeId = demoPrefs.tradeId ?? tradeId;
+    avatarUrl = defaultAvatarUrlForUser("demo-user");
   }
 
   const trade = await resolveTrade(tradeId);

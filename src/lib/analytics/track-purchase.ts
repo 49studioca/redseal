@@ -39,13 +39,13 @@ export function trackPurchase(opts: {
 
   const payload = {
     transaction_id: transactionId,
-    value: plan.introPrice,
+    value: plan.price,
     currency: "CAD",
     items: [
       {
         item_id: plan.id,
         item_name: `RedSealGuide ${plan.name}`,
-        price: plan.introPrice,
+        price: plan.price,
         quantity: 1,
       },
     ],

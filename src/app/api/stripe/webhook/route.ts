@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe/config";
 import { syncSubscriptionToProfile } from "@/lib/stripe/customers";
-import {
-  attachRegularBillingPhase,
-  planIdFromMetadata,
-} from "@/lib/stripe/schedules";
 import { createServiceClient } from "@/lib/supabase/server";
 import type Stripe from "stripe";
 
@@ -35,15 +31,10 @@ export async function POST(request: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        const planId = planIdFromMetadata(session.metadata);
         const subscriptionId =
           typeof session.subscription === "string"
             ? session.subscription
             : session.subscription?.id;
-
-        if (subscriptionId && planId) {
-          await attachRegularBillingPhase(subscriptionId, planId);
-        }
 
         if (session.client_reference_id && subscriptionId) {
           const supabase = await createServiceClient();

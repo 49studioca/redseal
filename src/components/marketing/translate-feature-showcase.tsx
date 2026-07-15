@@ -1,151 +1,280 @@
-import { Languages } from "lucide-react";
-import { TRANSLATION_LANGUAGES } from "@/lib/translation/languages";
+"use client";
+
+import {
+  AnimatedTranslateDemo,
+  type DemoLang,
+  type TranslateDemoContent,
+} from "@/components/marketing/animated-translate-demo";
 
 type TranslateFeatureShowcaseProps = {
   tradeName: string;
   tradeCode: string;
+  tradeSlug: string;
 };
+
+const SHARED_LANG_SHELL = [
+  { code: "es", label: "Español" },
+  { code: "fa", label: "فارسی", rtl: true },
+  { code: "pa", label: "ਪੰਜਾਬੀ" },
+  { code: "zh", label: "中文" },
+  { code: "ar", label: "العربية", rtl: true },
+] as const;
+
+function langsFrom(
+  entries: Array<{
+    translation: string;
+    definition: string;
+    context: string;
+  }>,
+): DemoLang[] {
+  return SHARED_LANG_SHELL.map((shell, i) => ({
+    ...shell,
+    ...entries[i],
+  }));
+}
+
+const TRADE_DEMOS: Record<
+  string,
+  Omit<TranslateDemoContent, "tradeName" | "tradeCode">
+> = {
+  "construction-electrician": {
+    word: "contactor",
+    lessonTitle: "Motor control & troubleshooting",
+    sentenceBefore:
+      "Before energizing the circuit, verify lockout/tagout is in place. A ",
+    sentenceAfter:
+      " that fails to pull in may indicate a coil fault, low control voltage, or open interlock in the control circuit.",
+    langs: langsFrom([
+      {
+        translation: "contactor",
+        definition:
+          "Interruptor electromagnético que cierra los circuitos de potencia del motor cuando la bobina está energizada.",
+        context:
+          "Si el contactor no engancha, puede haber falla en la bobina, voltaje bajo en control o un enclavamiento abierto.",
+      },
+      {
+        translation: "کنتاکتور",
+        definition:
+          "کلید الکترومغناطیسی که هنگام فعال شدن سیم‌پیچ، مدارهای قدرت موتور را می‌بندد.",
+        context:
+          "اگر کنتاکتور جذب نشود، ممکن است سیم‌پیچ خراب، ولتاژ کنترل پایین، یا اینترلاک باز باشد.",
+      },
+      {
+        translation: "ਕੰਟੈਕਟਰ",
+        definition:
+          "ਇੱਕ ਇਲੈਕਟ੍ਰੋਮੈਗਨੈਟਿਕ ਸਵਿੱਚ ਜੋ ਕੋਇਲ ਚਾਲੂ ਹੋਣ ਤੇ ਮੋਟਰ ਪਾਵਰ ਸਰਕਟ ਬੰਦ ਕਰਦਾ ਹੈ।",
+        context:
+          "ਜੇ ਕੰਟੈਕਟਰ ਨਾ ਖਿੱਚੇ, ਤਾਂ ਕੋਇਲ ਖਰਾਬ, ਘੱਟ ਕੰਟਰੋਲ ਵੋਲਟੇਜ ਜਾਂ ਖੁੱਲ੍ਹਾ ਇੰਟਰਲਾਕ ਹੋ ਸਕਦਾ ਹੈ।",
+      },
+      {
+        translation: "接触器",
+        definition: "线圈通电时用于闭合电机功率回路的电磁开关。",
+        context: "如果接触器不吸合，可能是线圈故障、控制电压偏低或联锁断路。",
+      },
+      {
+        translation: "مُلَامِس",
+        definition:
+          "مفتاح كهرومغناطيسي يغلق دوائر قدرة المحرك عندما تكون الملفّة مُفعَّلة.",
+        context:
+          "إذا لم ينجذب الملامس فقد يكون هناك عطل في الملف أو جهد تحكم منخفض أو قفل مفتوح.",
+      },
+    ]),
+  },
+  "industrial-electrician": {
+    word: "VFD",
+    lessonTitle: "Drive setup & motor protection",
+    sentenceBefore:
+      "When commissioning a pump skid, confirm the motor nameplate matches the ",
+    sentenceAfter:
+      " parameters for voltage, FLA, and ramp settings before you start the first loaded cycle.",
+    langs: langsFrom([
+      {
+        translation: "variador de frecuencia",
+        definition:
+          "Dispositivo que controla la velocidad del motor ajustando la frecuencia y la tensión de salida.",
+        context:
+          "Si el VFD dispara por sobrecorriente, revise la carga mecánica, el cableado del motor y los parámetros de rampa.",
+      },
+      {
+        translation: "درایو فرکانس متغیر",
+        definition:
+          "دستگاهی که با تغییر فرکانس و ولتاژ خروجی، سرعت موتور را کنترل می‌کند.",
+        context:
+          "اگر VFD به‌خاطر اضافه جریان قطع شود، بار مکانیکی، سیم‌کشی موتور و تنظیمات رمپ را بررسی کنید.",
+      },
+      {
+        translation: "ਵੇਰੀਏਬਲ ਫ੍ਰੀਕੁਐਂਸੀ ਡਰਾਈਵ",
+        definition:
+          "ਇੱਕ ਉਪਕਰਣ ਜੋ ਆਉਟਪੁੱਟ ਫ੍ਰੀਕੁਐਂਸੀ ਅਤੇ ਵੋਲਟੇਜ ਬਦਲ ਕੇ ਮੋਟਰ ਦੀ ਰਫ਼ਤਾਰ ਨਿਯੰਤਰਿਤ ਕਰਦਾ ਹੈ।",
+        context:
+          "ਜੇ VFD ਓਵਰਕਰੰਟ ਤੋਂ ਟ੍ਰਿਪ ਕਰੇ, ਮਕੈਨੀਕਲ ਲੋਡ, ਮੋਟਰ ਵਾਇਰਿੰਗ ਅਤੇ ਰੈਂਪ ਸੈਟਿੰਗਾਂ ਚੈੱਕ ਕਰੋ।",
+      },
+      {
+        translation: "变频器",
+        definition: "通过改变输出频率和电压来控制电机速度的装置。",
+        context: "如果变频器因过流跳闸，检查机械负载、电机接线与加速斜坡参数。",
+      },
+      {
+        translation: "محول تردد",
+        definition:
+          "جهاز يتحكم بسرعة المحرك عبر تغيير تردد وجهد الخرج.",
+        context:
+          "إذا تعطل الـ VFD بسبب زيادة التيار، افحص الحمل الميكانيكي وتوصيل المحرك وإعدادات التسارع.",
+      },
+    ]),
+  },
+  plumber: {
+    word: "trap",
+    lessonTitle: "DWV layout & fixture connections",
+    sentenceBefore:
+      "When roughing in a lavatory, size the fixture drain correctly and install the ",
+    sentenceAfter:
+      " so the water seal stays intact and sewer gas cannot enter the room.",
+    langs: langsFrom([
+      {
+        translation: "sifón",
+        definition:
+          "Tramo curvado de tubería que retiene un sello de agua para bloquear los gases del alcantarillado.",
+        context:
+          "Si el sifón se seca o se descebó, puede haber siphonic action o ventilación insuficiente en el ramal.",
+      },
+      {
+        translation: "سیفون",
+        definition:
+          "خم لوله‌ای که با نگه داشتن آب، گاز فاضلاب را از ورود به فضا جلوگیری می‌کند.",
+        context:
+          "اگر سیفون خشک شود یا آب آن خالی شود، ممکن است سیفون‌اَکشن یا تهویه ناکافی در شاخه وجود داشته باشد.",
+      },
+      {
+        translation: "ਟ੍ਰੈਪ / ਸਾਈਫਨ",
+        definition:
+          "ਪਾਈਪ ਦਾ ਝੁਕਿਆ ਹਿੱਸਾ ਜੋ ਪਾਣੀ ਦੀ ਸੀਲ ਰੱਖ ਕੇ ਸੀਵਰ ਗੈਸ ਰੋਕਦਾ ਹੈ।",
+        context:
+          "ਜੇ ਟ੍ਰੈਪ ਸੁੱਕ ਜਾਵੇ ਜਾਂ ਖਾਲੀ ਹੋਵੇ, ਤਾਂ ਸਾਈਫਨਿਕ ਐਕਸ਼ਨ ਜਾਂ ਘੱਟ ਵੈਂਟਿੰਗ ਹੋ ਸਕਦੀ ਹੈ।",
+      },
+      {
+        translation: "存水弯",
+        definition: "保留水封以阻止下水道气体进入室内的弯管段。",
+        context: "如果存水弯干涸或失水，可能是虹吸作用或支管通气不足。",
+      },
+      {
+        translation: "مصيدة",
+        definition:
+          "جزء منحنٍ من الأنبوب يحافظ على ختم مائي لمنع غازات الصرف.",
+        context:
+          "إذا جفت المصيدة أو فقدت الماء فقد يكون هناك سيفون أو تهوية غير كافية.",
+      },
+    ]),
+  },
+  welder: {
+    word: "penetration",
+    lessonTitle: "Groove welds & joint prep",
+    sentenceBefore:
+      "Before calling the root pass complete, check both faces of the joint for full ",
+    sentenceAfter:
+      " so the weld metal fuses through the groove without leaving incomplete fusion.",
+    langs: langsFrom([
+      {
+        translation: "penetración",
+        definition:
+          "Profundidad a la que el metal de aporte se fusiona a través de la junta soldada.",
+        context:
+          "Una penetración insuficiente puede dejar falta de fusión en la raíz y provocar rechazo en la prueba.",
+      },
+      {
+        translation: "نفوذ جوش",
+        definition:
+          "عمقی که فلز جوش به داخل اتصال نفوذ کرده و آن را به هم جوش می‌دهد.",
+        context:
+          "نفوذ ناکافی ممکن است باعث عدم جوش‌خوردگی در ریشه شود و آزمون را رد کند.",
+      },
+      {
+        translation: "ਪੈਨੀਟ੍ਰੇਸ਼ਨ",
+        definition:
+          "ਉਹ ਡੂੰਘਾਈ ਜਿੱਥੇ ਵੈਲਡ ਮੈਟਲ ਜੋੜ ਵਿੱਚ ਘੁਲ ਕੇ ਇੱਕ ਠੋਸ ਜੋੜ ਬਣਾਉਂਦਾ ਹੈ।",
+        context:
+          "ਘੱਟ ਪੈਨੀਟ੍ਰੇਸ਼ਨ ਨਾਲ ਰੂਟ ਵਿੱਚ incomplete fusion ਰਹਿ ਸਕਦਾ ਹੈ ਅਤੇ ਟੈਸਟ ਫੇਲ ਹੋ ਸਕਦਾ ਹੈ।",
+      },
+      {
+        translation: "熔深",
+        definition: "焊金属熔入并融合接头的深度。",
+        context: "熔深不足可能在根部留下未熔合，导致探伤不合格。",
+      },
+      {
+        translation: "اختراق",
+        definition: "عمق انصهار معدن اللحام داخل الوصلة.",
+        context:
+          "قد يترك الاختراق غير الكافي عدم انصهار في الجذر ويرفض في الفحص.",
+      },
+    ]),
+  },
+  carpenter: {
+    word: "joist",
+    lessonTitle: "Floor framing & layout",
+    sentenceBefore:
+      "After snapping the bearing lines, place each floor ",
+    sentenceAfter:
+      " on layout so crown faces up, ends sit full bearing, and the rim board ties the assembly.",
+    langs: langsFrom([
+      {
+        translation: "viga (joist)",
+        definition:
+          "Miembro horizontal que sostiene el piso o el techo entre apoyos.",
+        context:
+          "Si el joist está fuera de centro o sin apoyo completo, puede causar rechinar o desviación del piso.",
+      },
+      {
+        translation: "تیرچه کف",
+        definition:
+          "عضو افقی که کف یا سقف را بین دو تکیه‌گاه نگه می‌دارد.",
+        context:
+          "اگر تیرچه از آکس خارج باشد یا تکیه‌گاه کامل نداشته باشد، ممکن است کف صدا کند یا تاب بردارد.",
+      },
+      {
+        translation: "ਜੋਇਸਟ",
+        definition:
+          "ਇੱਕ ਲੇਟਵਾਂ ਮੈਂਬਰ ਜੋ ਫਰਸ਼ ਜਾਂ ਛੱਤ ਨੂੰ ਸਪੋਰਟਾਂ ਵਿਚਕਾਰ ਸਹਾਰਾ ਦਿੰਦਾ ਹੈ।",
+        context:
+          "ਜੇ ਜੋਇਸਟ ਆਫ਼-ਲੇਆਉਟ ਹੋਵੇ ਜਾਂ ਪੂਰਾ ਬੇਅਰਿੰਗ ਨਾ ਮਿਲੇ, ਫਰਸ਼ ਚਿੜਚਿੜਾ ਜਾਂ ਝੁਕ ਸਕਦਾ ਹੈ।",
+      },
+      {
+        translation: "搁栅",
+        definition: "在支座之间支撑楼板或顶棚的水平构件。",
+        context: "如果搁栅偏位或端部支承不足，楼板可能异响或下挠。",
+      },
+      {
+        translation: "رافدة",
+        definition: "عنصر أفقي يحمل الأرضية أو السقف بين المساند.",
+        context:
+          "إذا خرجت الرافدة عن الخط أو لم تستند جيداً فقد يصدر الأرض صريراً أو انحرافاً.",
+      },
+    ]),
+  },
+};
+
+function demoForTrade(
+  tradeSlug: string,
+  tradeName: string,
+  tradeCode: string,
+): TranslateDemoContent {
+  const base =
+    TRADE_DEMOS[tradeSlug] ?? TRADE_DEMOS["construction-electrician"];
+  return {
+    ...base,
+    tradeName,
+    tradeCode,
+  };
+}
 
 export function TranslateFeatureShowcase({
   tradeName,
   tradeCode,
+  tradeSlug,
 }: TranslateFeatureShowcaseProps) {
-  const supportedLanguages = TRANSLATION_LANGUAGES.filter(
-    (l) => l.code !== "en",
-  );
-
   return (
-    <div className="mt-10 overflow-hidden rounded-[20px] border border-[#E5E0D8] bg-gradient-to-br from-[#EFF6FF] via-white to-[#F6F3EE]">
-      <div className="grid items-center gap-8 p-6 sm:p-8 lg:grid-cols-[1fr_1.05fr] lg:gap-10 lg:p-10">
-        <div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#BFDBFE] bg-white px-3 py-1.5 text-xs font-bold text-[#2563EB]">
-            <Languages className="h-4 w-4" />
-            Built for ESL apprentices
-          </div>
-          <h3 className="mt-4 font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold leading-tight tracking-tight text-[#1F2A37] sm:text-4xl">
-            Click any word to translate
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-[#64748B] sm:text-base">
-            {tradeName} lessons use technical English that can be tough if it is
-            not your first language. Tap any word in a lesson, quiz, or
-            explanation to see it in your language — without leaving your{" "}
-            {tradeCode} study session.
-          </p>
-          <ul className="mt-5 space-y-2.5 text-sm font-semibold text-[#334155]">
-            {[
-              `${supportedLanguages.length} languages including Punjabi, Spanish, Arabic, and Mandarin`,
-              "Definitions and trade context — not just a dictionary lookup",
-              "Save words to your personal vocabulary list",
-            ].map((item) => (
-              <li key={item} className="flex items-start gap-2">
-                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#2563EB]" />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {supportedLanguages.map((lang) => (
-              <span
-                key={lang.code}
-                className="rounded-full border border-[#E5E0D8] bg-white px-2.5 py-1 text-xs font-semibold text-[#475569]"
-                dir={lang.rtl ? "rtl" : "ltr"}
-              >
-                {lang.nativeLabel}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Visual mockup */}
-        <div className="relative mx-auto w-full max-w-[480px] lg:max-w-none">
-          <div className="overflow-hidden rounded-2xl border border-[#E5E0D8] bg-white shadow-[0_20px_50px_rgba(31,42,55,0.12)]">
-            <div className="flex items-center gap-2 border-b border-[#ECE6DC] bg-[#F6F3EE] px-4 py-2.5">
-              <div className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-[#FCA5A5]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#FCD34D]" />
-                <span className="h-2.5 w-2.5 rounded-full bg-[#86EFAC]" />
-              </div>
-              <span className="ml-2 truncate text-[11px] font-semibold text-[#64748B]">
-                {tradeCode} · Block A — Lesson 3
-              </span>
-            </div>
-
-            <div className="relative p-5 sm:p-6">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-[#C0271E]">
-                {tradeName} lesson
-              </p>
-              <h4 className="mt-1 font-[family-name:var(--font-barlow-semi)] text-base font-semibold text-[#1F2A37]">
-                Motor control &amp; troubleshooting
-              </h4>
-              <p className="mt-3 text-sm leading-relaxed text-[#475569]">
-                Before energizing the circuit, verify lockout/tagout is in
-                place. A{" "}
-                <span className="relative cursor-pointer rounded bg-[#FEF2F2] px-1 py-0.5 font-semibold text-[#C0271E] ring-2 ring-[#C0271E]/25">
-                  contactor
-                </span>{" "}
-                that fails to pull in may indicate a coil fault, low control
-                voltage, or open interlock in the control circuit.
-              </p>
-
-              <div className="absolute bottom-6 left-5 right-5 sm:left-8 sm:right-auto sm:w-[280px]">
-                <div className="rounded-xl border border-[#E5E0D8] bg-white p-4 shadow-xl">
-                  <div className="flex items-start justify-between gap-2">
-                    <div>
-                      <div className="font-[family-name:var(--font-barlow-semi)] text-base font-bold capitalize text-[#1F2A37]">
-                        contactor
-                      </div>
-                      <div className="mt-0.5 text-[15px] font-semibold text-[#C0271E]">
-                        contactor
-                      </div>
-                    </div>
-                    <span className="rounded-md bg-[#EFF6FF] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#2563EB]">
-                      Español
-                    </span>
-                  </div>
-                  <p className="mt-2 text-xs leading-relaxed text-[#64748B]">
-                    Interruptor electromagnético que cierra los circuitos de
-                    potencia del motor cuando la bobina está energizada.
-                  </p>
-                  <div className="mt-3 rounded-lg bg-[#F6F3EE] p-3">
-                    <div className="text-[10px] font-bold uppercase tracking-wide text-[#64748B]">
-                      In this context
-                    </div>
-                    <p className="mt-1 text-xs leading-relaxed text-[#334155]">
-                      Si el contactor no engancha, puede haber falla en la
-                      bobina, voltaje bajo en control o un enclavamiento abierto
-                      en el circuito.
-                    </p>
-                  </div>
-                  <div className="mt-3 flex gap-2">
-                    <span className="rounded-lg bg-[#1F2A37] px-2.5 py-1 text-[10px] font-bold text-white">
-                      Save word
-                    </span>
-                    <span className="rounded-lg border border-[#E5E0D8] px-2.5 py-1 text-[10px] font-semibold text-[#64748B]">
-                      Close
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-[#ECE6DC] bg-[#FAFAF8] px-4 py-3">
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-wide text-[#64748B]">
-                  <Languages className="h-3.5 w-3.5 text-[#C0271E]" />
-                  Word translation
-                </div>
-                <div className="h-5 w-9 rounded-full bg-[#C0271E] p-0.5">
-                  <div className="ml-auto h-4 w-4 rounded-full bg-white shadow" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="pointer-events-none absolute -right-2 -top-2 rounded-full bg-[#2563EB] px-3 py-1.5 text-[11px] font-extrabold uppercase tracking-wide text-white shadow-lg sm:-right-4">
-            Tap any word
-          </div>
-        </div>
-      </div>
-    </div>
+    <AnimatedTranslateDemo
+      className="mt-10 sm:mt-10"
+      demo={demoForTrade(tradeSlug, tradeName, tradeCode)}
+    />
   );
 }

@@ -3,8 +3,8 @@ import {
   HeroSection,
   StatsBar,
   HowItWorks,
+  LearningExperience,
   TradesPreview,
-  FeatureHighlight,
   TestimonialSection,
   CtaBand,
   MarketingFooter,
@@ -24,7 +24,7 @@ export default function HomePage() {
       <HeroSection />
       <StatsBar />
       <HowItWorks />
-      <FeatureHighlight />
+      <LearningExperience />
       <TradesPreview />
       <TestimonialSection />
       <PricingSection />

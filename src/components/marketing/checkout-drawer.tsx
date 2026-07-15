@@ -45,12 +45,23 @@ type CheckoutDrawerProps = {
   planId: SubscriptionPlanId | null;
   open: boolean;
   onClose: () => void;
+  defaultTradeSlug?: string | null;
 };
 
-export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
+export function CheckoutDrawer({
+  planId,
+  open,
+  onClose,
+  defaultTradeSlug = null,
+}: CheckoutDrawerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const plan = planId ? getPlan(planId) : null;
+  const preselectedTrade =
+    defaultTradeSlug &&
+    SIGNUP_TRADES.some((trade) => trade.slug === defaultTradeSlug)
+      ? defaultTradeSlug
+      : "";
 
   const [isRendered, setIsRendered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
@@ -60,7 +71,7 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUp, setIsSignUp] = useState(true);
-  const [tradeSlug, setTradeSlug] = useState("");
+  const [tradeSlug, setTradeSlug] = useState(preselectedTrade);
   const [province, setProvince] = useState<ProvinceCode>(DEFAULT_PROVINCE);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -132,9 +143,10 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
     setClientSecret(null);
     setError(null);
     setNotice(null);
+    setTradeSlug(preselectedTrade);
     setCheckingSession(true);
     void checkAuth();
-  }, [open, planId, checkAuth]);
+  }, [open, planId, checkAuth, preselectedTrade]);
 
   useEffect(() => {
     if (searchParams.get("checkout") !== "success") return;
@@ -281,6 +293,9 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="checkout-drawer-title"
+        aria-describedby={
+          step === "success" ? undefined : "checkout-drawer-terms"
+        }
         className={cn(
           "fixed inset-y-0 right-0 z-[70] flex w-full max-w-[440px] flex-col border-l border-[#E5E0D8] bg-white shadow-2xl transition-transform duration-300 ease-out will-change-transform",
           isVisible ? "translate-x-0" : "translate-x-full",
@@ -295,11 +310,12 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
               id="checkout-drawer-title"
               className="font-[family-name:var(--font-barlow-semi)] text-lg font-semibold text-[#1F2A37]"
             >
-              {step === "success" ? "You're in!" : "Start your intro week"}
+              {step === "success" ? "You're in!" : "Complete subscription"}
             </h2>
           </div>
           <button
             type="button"
+            aria-label="Close checkout"
             onClick={onClose}
             className="rounded-lg p-2 text-[#64748B] hover:bg-[#F3EFE8]"
           >
@@ -312,17 +328,38 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
             <div className="rounded-xl border border-[#ECE6DC] bg-[#F6F3EE] p-4">
               <div className="flex items-baseline gap-1.5">
                 <span className="font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold text-[#1F2A37]">
-                  ${displayPlan.introPrice.toFixed(2)}
+                  ${displayPlan.price.toFixed(2)}
                 </span>
                 <span className="text-sm font-semibold text-[#94A3B8]">
-                  first week
+                  CAD {displayPlan.periodLabel}
                 </span>
               </div>
               <p className="mt-1 text-sm text-[#64748B]">
-                {displayPlan.regularLabel}
+                {displayPlan.billingNote}
               </p>
-              <p className="mt-2 text-xs text-[#94A3B8]">
-                24-hour refund window · cancel anytime
+              <p
+                id="checkout-drawer-terms"
+                className="mt-2 text-xs text-[#64748B]"
+              >
+                Renews automatically until cancelled ·{" "}
+                <span className="group relative inline-flex">
+                  <button
+                    type="button"
+                    aria-describedby="checkout-refund-tooltip"
+                    className="cursor-help font-semibold text-[#C0271E] underline decoration-dotted underline-offset-2"
+                  >
+                    24-hour refund policy
+                  </button>
+                  <span
+                    id="checkout-refund-tooltip"
+                    role="tooltip"
+                    className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-64 rounded-xl bg-[#1F2A37] px-3.5 py-3 text-left text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
+                  >
+                    Request a full refund within 24 hours of starting your plan.
+                    After that window, payments are non-refundable. Approved
+                    refunds usually appear in 5–10 business days.
+                  </span>
+                </span>
               </p>
             </div>
           )}
@@ -335,6 +372,48 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
 
           {!checkingSession && step === "auth" && (
             <div className="mt-6">
+              {isSignUp && (
+                <div className="mb-5 grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold">
+                      Trade
+                    </label>
+                    <select
+                      value={tradeSlug}
+                      onChange={(e) => setTradeSlug(e.target.value)}
+                      className="h-10 w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 text-sm"
+                      required
+                    >
+                      <option value="">Select trade</option>
+                      {SIGNUP_TRADES.map((trade) => (
+                        <option key={trade.id} value={trade.slug}>
+                          {trade.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-sm font-semibold">
+                      Province
+                    </label>
+                    <select
+                      value={province}
+                      onChange={(e) =>
+                        setProvince(e.target.value as ProvinceCode)
+                      }
+                      className="h-10 w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 text-sm"
+                      required
+                    >
+                      {PROVINCES.map((entry) => (
+                        <option key={entry.code} value={entry.code}>
+                          {entry.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+
               <div className="grid gap-2.5">
                 <Button
                   type="button"
@@ -363,47 +442,6 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
               </div>
 
               <form onSubmit={handleEmailAuth} className="space-y-3">
-                {isSignUp && (
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-semibold">
-                        Trade
-                      </label>
-                      <select
-                        value={tradeSlug}
-                        onChange={(e) => setTradeSlug(e.target.value)}
-                        className="h-10 w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 text-sm"
-                        required
-                      >
-                        <option value="">Select trade</option>
-                        {SIGNUP_TRADES.map((trade) => (
-                          <option key={trade.id} value={trade.slug}>
-                            {trade.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-sm font-semibold">
-                        Province
-                      </label>
-                      <select
-                        value={province}
-                        onChange={(e) =>
-                          setProvince(e.target.value as ProvinceCode)
-                        }
-                        className="h-10 w-full rounded-[10px] border border-[#E5E0D8] bg-white px-3 text-sm"
-                        required
-                      >
-                        {PROVINCES.map((entry) => (
-                          <option key={entry.code} value={entry.code}>
-                            {entry.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </div>
-                )}
                 <div>
                   <label className="mb-1.5 block text-sm font-semibold">
                     Email
@@ -515,8 +553,7 @@ export function CheckoutDrawer({ planId, open, onClose }: CheckoutDrawerProps) {
                 </svg>
               </div>
               <p className="mt-4 text-[#334155]">
-                Your intro week is active. Head to the dashboard to start
-                studying.
+                Your plan is active. Head to the dashboard to start studying.
               </p>
               <Link href="/dashboard" className="mt-6 inline-block">
                 <Button className="h-11 px-6">Go to dashboard</Button>

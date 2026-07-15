@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState, type ChangeEvent, type FormEvent } from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import {
   Camera,
   CreditCard,
@@ -18,11 +24,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PLANS } from "@/lib/stripe/config";
+import {
+  AVATAR_OPTION_SEEDS,
+  apprenticeAvatarUrl,
+  avatarSeedFromUrl,
+  defaultAvatarSeedForUser,
+} from "@/lib/avatars/options";
 import type { Profile } from "@/types";
 
 type ProfileFormProps = {
   userName: string;
   email: string;
+  userKey: string;
   avatarUrl?: string | null;
   tradeName: string;
   tradeCode: string;
@@ -33,6 +46,7 @@ type ProfileFormProps = {
 export function ProfileForm({
   userName,
   email,
+  userKey,
   avatarUrl: initialAvatarUrl,
   tradeName,
   tradeCode,
@@ -41,9 +55,12 @@ export function ProfileForm({
 }: ProfileFormProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [avatarUrl, setAvatarUrl] = useState(initialAvatarUrl ?? null);
+  const [avatarUrl, setAvatarUrl] = useState(
+    initialAvatarUrl ?? apprenticeAvatarUrl(defaultAvatarSeedForUser(userKey)),
+  );
   const [avatarBusy, setAvatarBusy] = useState(false);
   const [avatarError, setAvatarError] = useState<string | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -60,7 +77,33 @@ export function ProfileForm({
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const plan = PLANS[subscriptionTier] ?? PLANS.free;
-  const initials = userName.slice(0, 2).toUpperCase();
+  const selectedSeed = useMemo(() => avatarSeedFromUrl(avatarUrl), [avatarUrl]);
+
+  const saveAvatarSeed = async (seed: string) => {
+    setAvatarBusy(true);
+    setAvatarError(null);
+    try {
+      const res = await fetch("/api/profile/avatar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ seed }),
+        credentials: "same-origin",
+      });
+      const data = (await res.json()) as { avatarUrl?: string; error?: string };
+      if (!res.ok) {
+        throw new Error(data.error ?? "Could not update avatar");
+      }
+      setAvatarUrl(data.avatarUrl ?? apprenticeAvatarUrl(seed));
+      setPickerOpen(false);
+      router.refresh();
+    } catch (err) {
+      setAvatarError(
+        err instanceof Error ? err.message : "Could not update avatar",
+      );
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
 
   const handleAvatarChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -82,7 +125,11 @@ export function ProfileForm({
       if (!res.ok) {
         throw new Error(data.error ?? "Could not upload photo");
       }
-      setAvatarUrl(data.avatarUrl ?? null);
+      setAvatarUrl(
+        data.avatarUrl ??
+          apprenticeAvatarUrl(defaultAvatarSeedForUser(userKey)),
+      );
+      setPickerOpen(false);
       router.refresh();
     } catch (err) {
       setAvatarError(
@@ -163,24 +210,19 @@ export function ProfileForm({
         <div className="border-b border-[#E5E0D8] bg-gradient-to-br from-[#1F2A37] to-[#2C3A4A] px-4 py-5 sm:px-6">
           <div className="flex items-center gap-4">
             <div className="relative shrink-0">
-              {avatarUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={avatarUrl}
-                  alt={`${userName} profile photo`}
-                  className="h-14 w-14 rounded-full border-2 border-white/25 object-cover"
-                />
-              ) : (
-                <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-white/25 bg-gradient-to-br from-[#D8232A] to-[#A81A1F] text-lg font-bold text-white">
-                  {initials}
-                </div>
-              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={avatarUrl}
+                alt={`${userName} profile avatar`}
+                className="h-14 w-14 rounded-full border-2 border-white/25 bg-[#FCEBEC] object-cover"
+              />
               <button
                 type="button"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => setPickerOpen((open) => !open)}
                 disabled={avatarBusy}
                 className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-[#1F2A37] text-white shadow-md transition-colors hover:bg-[#2C3A4A] disabled:opacity-60"
-                aria-label="Upload profile photo"
+                aria-label="Choose avatar"
+                aria-expanded={pickerOpen}
               >
                 {avatarBusy ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -206,7 +248,7 @@ export function ProfileForm({
                 )}
               </div>
               <p className="mt-0.5 text-sm text-[#9FB4C7]">
-                Tap the camera to add a photo
+                Tap the camera to pick an avatar
               </p>
             </div>
           </div>
@@ -214,6 +256,68 @@ export function ProfileForm({
             <p className="mt-3 text-sm text-[#FCA5A5]">{avatarError}</p>
           )}
         </div>
+
+        {pickerOpen && (
+          <div className="border-b border-[#E5E0D8] bg-[#FAF8F4] px-4 py-4 sm:px-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-semibold uppercase tracking-wide text-[#94A3B8]">
+                  Choose avatar
+                </div>
+                <p className="mt-0.5 text-sm text-[#64748B]">
+                  Same style as apprentice stories. One is assigned by default.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setPickerOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+            <div className="mt-4 grid grid-cols-5 gap-2.5 sm:grid-cols-8 sm:gap-3">
+              {AVATAR_OPTION_SEEDS.map((seed) => {
+                const selected = selectedSeed === seed;
+                return (
+                  <button
+                    key={seed}
+                    type="button"
+                    disabled={avatarBusy}
+                    onClick={() => void saveAvatarSeed(seed)}
+                    className={`relative aspect-square overflow-hidden rounded-full border-2 transition ${
+                      selected
+                        ? "border-[#D8232A] ring-2 ring-[#D8232A]/25"
+                        : "border-[#E5E0D8] hover:border-[#C0271E]/50"
+                    } disabled:opacity-60`}
+                    aria-label={`Select avatar ${seed}`}
+                    aria-pressed={selected}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={apprenticeAvatarUrl(seed)}
+                      alt=""
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                disabled={avatarBusy}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                Upload photo instead
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="divide-y divide-[#ECE6DC]">
           <div className="flex items-start gap-3 px-4 py-4 sm:px-6">

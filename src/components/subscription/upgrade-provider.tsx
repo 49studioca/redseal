@@ -110,10 +110,10 @@ function UpgradeModal({
             </h2>
             <p className="mt-1 text-sm text-[#64748B]">
               {step === "success"
-                ? "Your intro week is active. All content is now unlocked."
+                ? "You're subscribed. All content is now unlocked."
                 : step === "checkout"
                   ? "Enter your payment details below."
-                  : "Pick a plan and start your discounted intro week."}
+                  : "Pick a plan — Exam Prep is built for one exam cycle."}
             </p>
           </div>
           <button
@@ -131,7 +131,7 @@ function UpgradeModal({
             <>
               <div className="inline-flex items-center gap-1.5 rounded-full bg-[#FCEBEC] px-3 py-1.5 text-xs font-bold text-[#B6291F]">
                 <Tag className="h-3.5 w-3.5" />
-                Discounted first week · 24h refund · cancel anytime
+                Free tier to try · 24h refund · cancel anytime
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
@@ -146,11 +146,15 @@ function UpgradeModal({
                         : "border-[#E5E0D8] bg-white hover:border-[#C0271E]/40"
                     }`}
                   >
-                    {plan.popular && (
+                    {plan.popular ? (
                       <span className="absolute right-2 top-2 rounded-md bg-[#C0271E] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-white">
                         Popular
                       </span>
-                    )}
+                    ) : plan.badge ? (
+                      <span className="absolute right-2 top-2 rounded-md bg-[#FCEBEC] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#B6291F]">
+                        {plan.badge}
+                      </span>
+                    ) : null}
                     <span className="font-[family-name:var(--font-barlow-semi)] text-xs font-bold uppercase tracking-wide text-[#C0271E]">
                       {plan.name}
                     </span>

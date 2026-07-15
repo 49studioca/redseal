@@ -45,9 +45,8 @@ export default function RefundsPage() {
           <p>
             You can request a full refund within{" "}
             <strong>24 hours of starting your plan</strong>. During this window,
-            you can cancel and be refunded directly from your profile.
-            After the first 24 hours — including once your intro week has begun
-            — payments are non-refundable.
+            you can cancel and be refunded directly from your profile. After the
+            first 24 hours, payments are non-refundable.
           </p>
         </ContentSection>
 
@@ -70,9 +69,9 @@ export default function RefundsPage() {
 
         <ContentSection heading="How to request a refund">
           <p>
-            If you&apos;re within the 24-hour window, open your profile
-            and use the refund option to be refunded and cancelled instantly. If
-            you run into any trouble, email{" "}
+            If you&apos;re within the 24-hour window, open your profile and use
+            the refund option to be refunded and cancelled instantly. If you run
+            into any trouble, email{" "}
             <a
               href="mailto:billing@redsealguide.com"
               className="font-semibold text-[#D8232A] hover:underline"

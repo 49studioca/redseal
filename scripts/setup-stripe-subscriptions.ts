@@ -1,8 +1,10 @@
 /**
- * Creates one Stripe product with intro + regular prices per plan.
+ * Creates one Stripe product with recurring prices per plan.
  * Run: npx tsx scripts/setup-stripe-subscriptions.ts
  *
  * Copy the printed env vars into .env
+ *
+ * Decoy ladder: monthly (anchor) / exam-prep 3-month (target) / annual (best $/mo).
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";
@@ -37,25 +39,22 @@ loadEnvFile();
 
 const PLANS = [
   {
-    key: "WEEKLY",
-    introCents: 999,
-    regularCents: 1999,
-    regularInterval: "week" as const,
-    regularIntervalCount: 1,
-  },
-  {
     key: "MONTHLY",
-    introCents: 799,
-    regularCents: 5999,
-    regularInterval: "month" as const,
-    regularIntervalCount: 1,
+    cents: 5999,
+    interval: "month" as const,
+    intervalCount: 1,
   },
   {
     key: "QUARTERLY",
-    introCents: 599,
-    regularCents: 9999,
-    regularInterval: "month" as const,
-    regularIntervalCount: 3,
+    cents: 9999,
+    interval: "month" as const,
+    intervalCount: 3,
+  },
+  {
+    key: "ANNUAL",
+    cents: 19999,
+    interval: "year" as const,
+    intervalCount: 1,
   },
 ];
 
@@ -81,30 +80,20 @@ async function main() {
   console.log(`Product: ${product.id}\n`);
 
   for (const plan of PLANS) {
-    const introPrice = await stripe.prices.create({
+    const price = await stripe.prices.create({
       product: product.id,
       currency: "cad",
-      unit_amount: plan.introCents,
-      recurring: { interval: "week", interval_count: 1 },
-      lookup_key: `redseal_${plan.key.toLowerCase()}_intro_week`,
-      metadata: { plan: plan.key.toLowerCase(), billing: "intro" },
-    });
-
-    const regularPrice = await stripe.prices.create({
-      product: product.id,
-      currency: "cad",
-      unit_amount: plan.regularCents,
+      unit_amount: plan.cents,
       recurring: {
-        interval: plan.regularInterval,
-        interval_count: plan.regularIntervalCount,
+        interval: plan.interval,
+        interval_count: plan.intervalCount,
       },
-      lookup_key: `redseal_${plan.key.toLowerCase()}_regular`,
-      metadata: { plan: plan.key.toLowerCase(), billing: "regular" },
+      lookup_key: `redseal_${plan.key.toLowerCase()}_v3`,
+      metadata: { plan: plan.key.toLowerCase() },
     });
 
     console.log(`# ${plan.key}`);
-    console.log(`STRIPE_${plan.key}_INTRO_PRICE_ID=${introPrice.id}`);
-    console.log(`STRIPE_${plan.key}_PRICE_ID=${regularPrice.id}`);
+    console.log(`STRIPE_${plan.key}_PRICE_ID=${price.id}`);
     console.log("");
   }
 

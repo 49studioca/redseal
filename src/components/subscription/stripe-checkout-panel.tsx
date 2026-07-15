@@ -147,13 +147,13 @@ export function StripeCheckoutPanel({
       <div className="rounded-xl border border-[#ECE6DC] bg-[#F6F3EE] p-4">
         <div className="flex items-baseline gap-1.5">
           <span className="font-[family-name:var(--font-barlow-condensed)] text-2xl font-bold text-[#1F2A37]">
-            ${plan.introPrice.toFixed(2)}
+            ${plan.price.toFixed(2)}
           </span>
           <span className="text-sm font-semibold text-[#94A3B8]">
-            first week
+            CAD {plan.periodLabel}
           </span>
         </div>
-        <p className="mt-1 text-sm text-[#64748B]">{plan.regularLabel}</p>
+        <p className="mt-1 text-sm text-[#64748B]">{plan.billingNote}</p>
       </div>
 
       <div className="mt-4">

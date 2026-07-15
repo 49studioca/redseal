@@ -39,7 +39,7 @@ export async function POST() {
     return NextResponse.json(
       {
         error:
-          "Refunds are only available within 24 hours of starting your plan. After your intro week, payments are non-refundable.",
+          "Refunds are only available within 24 hours of starting your plan.",
       },
       { status: 403 },
     );

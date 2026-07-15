@@ -90,6 +90,178 @@ body {
   border: 3px solid #f1ece3;
 }
 
+@keyframes home-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes home-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.home-fade-up {
+  animation: home-fade-up 0.7s ease-out both;
+}
+
+.home-fade-up-delay {
+  animation-delay: 0.12s;
+}
+
+.home-float {
+  animation: home-float 5.5s ease-in-out infinite;
+}
+
+/* Pricing section — scroll-triggered stagger */
+.pricing-reveal {
+  opacity: 0;
+  transform: translateY(22px);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.pricing-reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.pricing-reveal-delay-1 {
+  transition-delay: 0.08s;
+}
+.pricing-reveal-delay-2 {
+  transition-delay: 0.16s;
+}
+.pricing-reveal-delay-3 {
+  transition-delay: 0.24s;
+}
+.pricing-reveal-delay-4 {
+  transition-delay: 0.32s;
+}
+
+@keyframes pricing-popular-glow {
+  0%,
+  100% {
+    box-shadow: 0 18px 40px rgba(216, 35, 42, 0.32);
+  }
+  50% {
+    box-shadow: 0 22px 48px rgba(216, 35, 42, 0.48);
+  }
+}
+
+.pricing-card {
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    border-color 0.25s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-4px);
+}
+
+.pricing-card-popular {
+  animation: pricing-popular-glow 3.2s ease-in-out infinite;
+}
+
+.pricing-card-popular:hover {
+  transform: translateY(-6px) scale(1.01);
+}
+
+@keyframes pricing-badge-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.pricing-badge-pulse {
+  animation: pricing-badge-pulse 2.4s ease-in-out infinite;
+}
+
+@keyframes scroll-connector-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+.scroll-connector-bounce {
+  display: inline-block;
+  animation: scroll-connector-bounce 1.4s ease-in-out infinite;
+}
+
+@keyframes hero-guide-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.hero-guide-pulse {
+  animation: hero-guide-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes hero-guide-fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-guide-fade {
+  animation: hero-guide-fade 0.35s ease-out both;
+}
+
+@keyframes hero-seal-stamp {
+  0% {
+    opacity: 0;
+    transform: scale(1.55) rotate(-18deg) translateY(-18px);
+    filter: blur(1px);
+  }
+  55% {
+    opacity: 1;
+    transform: scale(0.94) rotate(-8deg) translateY(2px);
+    filter: blur(0);
+  }
+  75% {
+    transform: scale(1.04) rotate(-12deg) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-10deg) translateY(0);
+    filter: blur(0);
+  }
+}
+
+.hero-seal-stamp {
+  animation: hero-seal-stamp 0.55s cubic-bezier(0.2, 0.85, 0.25, 1) both;
+}
+
 @keyframes trade-marquee {
   to {
     transform: translateX(-50%);
@@ -105,7 +277,50 @@ body {
   animation-play-state: paused;
 }
 
+@keyframes testimonial-roll-up {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.testimonial-roll-track {
+  animation: testimonial-roll-up 55s linear infinite;
+  will-change: transform;
+}
+
+.testimonial-roll-track:hover {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .home-fade-up,
+  .home-fade-up-delay,
+  .home-float,
+  .scroll-connector-bounce,
+  .hero-guide-pulse,
+  .hero-guide-fade,
+  .hero-seal-stamp,
+  .pricing-card-popular,
+  .pricing-badge-pulse {
+    animation: none;
+  }
+
+  .testimonial-roll-track {
+    animation: none;
+    transform: none;
+  }
+
+  .pricing-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .pricing-card:hover,
+  .pricing-card-popular:hover {
+    transform: none;
+  }
+
   .trade-marquee-wrap {
     overflow-x: auto;
     mask-image: none;

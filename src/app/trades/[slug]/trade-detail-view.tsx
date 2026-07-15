@@ -18,6 +18,7 @@ import {
 import {
   MarketingHeader,
   MarketingFooter,
+  TestimonialSection,
 } from "@/components/marketing/sections";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { TranslateFeatureShowcase } from "@/components/marketing/translate-feature-showcase";
@@ -250,7 +251,7 @@ export function TradeDetailView({ slug }: { slug: string }) {
               </ul>
               <div className="mt-8 flex flex-wrap gap-3">
                 <TradeCta trade={trade} />
-                <Link href="/pricing">
+                <Link href="#pricing">
                   <Button
                     variant="ghost"
                     className="h-[42px] border border-white/25 bg-white/10 text-white hover:bg-white/20"
@@ -320,7 +321,7 @@ export function TradeDetailView({ slug }: { slug: string }) {
         <section>
           <div className="max-w-2xl">
             <p className="text-[13px] font-bold uppercase tracking-wider text-[#D8232A]">
-              Why RedSealGuide
+              Why RedSeal Guide
             </p>
             <h2 className="mt-2 font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold tracking-tight sm:text-4xl">
               The smartest way to prep for your {trade.code} Red Seal exam
@@ -330,6 +331,7 @@ export function TradeDetailView({ slug }: { slug: string }) {
           <TranslateFeatureShowcase
             tradeName={trade.name}
             tradeCode={trade.code}
+            tradeSlug={trade.slug}
           />
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
@@ -464,7 +466,9 @@ export function TradeDetailView({ slug }: { slug: string }) {
         </section>
       </div>
 
-      <PricingSection />
+      <TestimonialSection tradeSlug={trade.slug} tradeName={trade.name} />
+
+      <PricingSection defaultTradeSlug={trade.slug} />
 
       <div className="mx-auto max-w-[1180px] px-6 pb-14 sm:pb-16">
         {/* Final CTA */}

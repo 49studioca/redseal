@@ -146,6 +146,30 @@ export function homepageSchema() {
               text: "Yes. RedSealGuide supports learners across Canada's provinces and territories and flags province-specific code or registration differences where relevant.",
             },
           },
+          {
+            "@type": "Question",
+            name: "What can I try for free?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Free starter access includes the first Block A lesson, 5 mock-exam questions, 5 flashcards, and 5 translations. No credit card is required.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How do billing and cancellation work?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Paid plans renew automatically at the displayed monthly, 3-month, or yearly interval. Customers can cancel from their dashboard at any time and keep access through the paid period.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "What is the refund policy?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "New subscriptions have a 24-hour refund window. Full eligibility and processing details are available in the RedSealGuide refund policy.",
+            },
+          },
         ],
       },
     ],
