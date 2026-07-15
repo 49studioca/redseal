@@ -319,85 +319,43 @@ export function CheckoutDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="checkout-drawer-title"
-        aria-describedby={
-          step === "success" ? undefined : "checkout-drawer-terms"
-        }
         className={cn(
           "fixed inset-y-0 right-0 z-[70] flex w-full max-w-[440px] flex-col border-l border-[#E5E0D8] bg-white shadow-2xl transition-transform duration-300 ease-out will-change-transform",
           isVisible ? "translate-x-0" : "translate-x-full",
         )}
       >
-        <div className="flex items-center justify-between border-b border-[#ECE6DC] px-5 py-4">
+        <div className="flex items-center justify-between px-5 pb-3 pt-4">
           <div>
-            <div className="text-[11px] font-bold uppercase tracking-wider text-[#D8232A]">
-              {displayPlan.name} plan
-            </div>
             <h2
               id="checkout-drawer-title"
               className="font-[family-name:var(--font-barlow-semi)] text-lg font-semibold text-[#1F2A37]"
             >
-              {step === "success" ? "You're in!" : "Complete subscription"}
+              {step === "success"
+                ? "You're in!"
+                : step === "checkout"
+                  ? "Payment"
+                  : `Subscribe — ${displayPlan.name}`}
             </h2>
           </div>
           <button
             type="button"
             aria-label="Close checkout"
             onClick={onClose}
-            className="rounded-lg p-2 text-[#64748B] hover:bg-[#F3EFE8]"
+            className="rounded-lg p-2 text-[#64748B] hover:bg-[#F3F4F6]"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-5">
-          {step !== "success" && (
-            <div className="rounded-xl border border-[#ECE6DC] bg-[#F6F3EE] p-4">
-              <div className="flex items-baseline gap-1.5">
-                <span className="font-[family-name:var(--font-barlow-condensed)] text-3xl font-bold text-[#1F2A37]">
-                  ${displayPlan.price.toFixed(2)}
-                </span>
-                <span className="text-sm font-semibold text-[#94A3B8]">
-                  CAD {displayPlan.periodLabel}
-                </span>
-              </div>
-              <p className="mt-1 text-sm text-[#64748B]">
-                {displayPlan.billingNote}
-              </p>
-              <p
-                id="checkout-drawer-terms"
-                className="mt-2 text-xs text-[#64748B]"
-              >
-                Renews automatically until cancelled ·{" "}
-                <span className="group relative inline-flex">
-                  <button
-                    type="button"
-                    aria-describedby="checkout-refund-tooltip"
-                    className="cursor-help font-semibold text-[#C0271E] underline decoration-dotted underline-offset-2"
-                  >
-                    24-hour refund policy
-                  </button>
-                  <span
-                    id="checkout-refund-tooltip"
-                    role="tooltip"
-                    className="pointer-events-none absolute right-0 top-full z-50 mt-2 w-64 rounded-xl bg-[#1F2A37] px-3.5 py-3 text-left text-xs font-medium leading-relaxed text-white opacity-0 shadow-xl transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-                  >
-                    Request a full refund within 24 hours of starting your plan.
-                    After that window, payments are non-refundable. Approved
-                    refunds usually appear in 5–10 business days.
-                  </span>
-                </span>
-              </p>
-            </div>
-          )}
-
+        <div className="flex-1 overflow-y-auto px-5 pb-6">
           {checkingSession && (
-            <div className="mt-8 flex justify-center text-[#64748B]">
+            <div className="mt-10 flex justify-center text-[#64748B]">
               <Loader2 className="h-6 w-6 animate-spin" />
             </div>
           )}
 
           {!checkingSession && step === "auth" && (
-            <div className="mt-6">
+            <div className="mt-5">
               {isSignUp && (
                 <div className="mb-5 grid gap-3 sm:grid-cols-2">
                   <div>
@@ -532,7 +490,8 @@ export function CheckoutDrawer({
           )}
 
           {step === "checkout" && clientSecret && stripePromise && (
-            <div className="mt-6">
+            <div className="mt-4 -mx-1">
+              {error && <p className="mb-3 text-sm text-[#B91C1C]">{error}</p>}
               <EmbeddedCheckoutProvider
                 stripe={stripePromise}
                 options={embeddedCheckoutOptions}
@@ -542,10 +501,17 @@ export function CheckoutDrawer({
             </div>
           )}
 
+          {step === "checkout" && loading && !clientSecret && (
+            <div className="mt-10 flex flex-col items-center gap-2 text-[#64748B]">
+              <Loader2 className="h-6 w-6 animate-spin" />
+              <p className="text-sm">Preparing secure checkout…</p>
+            </div>
+          )}
+
           {step === "checkout" && !stripePromise && (
-            <p className="mt-6 text-sm text-[#64748B]">
+            <p className="mt-5 text-sm text-[#64748B]">
               Add{" "}
-              <code className="rounded bg-[#F3EFE8] px-1">
+              <code className="rounded bg-[#F3F4F6] px-1">
                 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
               </code>{" "}
               to enable payments.
@@ -553,23 +519,8 @@ export function CheckoutDrawer({
           )}
 
           {step === "success" && (
-            <div className="mt-6 text-center">
-              <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-[#ECFDF5] text-[#059669]">
-                <svg
-                  className="h-7 w-7"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-              </div>
-              <p className="mt-4 text-[#334155]">
+            <div className="mt-10 text-center">
+              <p className="text-[#334155]">
                 Your plan is active. Head to the dashboard to start studying.
               </p>
               <Link href="/dashboard" className="mt-6 inline-block">

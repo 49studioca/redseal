@@ -69,6 +69,7 @@ export async function POST(request: Request) {
       customer: customerId,
       client_reference_id: user.id,
       line_items: [{ price: plan.priceId!, quantity: 1 }],
+      allow_promotion_codes: true,
       // Keep card checkouts in the drawer; only redirect-based methods leave the page.
       redirect_on_completion: "if_required",
       return_url: `${origin}/dashboard?checkout=success&plan=${planId}&session_id={CHECKOUT_SESSION_ID}`,
