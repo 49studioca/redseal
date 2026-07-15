@@ -18,7 +18,7 @@ import {
   isSubscriptionPlanId,
   type SubscriptionPlanId,
 } from "@/lib/stripe/plans";
-import { trackPurchase } from "@/lib/analytics/track-purchase";
+import { trackPurchaseFromSession } from "@/lib/analytics/track-purchase";
 import { UPGRADE_PLANS } from "@/components/subscription/upgrade-plans";
 
 type UpgradeContextValue = {
@@ -244,12 +244,10 @@ function UpgradeProviderInner({ children }: { children: ReactNode }) {
   }, []);
 
   const handleCheckoutSuccess = useCallback(() => {
-    if (selectedPlan) {
-      trackPurchase({ planId: selectedPlan });
-    }
+    // Purchase analytics are fired from StripeCheckoutPanel with the session id.
     setStep("success");
     router.refresh();
-  }, [router, selectedPlan]);
+  }, [router]);
 
   useEffect(() => {
     const checkout = searchParams.get("checkout");
@@ -261,7 +259,10 @@ function UpgradeProviderInner({ children }: { children: ReactNode }) {
       plan &&
       isSubscriptionPlanId(plan)
     ) {
-      trackPurchase({ planId: plan, transactionId: sessionId });
+      void trackPurchaseFromSession({
+        sessionId,
+        fallbackPlanId: plan,
+      });
       setSelectedPlan(plan);
       setStep("success");
       setModalOpen(true);

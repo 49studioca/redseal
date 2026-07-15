@@ -17,7 +17,7 @@ import {
   isSubscriptionPlanId,
   type SubscriptionPlanId,
 } from "@/lib/stripe/plans";
-import { trackPurchase } from "@/lib/analytics/track-purchase";
+import { trackPurchaseFromSession } from "@/lib/analytics/track-purchase";
 import { TRADES } from "@/data/seed";
 import {
   DEFAULT_PROVINCE,
@@ -77,6 +77,9 @@ export function CheckoutDrawer({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(
+    null,
+  );
   const [checkingSession, setCheckingSession] = useState(true);
 
   const fetchCheckoutSession = useCallback(async () => {
@@ -105,6 +108,9 @@ export function CheckoutDrawer({
         );
       }
       setClientSecret(data.clientSecret);
+      setCheckoutSessionId(
+        typeof data.sessionId === "string" ? data.sessionId : null,
+      );
       setStep("checkout");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Checkout failed");
@@ -148,6 +154,7 @@ export function CheckoutDrawer({
     if (!open) return;
     setStep("auth");
     setClientSecret(null);
+    setCheckoutSessionId(null);
     setError(null);
     setNotice(null);
     setTradeSlug(preselectedTrade);
@@ -163,11 +170,16 @@ export function CheckoutDrawer({
     if (!sessionId) return;
     setStep("success");
     const plan = searchParams.get("plan");
-    if (planId && isSubscriptionPlanId(planId)) {
-      trackPurchase({ planId, transactionId: sessionId });
-    } else if (plan && isSubscriptionPlanId(plan)) {
-      trackPurchase({ planId: plan, transactionId: sessionId });
-    }
+    const fallbackPlanId =
+      planId && isSubscriptionPlanId(planId)
+        ? planId
+        : plan && isSubscriptionPlanId(plan)
+          ? plan
+          : null;
+    void trackPurchaseFromSession({
+      sessionId,
+      fallbackPlanId,
+    });
   }, [searchParams, planId]);
 
   useEffect(() => {
@@ -287,12 +299,15 @@ export function CheckoutDrawer({
   };
 
   const handleCheckoutComplete = useCallback(() => {
-    if (planId) {
-      trackPurchase({ planId });
+    if (checkoutSessionId) {
+      void trackPurchaseFromSession({
+        sessionId: checkoutSessionId,
+        fallbackPlanId: planId,
+      });
     }
     setStep("success");
     router.refresh();
-  }, [planId, router]);
+  }, [checkoutSessionId, planId, router]);
 
   const embeddedCheckoutOptions = useMemo(
     () => ({

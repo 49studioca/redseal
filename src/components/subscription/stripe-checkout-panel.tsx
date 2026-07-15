@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   EmbeddedCheckout,
@@ -9,7 +9,7 @@ import {
 import { loadStripe } from "@stripe/stripe-js";
 import { Loader2 } from "lucide-react";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
-import { trackPurchase } from "@/lib/analytics/track-purchase";
+import { trackPurchaseFromSession } from "@/lib/analytics/track-purchase";
 import { Button } from "@/components/ui/button";
 
 const stripePromise = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
@@ -41,6 +41,9 @@ export function StripeCheckoutPanel({
   const router = useRouter();
   const plan = getPlan(planId);
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [checkoutSessionId, setCheckoutSessionId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [demo, setDemo] = useState(false);
@@ -52,6 +55,7 @@ export function StripeCheckoutPanel({
       setLoading(true);
       setError(null);
       setClientSecret(null);
+      setCheckoutSessionId(null);
       setDemo(false);
 
       try {
@@ -86,6 +90,9 @@ export function StripeCheckoutPanel({
         }
 
         setClientSecret(data.clientSecret);
+        setCheckoutSessionId(
+          typeof data.sessionId === "string" ? data.sessionId : null,
+        );
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : "Checkout failed");
@@ -103,6 +110,25 @@ export function StripeCheckoutPanel({
       cancelled = true;
     };
   }, [planId]);
+
+  const handleCheckoutComplete = useCallback(() => {
+    if (checkoutSessionId) {
+      void trackPurchaseFromSession({
+        sessionId: checkoutSessionId,
+        fallbackPlanId: planId,
+      });
+    }
+    router.refresh();
+    onSuccess();
+  }, [checkoutSessionId, onSuccess, planId, router]);
+
+  const embeddedCheckoutOptions = useMemo(
+    () => ({
+      clientSecret: clientSecret ?? "",
+      onComplete: handleCheckoutComplete,
+    }),
+    [clientSecret, handleCheckoutComplete],
+  );
 
   if (loading) {
     return (
@@ -163,14 +189,7 @@ export function StripeCheckoutPanel({
       <div className="mt-4">
         <EmbeddedCheckoutProvider
           stripe={stripePromise}
-          options={{
-            clientSecret,
-            onComplete: () => {
-              trackPurchase({ planId });
-              router.refresh();
-              onSuccess();
-            },
-          }}
+          options={embeddedCheckoutOptions}
         >
           <EmbeddedCheckout />
         </EmbeddedCheckoutProvider>

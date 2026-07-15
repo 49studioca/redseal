@@ -3,7 +3,7 @@
 import { sendGAEvent } from "@next/third-parties/google";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
 
-const STORAGE_PREFIX = "ga_purchase_";
+const STORAGE_PREFIX = "ga_purchase_tx_";
 
 declare global {
   interface Window {
@@ -11,49 +11,156 @@ declare global {
   }
 }
 
-/**
- * Fire a one-time GA4 / Google Ads `purchase` conversion for a completed checkout.
- * Deduped per browser session so in-app success + Stripe return_url don't double-count.
- */
-export function trackPurchase(opts: {
+export type PurchaseAnalytics = {
   planId: SubscriptionPlanId;
-  transactionId?: string | null;
-}): void {
-  if (typeof window === "undefined") return;
+  transactionId: string;
+  value: number;
+  currency: string;
+  subscriptionId?: string | null;
+};
 
-  const plan = getPlan(opts.planId);
-  const transactionId =
-    opts.transactionId?.trim() || `plan_${opts.planId}_success`;
-  const planKey = `${STORAGE_PREFIX}plan_${opts.planId}`;
-  const txKey = `${STORAGE_PREFIX}${transactionId}`;
-
+function hasTracked(transactionId: string): boolean {
   try {
-    if (sessionStorage.getItem(planKey) || sessionStorage.getItem(txKey)) {
-      return;
-    }
-    sessionStorage.setItem(planKey, "1");
-    sessionStorage.setItem(txKey, "1");
+    return Boolean(localStorage.getItem(`${STORAGE_PREFIX}${transactionId}`));
   } catch {
-    // private / blocked storage — still attempt to send
+    return false;
   }
+}
 
+function markTracked(transactionId: string): void {
+  try {
+    localStorage.setItem(`${STORAGE_PREFIX}${transactionId}`, "1");
+  } catch {
+    // private / blocked storage — still send the event
+  }
+}
+
+function emitPurchase(data: PurchaseAnalytics): void {
+  const plan = getPlan(data.planId);
   const payload = {
-    transaction_id: transactionId,
-    value: plan.price,
-    currency: "CAD",
+    transaction_id: data.transactionId,
+    value: data.value,
+    currency: data.currency,
+    // GA4 / Ads commonly use `value` as the conversion fee amount.
+    fee: data.value,
     items: [
       {
         item_id: plan.id,
         item_name: `RedSealGuide ${plan.name}`,
-        price: plan.price,
+        item_category: "subscription",
+        item_variant: plan.id,
+        price: data.value,
         quantity: 1,
       },
     ],
   };
 
+  const subscriptionPayload = {
+    ...payload,
+    subscription_id: data.subscriptionId ?? undefined,
+    plan_id: plan.id,
+    plan_name: plan.name,
+  };
+
   try {
     sendGAEvent("event", "purchase", payload);
+    sendGAEvent("event", "subscribe", subscriptionPayload);
   } catch {
     window.gtag?.("event", "purchase", payload);
+    window.gtag?.("event", "subscribe", subscriptionPayload);
+  }
+}
+
+/**
+ * Fire GA4 `purchase` + `subscribe` once per Stripe Checkout Session.
+ * Prefer calling {@link trackPurchaseFromSession} so value matches the charged total.
+ */
+export function trackPurchase(opts: {
+  planId: SubscriptionPlanId;
+  transactionId?: string | null;
+  value?: number | null;
+  currency?: string | null;
+  subscriptionId?: string | null;
+}): void {
+  if (typeof window === "undefined") return;
+
+  const transactionId = opts.transactionId?.trim();
+  if (!transactionId) {
+    console.warn(
+      "[analytics] Skipping purchase event without Stripe transaction_id",
+    );
+    return;
+  }
+
+  if (hasTracked(transactionId)) return;
+  markTracked(transactionId);
+
+  const plan = getPlan(opts.planId);
+  emitPurchase({
+    planId: opts.planId,
+    transactionId,
+    value:
+      typeof opts.value === "number" && Number.isFinite(opts.value)
+        ? opts.value
+        : plan.price,
+    currency: (opts.currency ?? "CAD").toUpperCase(),
+    subscriptionId: opts.subscriptionId,
+  });
+}
+
+/**
+ * Load the completed Checkout Session from our API, then send GA events with
+ * the real Stripe transaction_id, paid value, and subscription id.
+ */
+export async function trackPurchaseFromSession(opts: {
+  sessionId: string;
+  fallbackPlanId?: SubscriptionPlanId | null;
+}): Promise<void> {
+  if (typeof window === "undefined") return;
+
+  const sessionId = opts.sessionId.trim();
+  if (!sessionId) return;
+  if (hasTracked(sessionId)) return;
+
+  try {
+    const res = await fetch(
+      `/api/stripe/checkout-session?session_id=${encodeURIComponent(sessionId)}`,
+      { credentials: "same-origin" },
+    );
+    const data = (await res.json()) as {
+      transactionId?: string;
+      value?: number | null;
+      currency?: string;
+      planId?: SubscriptionPlanId | null;
+      subscriptionId?: string | null;
+      paymentStatus?: string;
+      error?: string;
+    };
+
+    if (!res.ok) {
+      throw new Error(data.error ?? "Could not verify checkout session");
+    }
+
+    const planId = data.planId ?? opts.fallbackPlanId;
+    if (!planId) {
+      throw new Error("Checkout session missing plan");
+    }
+
+    // Still track unpaid/open only if we somehow reached success UI; prefer paid.
+    trackPurchase({
+      planId,
+      transactionId: data.transactionId ?? sessionId,
+      value: data.value,
+      currency: data.currency,
+      subscriptionId: data.subscriptionId,
+    });
+  } catch (error) {
+    console.warn("[analytics] Falling back to plan price for purchase", error);
+    if (opts.fallbackPlanId) {
+      trackPurchase({
+        planId: opts.fallbackPlanId,
+        transactionId: sessionId,
+      });
+    }
   }
 }

@@ -94,6 +94,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       clientSecret: session.client_secret,
+      sessionId: session.id,
       planId,
     });
   } catch (error) {
