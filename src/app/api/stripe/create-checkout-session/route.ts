@@ -26,12 +26,12 @@ export async function POST(request: Request) {
     if (!stripe || !planHasStripeConfig(plan)) {
       return NextResponse.json(
         {
-          demo: true,
-          clientSecret: null,
+          error:
+            "Payments are not configured for this plan yet. Please try another plan or contact support.",
           message:
             "Stripe is not configured. Add price IDs from setup-stripe-subscriptions.ts.",
         },
-        { status: 200 },
+        { status: 503 },
       );
     }
 
@@ -69,6 +69,8 @@ export async function POST(request: Request) {
       customer: customerId,
       client_reference_id: user.id,
       line_items: [{ price: plan.priceId!, quantity: 1 }],
+      // Keep card checkouts in the drawer; only redirect-based methods leave the page.
+      redirect_on_completion: "if_required",
       return_url: `${origin}/dashboard?checkout=success&plan=${planId}&session_id={CHECKOUT_SESSION_ID}`,
       subscription_data: {
         metadata: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -93,9 +93,16 @@ export function CheckoutDrawer({
       if (!res.ok) {
         throw new Error(data.error ?? "Could not start checkout");
       }
-      if (data.demo) {
-        setStep("success");
-        return;
+      if (
+        data.demo ||
+        typeof data.clientSecret !== "string" ||
+        !data.clientSecret
+      ) {
+        throw new Error(
+          typeof data.message === "string"
+            ? data.message
+            : "Payment is unavailable right now. Please try again later.",
+        );
       }
       setClientSecret(data.clientSecret);
       setStep("checkout");
@@ -149,10 +156,13 @@ export function CheckoutDrawer({
   }, [open, planId, checkAuth, preselectedTrade]);
 
   useEffect(() => {
+    // Only celebrate from a Stripe return URL that includes a session id.
+    // Bare ?checkout=success must not unlock the success UI without payment.
     if (searchParams.get("checkout") !== "success") return;
+    const sessionId = searchParams.get("session_id");
+    if (!sessionId) return;
     setStep("success");
     const plan = searchParams.get("plan");
-    const sessionId = searchParams.get("session_id");
     if (planId && isSubscriptionPlanId(planId)) {
       trackPurchase({ planId, transactionId: sessionId });
     } else if (plan && isSubscriptionPlanId(plan)) {
@@ -275,6 +285,22 @@ export function CheckoutDrawer({
     if (oauthError)
       setError(getOAuthErrorMessage(provider, oauthError.message));
   };
+
+  const handleCheckoutComplete = useCallback(() => {
+    if (planId) {
+      trackPurchase({ planId });
+    }
+    setStep("success");
+    router.refresh();
+  }, [planId, router]);
+
+  const embeddedCheckoutOptions = useMemo(
+    () => ({
+      clientSecret: clientSecret ?? "",
+      onComplete: handleCheckoutComplete,
+    }),
+    [clientSecret, handleCheckoutComplete],
+  );
 
   if (!isRendered || !displayPlan) return null;
 
@@ -509,16 +535,7 @@ export function CheckoutDrawer({
             <div className="mt-6">
               <EmbeddedCheckoutProvider
                 stripe={stripePromise}
-                options={{
-                  clientSecret,
-                  onComplete: () => {
-                    if (planId) {
-                      trackPurchase({ planId });
-                    }
-                    setStep("success");
-                    router.refresh();
-                  },
-                }}
+                options={embeddedCheckoutOptions}
               >
                 <EmbeddedCheckout />
               </EmbeddedCheckoutProvider>

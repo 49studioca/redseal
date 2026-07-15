@@ -65,6 +65,10 @@ export function StripeCheckoutPanel({
         if (cancelled) return;
 
         if (!res.ok) {
+          if (res.status === 503) {
+            setDemo(true);
+            return;
+          }
           throw new Error(
             typeof data.error === "string"
               ? data.error

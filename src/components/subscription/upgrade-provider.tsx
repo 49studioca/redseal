@@ -255,7 +255,12 @@ function UpgradeProviderInner({ children }: { children: ReactNode }) {
     const checkout = searchParams.get("checkout");
     const plan = searchParams.get("plan");
     const sessionId = searchParams.get("session_id");
-    if (checkout === "success" && plan && isSubscriptionPlanId(plan)) {
+    if (
+      checkout === "success" &&
+      sessionId &&
+      plan &&
+      isSubscriptionPlanId(plan)
+    ) {
       trackPurchase({ planId: plan, transactionId: sessionId });
       setSelectedPlan(plan);
       setStep("success");
