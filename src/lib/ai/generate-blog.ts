@@ -18,6 +18,11 @@ export interface GenerateBlogInput {
   targetKeywords?: string[];
   tradeContext?: string;
   audience?: string;
+  /** Public URL whose content should inspire a related original article. */
+  sourceUrl?: string;
+  /** Extracted text from sourceUrl (fetched server-side). */
+  sourceContent?: string;
+  sourceTitle?: string;
 }
 
 export interface GeneratedBlogDraft {
@@ -52,6 +57,7 @@ FOLLOW THESE 2026 SEO / GEO (Generative Engine Optimization) RULES:
 - Provide a short FAQ (3-6 Q&As) targeting real "People Also Ask"-style questions in the "faq" field ONLY.
 - Do NOT include an FAQ / "Frequently Asked Questions" section inside content_html — the FAQ is rendered separately from the "faq" field. Never duplicate it in the body.
 - Neutral, helpful, expert tone. No fluff, no hype, no invented statistics or fake citations.
+- If a source link/excerpt is provided: write an ORIGINAL related article for RedSealGuide readers — expand, localize to Canadian Red Seal context, and add exam-prep value. Do NOT copy, paraphrase closely, or reproduce large passages. Treat the source as research inspiration only. Never invent claims the source does not support without clearly framing them as general guidance.
 
 OUTPUT — return VALID JSON ONLY with this exact shape:
 {
@@ -75,11 +81,23 @@ export async function generateBlogDraft(
     return mockBlogDraft(input);
   }
 
+  const sourceBlock =
+    input.sourceUrl || input.sourceContent
+      ? `
+Source link: ${input.sourceUrl ?? "(not provided)"}
+${input.sourceTitle ? `Source page title: ${input.sourceTitle}` : ""}
+Source excerpt (research only — write an original related article, do not copy):
+---
+${(input.sourceContent ?? "").slice(0, 10000) || "(no extractable text — infer topic from the URL and any notes above)"}
+---`
+      : "";
+
   const userPrompt = `Topic / working title: ${input.topic}
 ${input.brief ? `Angle / notes: ${input.brief}` : ""}
 ${input.targetKeywords?.length ? `Target keywords to rank for: ${input.targetKeywords.join(", ")}` : ""}
 ${input.tradeContext ? `Trade focus: ${input.tradeContext}` : "Scope: General Red Seal exam prep content for all Canadian trades (not limited to one trade)."}
 Audience: ${input.audience ?? "Canadian apprentices and journeypersons preparing for Red Seal certification exams"}
+${sourceBlock}
 
 Write the article now. Aim for roughly 900-1400 words of genuinely useful content.`;
 

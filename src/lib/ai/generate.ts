@@ -4,8 +4,16 @@ import type { QuestionOption } from "@/types";
 import { normalizeContentBlocks } from "@/lib/content/normalize-content-blocks";
 import { hasCheckAnswer } from "@/lib/content/check-question-meta";
 import { formatProvincePromptForTrade } from "@/lib/content/province-content";
-import { formatBlockMediaForPrompt } from "@/data/block-media";
+import {
+  formatBlockMediaForPrompt,
+  getBlockMedia,
+} from "@/data/block-media";
 import { embedText, hasEmbeddingProvider } from "@/lib/ai/embeddings";
+import {
+  validateGeneratedFlashcards,
+  validateGeneratedLesson,
+  validateGeneratedQuestion,
+} from "@/lib/ai/generation-quality";
 
 export { embedText, hasEmbeddingProvider };
 
@@ -23,12 +31,15 @@ export interface GenerateQuestionInput {
   tradeCode: string;
   tradeName: string;
   subtaskName: string;
+  taskCode?: string;
   blockName: string;
   questionType: "recall" | "application" | "critical";
   difficulty: number;
   codeVersion?: string;
   province?: string;
   retrievedChunks: ReferenceChunk[];
+  learningFocus?: string;
+  previousStems?: string[];
   tradeProfile?: {
     glossary?: Record<string, string>;
     code_standards?: string[];
@@ -42,7 +53,12 @@ export interface GeneratedQuestion {
   options: QuestionOption[];
   correct_option: "A" | "B" | "C" | "D";
   explanation: string;
-  code_citations: { rule_number: string; section_title?: string; excerpt?: string }[];
+  code_citations: {
+    rule_number: string;
+    section_title?: string;
+    excerpt?: string;
+    doc_id?: string;
+  }[];
   requires_reference: boolean;
 }
 
@@ -73,12 +89,25 @@ export async function generateQuestion(
   if (!openrouter) {
     return mockGenerateQuestion(input);
   }
+  const client = openrouter;
 
   const chunkContext = formatChunksForPrompt(input.retrievedChunks);
   const systemPrompt = `You are an expert Red Seal exam question writer for Canadian trades.
-Generate exam-quality multiple choice questions aligned with RSOS standards.
+Generate one exam-quality multiple-choice question aligned with the stated RSOS task.
 Use Canadian codes and standards only — never US NEC or IPC.
 ${input.tradeProfile?.system_prompt_suffix ?? ""}
+
+LEARNING DESIGN:
+- Require retrieval, application, interpretation, or diagnosis; never merely recognition of an obvious definition.
+- Test one assessable decision and include every fact needed to answer it.
+- For application and critical-thinking items, use a realistic jobsite situation, observation, drawing description, measurement, or test result.
+- Match difficulty through reasoning depth, not obscure trivia or intentionally confusing wording.
+- Do not reveal the answer through option length, grammar, absolutes, or repeated wording from the stem.
+
+SOURCE SAFETY:
+- Treat supplied reference excerpts as the only authority for specific code, rule, and table claims.
+- Never invent a rule number, quotation, source, table value, or code requirement.
+- If no excerpt supports a specific code claim, write a general trade-knowledge question and return code_citations: [].
 
 CRITICAL: For each wrong option (distractor), you MUST provide distractor_rationale explaining the specific student mistake that would lead someone to pick it (e.g., "Student forgot to convert mm to m").
 Distractors must be plausible and diagnose common errors — never random wrong numbers.
@@ -100,30 +129,63 @@ Return valid JSON only with this shape:
 
   const userPrompt = `Trade: ${input.tradeName} (${input.tradeCode})
 Block: ${input.blockName}
-Subtask: ${input.subtaskName}
+RSOS task: ${input.taskCode ? `${input.taskCode}: ` : ""}${input.subtaskName}
 Question type: ${input.questionType}
 Difficulty: ${input.difficulty}/5
+Learning focus: ${input.learningFocus ?? "apply the task accurately in realistic conditions"}
 Code version: ${input.codeVersion ?? "current"}
 ${provinceContext ? `\n${provinceContext}\n` : ""}
 Reference material (cite these in your explanation):
-${chunkContext || "No reference chunks — use general trade knowledge but note if reference would be needed."}
+${chunkContext || "No verified reference excerpts were supplied. Do not cite or assert a specific code value; return code_citations: [] and requires_reference: false."}
 
 Glossary: ${JSON.stringify(input.tradeProfile?.glossary ?? {})}
 Common distractor patterns: ${(input.tradeProfile?.distractor_patterns ?? []).join(", ")}`;
 
-  const response = await openrouter.chat.completions.create({
-    model: CHAT_MODEL,
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    response_format: { type: "json_object" },
-    temperature: 0.7,
-  });
+  const priorStemContext = (input.previousStems ?? [])
+    .slice(-8)
+    .map((stem, index) => `${index + 1}. ${stem}`)
+    .join("\n");
 
-  const content = response.choices[0]?.message?.content;
-  if (!content) throw new Error("No response from AI");
-  return JSON.parse(content) as GeneratedQuestion;
+  const requestOnce = async (retryHint?: string) => {
+    const response = await client.chat.completions.create({
+      model: CHAT_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: `${userPrompt}\n\n${
+            priorStemContext
+              ? `Questions already generated for this task. Create a materially different scenario and decision:\n${priorStemContext}`
+              : "This is the first question for this task."
+          }${retryHint ? `\n\n${retryHint}` : ""}`,
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: retryHint ? 0.35 : 0.45,
+    });
+
+    const content = response.choices[0]?.message?.content;
+    if (!content) throw new Error("No response from AI");
+    return validateGeneratedQuestion(
+      JSON.parse(content) as GeneratedQuestion,
+      input.retrievedChunks,
+      input.previousStems,
+    );
+  };
+
+  try {
+    return await requestOnce();
+  } catch (firstError) {
+    try {
+      return await requestOnce(
+        "RETRY: Return exactly four options as an array with keys A, B, C, and D, each with non-empty text. Distractors need distractor_rationale. Do not invent code citations.",
+      );
+    } catch {
+      throw firstError instanceof Error
+        ? firstError
+        : new Error("Question generation failed validation.");
+    }
+  }
 }
 
 
@@ -133,21 +195,25 @@ Use Canadian codes and standards only — never US NEC, IPC, or OSHA-centric gui
 Write DEEP TEACHING CONTENT — not an exam study guide or RSOS task checklist.
 
 DO:
+- Follow this learning sequence: activate prior knowledge → build a mental model → demonstrate a worked example → guide a partially completed example → present a new jobsite transfer scenario → schedule retrieval checks
 - Teach how to DO the work: procedures, calculations, code rules, tooling, safety, troubleshooting
 - Cover every RSOS task in the user prompt — each task area must appear as taught content (group related tasks under topic headings; do not skip any)
 - Organize by TOPIC (e.g. "Fixture Unit Method", "Lockout / Tagout") — not by RSOS task codes
+- Include at least 3 "heading" blocks that open distinct sections (retrieval, model/procedure, transfer). Never put section titles inside "text" blocks.
 - Write 10–16 content_blocks with substantive paragraphs (3–5 sentences each)
 - Include at least 2 callouts (meta.variant: "tip" or "warning") with practical jobsite advice
-- Include at least 1 worked example; use "math" blocks with LaTeX for formulas
-- Include at least 1 "video" block (YouTube ID in content, title in meta) and 1 "image" block (image URL in content, alt/caption in meta) — use entries from the curated media catalog when provided
+- Include at least 1 fully worked example and 1 guided example that withholds one decision or calculation step from the learner; write them as "text"/"math" blocks (never custom types like guided_example)
+- Use ONLY these block types: heading, text, math, video, image, callout, check_question
+- Include video/image blocks only when exact blocks are supplied in the curated media catalog; never invent or substitute a media URL or YouTube ID
 - In math JSON strings, escape every LaTeX backslash twice (e.g. \\\\frac, \\\\text, \\\\) so JSON parsing preserves them
 - math "content" must be one LaTeX string only — never a nested JSON object; put example narration in a following "text" block
 - Never put \\(...\\) delimiters or English sentences inside math blocks — formula only in math; explanation in the next text block
 - For inline variables in text blocks use \\(L\\) only once — never repeat the plain letter after it (wrong: \\(L\\) L, correct: \\(L\\) is)
 - For display formulas use a dedicated "math" block with LaTeX — not \\[...\\] inside text blocks
-- End with 1–2 "check_question" blocks that test applied understanding (meta.answer required; meta.steps optional for multi-step calcs)
+- Include at least 3 "check_question" blocks across the lesson: an early retrieval check, a guided-practice check, and a final transfer check (meta.answer required; meta.steps optional for multi-step calculations)
 - check_question meta.answer: use plain English, or LaTeX with \\text{} and \\frac{} then a semicolon and variable definitions (e.g. \\text{Voltage Drop} = \\frac{2LI R}{1000}; L = length in meters)
 - Cite specific code rules/tables from the reference material when provided
+- Never invent citations. If the retrieved material does not support a precise code claim, label it as general practice and tell the learner to verify the adopted code or manufacturer instructions.
 - Use trade-accurate units (metric primary, imperial in parentheses where common on jobsites)
 
 DO NOT:
@@ -179,18 +245,22 @@ Use Canadian codes and standards only — never US NEC or OSHA-centric guidance 
 Write DEEP TEACHING CONTENT for this single task — not a checklist and not a thin overview.
 
 DO:
+- Follow this learning sequence: retrieval warm-up → mental model → demonstrated procedure → worked example → guided example → troubleshooting transfer → spaced-review prompts
 - Teach how to DO this specific work: procedures, calculations, code rules, tooling, safety, troubleshooting, commissioning, and maintenance
 - Write 10–14 content_blocks with substantive paragraphs (4–6 sentences each). Prefer depth over brevity.
 - Start with a "heading", then alternate teaching "text" with callouts / worked examples
+- Include at least 3 "heading" blocks total — retrieval warm-up, procedure/model, and transfer/troubleshooting. Never put section titles inside "text" blocks.
 - Include at least 2 callouts (meta.variant: "tip" or "warning") with practical jobsite advice
-- Include at least 1 worked example; use "math" blocks with LaTeX STRING content when calculations apply
+- Include at least 1 fully worked example and 1 guided example that withholds one decision or calculation step; write them as "text"/"math" blocks (never custom types like guided_example or worked_example)
+- Use ONLY these block types: heading, text, math, video, image, callout, check_question
 - Include at least 1 "video" block and 1 "image" block when curated media is provided
 - Use ONLY the video/image blocks from the curated media catalog — do not substitute other YouTube IDs or image URLs
 - EVERY block MUST include both "type" and string "content" — never omit type; never put objects in content
 - video content = YouTube ID string; image content = image URL or asset path string; math content = LaTeX string
 - In math JSON strings, escape every LaTeX backslash twice (e.g. \\\\frac, \\\\text)
-- End with 1–2 "check_question" blocks — each MUST include meta.answer (required) and meta.steps when showing calculation work
+- Include at least 3 "check_question" blocks across the lesson: retrieval, guided practice, and jobsite transfer. Each MUST include meta.answer and meta.steps when showing calculation work.
 - check_question meta.answer: concise model answer (plain English or LaTeX with \\text{}); cite CEC rule numbers when relevant
+- Use a specific rule number only when it appears in the supplied reference material; never fabricate a citation
 
 DO NOT:
 - Cover other RSOS tasks from the same block — stay focused on the one task given
@@ -311,10 +381,25 @@ async function finalizeGeneratedLesson(
   context: {
     tradeName: string;
     tradeCode: string;
+    blockCode: string;
+    taskCode?: string;
     codeVersion?: string;
   },
 ): Promise<GeneratedLesson> {
-  return fillMissingCheckQuestionAnswers(normalizeLessonMath(lesson), context);
+  const withAnswers = await fillMissingCheckQuestionAnswers(
+    normalizeLessonMath(lesson),
+    context,
+  );
+  const media = getBlockMedia(
+    context.tradeCode,
+    context.blockCode,
+    context.taskCode,
+  );
+  return validateGeneratedLesson(withAnswers, {
+    minimumBlocks: context.taskCode ? 10 : 12,
+    allowedVideoIds: media?.video ? [media.video.youtubeId] : [],
+    allowedImageSources: (media?.images ?? []).map((image) => image.src),
+  }) as GeneratedLesson;
 }
 
 export async function generateChapterLesson(input: {
@@ -382,6 +467,7 @@ ${formatBlockMediaForPrompt(input.tradeCode, input.blockCode)}`,
     {
       tradeName: input.tradeName,
       tradeCode: input.tradeCode,
+      blockCode: input.blockCode,
       codeVersion: input.codeVersion,
     },
   );
@@ -449,6 +535,8 @@ ${formatBlockMediaForPrompt(input.tradeCode, input.blockCode, input.task.code)}`
     {
       tradeName: input.tradeName,
       tradeCode: input.tradeCode,
+      blockCode: input.blockCode,
+      taskCode: input.task.code,
       codeVersion: input.codeVersion,
     },
   );
@@ -505,7 +593,10 @@ ${formatChunksForPrompt(input.retrievedChunks) || "No reference chunks — use a
   return JSON.parse(response.choices[0]?.message?.content ?? "{}") as GeneratedLesson;
 }
 
-export async function generateFlashcardsFromLesson(lessonTitle: string, lessonContent: string): Promise<GeneratedFlashcard[]> {
+export async function generateFlashcardsFromLesson(
+  lessonTitle: string,
+  lessonContent: string,
+): Promise<GeneratedFlashcard[]> {
   if (!openrouter) {
     return [
       { front: `Key concept from ${lessonTitle}?`, back: "See lesson for details." },
@@ -515,14 +606,31 @@ export async function generateFlashcardsFromLesson(lessonTitle: string, lessonCo
   const response = await openrouter.chat.completions.create({
     model: CHAT_MODEL,
     messages: [
-      { role: "system", content: "Create 5 spaced-repetition flashcards. Return JSON: { flashcards: [{ front, back }] }" },
+      {
+        role: "system",
+        content: `Create 8–10 high-quality spaced-repetition flashcards from the supplied lesson only.
+
+Cover a deliberate mix of:
+- terminology or conditions that require exact retrieval
+- a procedure step or correct sequence
+- a formula, unit, threshold, or code condition when present
+- safety-critical decisions
+- troubleshooting from symptom to likely cause or next test
+- discrimination between two commonly confused concepts
+
+Each card must test one idea, be answerable without seeing the lesson, and use a concise but explanatory answer. Avoid yes/no questions, vague prompts such as "What is important?", and duplicate facts. Do not introduce facts or citations absent from the lesson.
+
+Return JSON only: { "flashcards": [{ "front": "...", "back": "..." }] }`,
+      },
       { role: "user", content: `Lesson: ${lessonTitle}\n${lessonContent}` },
     ],
     response_format: { type: "json_object" },
   });
 
-  const parsed = JSON.parse(response.choices[0]?.message?.content ?? "{}");
-  return parsed.flashcards ?? [];
+  const parsed = JSON.parse(response.choices[0]?.message?.content ?? "{}") as {
+    flashcards?: GeneratedFlashcard[];
+  };
+  return validateGeneratedFlashcards(parsed.flashcards ?? []);
 }
 
 export interface WordTranslation {

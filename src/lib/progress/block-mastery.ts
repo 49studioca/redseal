@@ -27,17 +27,6 @@ export type WeakBlocksSummary = {
   hasData: boolean;
 };
 
-function toMasteryStats(
-  attempted: number,
-  correct: number,
-): BlockMasteryStats {
-  return {
-    questions_attempted: attempted,
-    questions_correct: correct,
-    mastery_score: attempted ? (correct / attempted) * 100 : 0,
-  };
-}
-
 async function getAuthenticatedUserId(): Promise<string | null> {
   if (!usesSupabaseData()) return null;
   const user = await getServerSessionUser();
@@ -116,6 +105,47 @@ async function upsertSupabaseBlockAnswer(
   return { questions_attempted, questions_correct, mastery_score };
 }
 
+async function upsertSupabaseTaskAnswer(
+  userId: string,
+  tradeId: string,
+  blockId: string,
+  taskCode: string,
+  isCorrect: boolean,
+): Promise<void> {
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from("task_mastery")
+    .select("questions_attempted, questions_correct")
+    .eq("user_id", userId)
+    .eq("trade_id", tradeId)
+    .eq("block_id", blockId)
+    .eq("chapter_task_code", taskCode)
+    .maybeSingle();
+
+  const questions_attempted = (existing?.questions_attempted ?? 0) + 1;
+  const questions_correct =
+    (existing?.questions_correct ?? 0) + (isCorrect ? 1 : 0);
+
+  const { error } = await supabase.from("task_mastery").upsert(
+    {
+      user_id: userId,
+      trade_id: tradeId,
+      block_id: blockId,
+      chapter_task_code: taskCode,
+      questions_attempted,
+      questions_correct,
+      mastery_score: (questions_correct / questions_attempted) * 100,
+      last_practiced_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "user_id,trade_id,block_id,chapter_task_code",
+    },
+  );
+  if (error) {
+    console.error("Failed to upsert task_mastery:", error.message);
+  }
+}
+
 async function applySupabaseBlockExamResults(
   userId: string,
   blockScores: Record<string, { correct: number; total: number }>,
@@ -171,13 +201,25 @@ export async function recordBlockAnswer(
   tradeId: string,
   blockId: string,
   isCorrect: boolean,
+  taskCode?: string,
 ): Promise<BlockMasteryStats> {
   const cookieStore = await cookies();
   const userId = await getAuthenticatedUserId();
 
   if (userId) {
     const saved = await upsertSupabaseBlockAnswer(userId, blockId, isCorrect);
-    if (saved) return saved;
+    if (saved) {
+      if (taskCode) {
+        await upsertSupabaseTaskAnswer(
+          userId,
+          tradeId,
+          blockId,
+          taskCode,
+          isCorrect,
+        );
+      }
+      return saved;
+    }
   }
 
   return recordDemoBlockAnswer(cookieStore, tradeId, blockId, isCorrect);

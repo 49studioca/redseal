@@ -23,12 +23,7 @@ import {
 } from "./lesson-structure";
 import { computePracticeQuestionCount } from "./practice-questions";
 import { shuffleQuestionOptions } from "@/lib/practice/shuffle-options";
-
-const QUESTION_TYPES: Question["question_type"][] = [
-  "recall",
-  "application",
-  "critical",
-];
+import { buildQuestionBlueprints } from "@/lib/ai/generation-quality";
 
 export interface GenerateBlockContentInput {
   supabase: SupabaseClient;
@@ -55,36 +50,44 @@ export interface GenerateBlockContentInput {
   };
 }
 
-function distributeQuestionCounts(
+export function distributeQuestionCounts(
   tasks: RsosChapterTask[],
   total: number,
 ): Array<{ task: RsosChapterTask; count: number }> {
   if (tasks.length === 0) {
     return [{ task: { code: "?", name: "General", exam_question_count: total }, count: total }];
   }
-  const taskTotal = tasks.reduce((n, t) => n + t.exam_question_count, 0);
-  const plan: Array<{ task: RsosChapterTask; count: number }> = [];
-  let assigned = 0;
-
-  for (let i = 0; i < tasks.length; i++) {
-    const task = tasks[i];
-    const isLast = i === tasks.length - 1;
-    const count = isLast
-      ? total - assigned
-      : Math.max(1, Math.round((task.exam_question_count / taskTotal) * total));
-    plan.push({ task, count });
-    assigned += count;
+  const safeTotal = Math.max(0, Math.floor(total));
+  const taskWeightTotal = tasks.reduce(
+    (sum, task) => sum + Math.max(0, task.exam_question_count),
+    0,
+  );
+  const basePerTask = safeTotal >= tasks.length ? 1 : 0;
+  const remaining = safeTotal - basePerTask * tasks.length;
+  const weighted = tasks.map((task, index) => {
+    const weight =
+      taskWeightTotal > 0
+        ? Math.max(0, task.exam_question_count) / taskWeightTotal
+        : 1 / tasks.length;
+    const exactExtra = remaining * weight;
+    const extra = Math.floor(exactExtra);
+    return {
+      task,
+      index,
+      count: basePerTask + extra,
+      remainder: exactExtra - extra,
+    };
+  });
+  let assigned = weighted.reduce((sum, entry) => sum + entry.count, 0);
+  for (const entry of [...weighted].sort((a, b) => {
+    if (b.remainder !== a.remainder) return b.remainder - a.remainder;
+    return a.index - b.index;
+  })) {
+    if (assigned >= safeTotal) break;
+    entry.count += 1;
+    assigned += 1;
   }
-
-  while (assigned > total) {
-    const last = plan[plan.length - 1];
-    if (last.count > 1) {
-      last.count--;
-      assigned--;
-    } else break;
-  }
-
-  return plan;
+  return weighted.map(({ task, count }) => ({ task, count }));
 }
 
 export async function generateAndPersistBlockContent(
@@ -97,11 +100,14 @@ export async function generateAndPersistBlockContent(
     input.block.code,
   );
 
+  const reviewStatus =
+    input.retrievedChunks.length > 0 ? "approved" : "draft";
   const result: {
     lessonId?: string;
     questionIds: string[];
     flashcardIds: string[];
-  } = { questionIds: [], flashcardIds: [] };
+    reviewStatus: "draft" | "approved";
+  } = { questionIds: [], flashcardIds: [], reviewStatus };
 
   let lessonText = "";
 
@@ -119,6 +125,9 @@ export async function generateAndPersistBlockContent(
         if (i > 0) {
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
+        console.log(
+          `  … lesson ${i + 1}/${input.chapterTasks.length}: ${task.code} ${task.name}`,
+        );
         const lesson = await generateTaskLesson({
           tradeName: input.trade.name,
           tradeCode: input.trade.code,
@@ -140,11 +149,13 @@ export async function generateAndPersistBlockContent(
           codeVersion: input.codeVersion,
           province: input.province,
           taskCode: task.code,
+          reviewStatus,
           lesson,
         });
         if (!result.lessonId) result.lessonId = saved.id as string;
 
         if (!input.options?.skipFlashcards) {
+          console.log(`  … flashcards for ${task.code}`);
           const taskText = lesson.content_blocks.map((b) => b.content).join("\n");
           const cards = await generateFlashcardsFromLesson(
             `${task.code}: ${lesson.title}`,
@@ -156,7 +167,7 @@ export async function generateAndPersistBlockContent(
             codeVersion: input.codeVersion,
             province: input.province,
             cards,
-            reviewStatus: "approved",
+            reviewStatus,
           });
           result.flashcardIds.push(
             ...flashcardIds.map((row) => row.id as string),
@@ -185,6 +196,7 @@ export async function generateAndPersistBlockContent(
         sortOrder: input.block.sort_order,
         codeVersion: input.codeVersion,
         province: input.province,
+        reviewStatus,
         lesson,
       });
       result.lessonId = saved.id as string;
@@ -204,29 +216,39 @@ export async function generateAndPersistBlockContent(
       generated: Awaited<ReturnType<typeof generateQuestion>>;
       questionType: Question["question_type"];
       difficulty: number;
+      taskCode?: string;
       subtaskName: string;
     }> = [];
 
-    let qi = 0;
+    let questionIndex = 0;
     for (const { task, count } of plan) {
-      for (let i = 0; i < count; i++) {
-        const questionType = QUESTION_TYPES[qi % QUESTION_TYPES.length];
-        const difficulty = (qi % 5) + 1;
+      const previousStems: string[] = [];
+      const blueprints = buildQuestionBlueprints(count);
+      for (let i = 0; i < blueprints.length; i++) {
+        const { questionType, difficulty, focus } = blueprints[i];
+        questionIndex += 1;
+        console.log(
+          `  … question ${questionIndex}/${total}: ${task.code} (${questionType}, d${difficulty})`,
+        );
         const gq = await generateQuestion({
           tradeCode: input.trade.code,
           tradeName: input.trade.name,
           subtaskName: task.name,
+          taskCode: task.code === "?" ? undefined : task.code,
           blockName: input.block.name,
           questionType,
           difficulty,
+          learningFocus: focus,
+          previousStems,
           codeVersion: input.codeVersion,
           province: input.province,
           retrievedChunks: input.retrievedChunks,
           tradeProfile: input.tradeProfile,
         });
+        previousStems.push(gq.stem);
         generated.push({
           generated: shuffleQuestionOptions({
-            id: `gen-${qi}`,
+            id: `gen-${task.code}-${i}`,
             trade_id: input.trade.id,
             block_id: input.block.id,
             stem: gq.stem,
@@ -243,9 +265,9 @@ export async function generateAndPersistBlockContent(
           }),
           questionType,
           difficulty,
+          taskCode: task.code === "?" ? undefined : task.code,
           subtaskName: task.name,
         });
-        qi++;
       }
     }
 
@@ -258,6 +280,7 @@ export async function generateAndPersistBlockContent(
       blockId,
       codeVersion: input.codeVersion,
       province: input.province,
+      reviewStatus,
       questions: generated.map((q) => ({
         generated: {
           stem: q.generated.stem,
@@ -269,6 +292,7 @@ export async function generateAndPersistBlockContent(
         },
         questionType: q.questionType,
         difficulty: q.difficulty,
+        taskCode: q.taskCode,
         subtaskName: q.subtaskName,
       })),
     });
@@ -311,7 +335,7 @@ export async function generateAndPersistBlockContent(
         codeVersion: input.codeVersion,
         province: input.province,
         cards,
-        reviewStatus: "approved",
+        reviewStatus,
       });
       result.flashcardIds = saved.map((r) => r.id as string);
     }

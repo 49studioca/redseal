@@ -80,6 +80,7 @@ export async function upsertApprovedLesson(
     codeVersion?: string;
     province?: string;
     taskCode?: string;
+    reviewStatus?: "draft" | "approved";
     lesson: GeneratedLesson;
   },
 ) {
@@ -110,7 +111,7 @@ export async function upsertApprovedLesson(
     code_version: input.codeVersion,
     province: input.province ?? null,
     chapter_task_code: input.taskCode ?? null,
-    review_status: "approved" as const,
+    review_status: input.reviewStatus ?? "approved",
   };
 
   if (existing?.id) {
@@ -140,10 +141,12 @@ export async function appendBlockQuestions(
     blockId: string;
     codeVersion?: string;
     province?: string;
+    reviewStatus?: "draft" | "approved";
     questions: Array<{
       generated: GeneratedQuestion;
       questionType: Question["question_type"];
       difficulty: number;
+      taskCode?: string;
       subtaskName: string;
     }>;
   },
@@ -160,10 +163,11 @@ export async function appendBlockQuestions(
     code_citations: q.generated.code_citations,
     question_type: q.questionType,
     difficulty: q.difficulty,
+    chapter_task_code: q.taskCode ?? null,
     code_version: input.codeVersion,
     province: input.province ?? null,
     requires_reference: q.generated.requires_reference,
-    review_status: "approved" as const,
+    review_status: input.reviewStatus ?? "approved",
   }));
 
   const { data, error } = await supabase
@@ -181,23 +185,26 @@ export async function replaceBlockQuestions(
     blockId: string;
     codeVersion?: string;
     province?: string;
+    reviewStatus?: "draft" | "approved";
     questions: Array<{
       generated: GeneratedQuestion;
       questionType: Question["question_type"];
       difficulty: number;
+      taskCode?: string;
       subtaskName: string;
     }>;
   },
 ) {
-  let deleteQuery = supabase
+  let existingQuery = supabase
     .from("questions")
-    .delete()
+    .select("id")
     .eq("trade_id", input.tradeId)
     .eq("block_id", input.blockId);
-  deleteQuery = input.province
-    ? deleteQuery.eq("province", input.province)
-    : deleteQuery.is("province", null);
-  await deleteQuery;
+  existingQuery = input.province
+    ? existingQuery.eq("province", input.province)
+    : existingQuery.is("province", null);
+  const { data: existingRows, error: existingError } = await existingQuery;
+  if (existingError) throw existingError;
 
   if (input.questions.length === 0) return [];
 
@@ -211,17 +218,43 @@ export async function replaceBlockQuestions(
     code_citations: q.generated.code_citations,
     question_type: q.questionType,
     difficulty: q.difficulty,
+    chapter_task_code: q.taskCode ?? null,
     code_version: input.codeVersion,
     province: input.province ?? null,
     requires_reference: q.generated.requires_reference,
-    review_status: "approved" as const,
+    review_status: input.reviewStatus ?? "approved",
   }));
 
+  // Insert replacements first so a failed insert leaves the live bank intact.
+  // If the subsequent delete fails, roll back the new rows to avoid duplicates.
   const { data, error } = await supabase
     .from("questions")
     .insert(rows)
     .select("id");
   if (error) throw error;
+
+  const insertedIds = (data ?? []).map((row) => row.id as string);
+  const existingIds = (existingRows ?? []).map((row) => row.id as string);
+  if (existingIds.length > 0) {
+    const { error: deleteError } = await supabase
+      .from("questions")
+      .delete()
+      .in("id", existingIds);
+    if (deleteError) {
+      if (insertedIds.length > 0) {
+        const { error: rollbackError } = await supabase
+          .from("questions")
+          .delete()
+          .in("id", insertedIds);
+        if (rollbackError) {
+          throw new Error(
+            `Failed to delete replaced questions (${deleteError.message}); also failed to roll back inserted questions (${rollbackError.message}).`,
+          );
+        }
+      }
+      throw deleteError;
+    }
+  }
   return data ?? [];
 }
 

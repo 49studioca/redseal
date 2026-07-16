@@ -293,7 +293,7 @@ export default function PracticePage() {
   };
 
   const handleAnswer = useCallback(
-    (_option: string, isCorrect: boolean) => {
+    (option: string, isCorrect: boolean) => {
       const q = questions[currentIndex];
       if (!q?.block_id) return;
       trackEvent("practice_answer", {
@@ -309,6 +309,9 @@ export default function PracticePage() {
         body: JSON.stringify({
           trade_id: trade.id,
           block_id: q.block_id,
+          question_id: q.id,
+          chapter_task_code: q.chapter_task_code,
+          selected_option: option,
           is_correct: isCorrect,
         }),
       });

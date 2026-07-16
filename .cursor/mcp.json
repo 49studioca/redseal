@@ -4,9 +4,26 @@
       "command": "python",
       "args": ["-m", "pipx", "run", "analytics-mcp"],
       "env": {
-        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\rezah\\AppData\\Roaming\\gcloud\\application_default_credentials.json",
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\rezah\\gcloud-config\\application_default_credentials.json",
         "GOOGLE_PROJECT_ID": "redseal-guide",
         "GOOGLE_CLOUD_PROJECT": "redseal-guide"
+      }
+    },
+    "google-ads-mcp": {
+      "command": "python",
+      "args": [
+        "-m",
+        "pipx",
+        "run",
+        "--spec",
+        "git+https://github.com/googleads/google-ads-mcp.git",
+        "google-ads-mcp"
+      ],
+      "env": {
+        "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\rezah\\gcloud-config\\application_default_credentials.json",
+        "GOOGLE_PROJECT_ID": "redseal-guide",
+        "GOOGLE_CLOUD_PROJECT": "redseal-guide",
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "${env:GOOGLE_ADS_DEVELOPER_TOKEN}"
       }
     }
   }

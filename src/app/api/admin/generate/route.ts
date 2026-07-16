@@ -93,6 +93,9 @@ export async function POST(request: Request) {
   const resolvedBlockName = block_name ?? block.name;
   const resolvedSubtask =
     subtask_name ?? chapterTasks[0]?.name ?? "General subtask";
+  const resolvedTaskCode = chapterTasks.find(
+    (task) => task.name === resolvedSubtask,
+  )?.code;
 
   let output: GeneratedQuestion | GeneratedLesson | { flashcards: GeneratedFlashcard[] };
   try {
@@ -133,7 +136,7 @@ export async function POST(request: Request) {
         practice_question_count: practiceCount,
         append: append_questions,
         question_ids: result.questionIds,
-        review_status: "approved",
+        review_status: result.reviewStatus,
       });
     }
 
@@ -142,6 +145,7 @@ export async function POST(request: Request) {
         tradeCode: trade.code,
         tradeName: trade.name,
         subtaskName: resolvedSubtask,
+        taskCode: resolvedTaskCode,
         blockName: resolvedBlockName,
         questionType: question_type,
         difficulty,

@@ -1,11 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import Script from "next/script";
 import {
   Barlow,
   Barlow_Condensed,
   Barlow_Semi_Condensed,
   IBM_Plex_Mono,
 } from "next/font/google";
+import { GOOGLE_ADS_ID } from "@/lib/analytics/google-ads";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
@@ -108,6 +110,9 @@ export default function RootLayout({
       >
         {children}
         <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />
+        <Script id="google-ads-config" strategy="afterInteractive">
+          {`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('config','${GOOGLE_ADS_ID}');`}
+        </Script>
       </body>
     </html>
   );

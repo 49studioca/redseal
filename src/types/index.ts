@@ -75,6 +75,8 @@ export interface Question {
   trade_id: string;
   subtask_id?: string;
   block_id?: string;
+  /** RSOS exam task code used to generate and assess this question. */
+  chapter_task_code?: string;
   stem: string;
   options: QuestionOption[];
   correct_option: "A" | "B" | "C" | "D";

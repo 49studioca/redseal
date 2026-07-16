@@ -171,7 +171,7 @@ async function main() {
         },
       });
       console.log(
-        `  ✓ lesson=${result.lessonId ?? "skipped"} questions=${result.questionIds.length} flashcards=${result.flashcardIds.length}`,
+        `  ✓ lesson=${result.lessonId ?? "skipped"} questions=${result.questionIds.length} flashcards=${result.flashcardIds.length} status=${result.reviewStatus}`,
       );
     } catch (err) {
       console.error(`  ✗ failed:`, err instanceof Error ? err.message : err);

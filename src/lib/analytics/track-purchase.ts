@@ -1,6 +1,7 @@
 "use client";
 
 import { readAdClickParamsFromDocument } from "@/lib/analytics/ad-click-ids";
+import { GOOGLE_ADS_SUBSCRIBE_SEND_TO } from "@/lib/analytics/google-ads";
 import { getPlan, type SubscriptionPlanId } from "@/lib/stripe/plans";
 import { trackEvent } from "@/lib/analytics/track-event";
 
@@ -64,6 +65,16 @@ function emitPurchase(data: PurchaseAnalytics): void {
     plan_id: plan.id,
     plan_name: plan.name,
   });
+
+  // Google Ads "Subscribe (1)" conversion — once per Checkout Session (same dedupe as above).
+  if (typeof window !== "undefined") {
+    window.gtag?.("event", "conversion", {
+      send_to: GOOGLE_ADS_SUBSCRIBE_SEND_TO,
+      value: data.value,
+      currency: data.currency,
+      transaction_id: data.transactionId,
+    });
+  }
 }
 
 /**

@@ -110,6 +110,7 @@ export function BlogEditorForm({ postId }: { postId?: string }) {
 
   // AI generation inputs
   const [aiTopic, setAiTopic] = useState("");
+  const [aiSourceUrl, setAiSourceUrl] = useState("");
   const [aiBrief, setAiBrief] = useState("");
   const [aiKeywords, setAiKeywords] = useState("");
 
@@ -140,8 +141,8 @@ export function BlogEditorForm({ postId }: { postId?: string }) {
   const isPublished = isEditing && form.status === "published";
 
   const runAiGenerate = async () => {
-    if (!aiTopic.trim()) {
-      setError("Enter a topic to generate content.");
+    if (!aiTopic.trim() && !aiSourceUrl.trim()) {
+      setError("Enter a topic or paste a source link.");
       return;
     }
     setGenerating(true);
@@ -153,6 +154,7 @@ export function BlogEditorForm({ postId }: { postId?: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           topic: aiTopic,
+          sourceUrl: aiSourceUrl,
           brief: aiBrief,
           targetKeywords: aiKeywords,
           tradeContext: selectedTrade
@@ -178,8 +180,11 @@ export function BlogEditorForm({ postId }: { postId?: string }) {
         content_html: d.content_html || f.content_html,
         faq: Array.isArray(d.faq) ? d.faq : f.faq,
       }));
+      const sourceLabel = data.source?.title || data.source?.url;
       setNotice(
-        "AI draft loaded into the form. Review, then generate a cover image and publish.",
+        sourceLabel
+          ? `AI draft loaded from “${sourceLabel}”. Review, then generate a cover image and publish.`
+          : "AI draft loaded into the form. Review, then generate a cover image and publish.",
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : "Generation failed");
@@ -398,14 +403,24 @@ export function BlogEditorForm({ postId }: { postId?: string }) {
           <h2 className="font-semibold">AI content generator</h2>
         </div>
         <p className="mt-1 text-xs text-[#64748B]">
-          Describe the topic; the AI writes an SEO-optimized draft and fills the
-          fields below (title, slug, meta, tags, FAQ, and body).
+          Paste a source link and/or describe a topic. The AI writes an original
+          SEO draft related to that content and fills the fields below.
         </p>
         <div className="mt-3 grid gap-3">
+          <div>
+            <label className={labelClass}>Source link</label>
+            <input
+              type="url"
+              value={aiSourceUrl}
+              onChange={(e) => setAiSourceUrl(e.target.value)}
+              placeholder="https://… — article, guide, or page to base the post on"
+              className={inputClass}
+            />
+          </div>
           <input
             value={aiTopic}
             onChange={(e) => setAiTopic(e.target.value)}
-            placeholder="Topic or working title, e.g. How to pass the 309A electrician Red Seal exam"
+            placeholder="Topic or working title (optional if you pasted a link)"
             className={inputClass}
           />
           <div className="grid gap-3 sm:grid-cols-2">
@@ -447,7 +462,10 @@ export function BlogEditorForm({ postId }: { postId?: string }) {
             >
               {generating ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Generating…
+                  <Loader2 className="h-4 w-4 animate-spin" />{" "}
+                  {aiSourceUrl.trim()
+                    ? "Reading link & generating…"
+                    : "Generating…"}
                 </>
               ) : (
                 <>

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { assertAdminApi } from "@/lib/admin/require-admin";
 import { generateBlogDraft } from "@/lib/ai/generate-blog";
+import { fetchSourcePage } from "@/lib/blog/fetch-source-url";
 import {
   sanitizeHtml,
   slugify,
@@ -18,9 +19,10 @@ export async function POST(request: Request) {
 
   const body = await request.json().catch(() => ({}));
   const topic = String(body.topic ?? "").trim();
-  if (!topic) {
+  const sourceUrl = String(body.sourceUrl ?? "").trim();
+  if (!topic && !sourceUrl) {
     return NextResponse.json(
-      { error: "Enter a topic or working title." },
+      { error: "Enter a topic or paste a source link." },
       { status: 400 },
     );
   }
@@ -35,12 +37,19 @@ export async function POST(request: Request) {
       : [];
 
   try {
+    const source = sourceUrl ? await fetchSourcePage(sourceUrl) : null;
     const draft = await generateBlogDraft({
-      topic,
+      topic:
+        topic ||
+        source?.title ||
+        `Red Seal guide related to ${source?.url ?? "source link"}`,
       brief: body.brief ? String(body.brief) : undefined,
       targetKeywords,
       tradeContext: body.tradeContext ? String(body.tradeContext) : undefined,
       audience: body.audience ? String(body.audience) : undefined,
+      sourceUrl: source?.url ?? (sourceUrl || undefined),
+      sourceTitle: source?.title || undefined,
+      sourceContent: source?.text || undefined,
     });
 
     // FAQ is stored/rendered as structured data, so keep it out of the body.
@@ -53,6 +62,9 @@ export async function POST(request: Request) {
         content_html: contentHtml,
         reading_minutes: estimateReadingMinutes(contentHtml),
       },
+      source: source
+        ? { url: source.url, title: source.title || null }
+        : null,
     });
   } catch (err) {
     return NextResponse.json(

@@ -3,7 +3,10 @@
 -- original TipTap JSON document), with full SEO metadata for 2026 search + AI
 -- answer engines. Public reads are limited to published posts; all writes go
 -- through the service role / admins.
-CREATE TABLE blog_posts (
+--
+-- Idempotent: remote may already have blog_posts from an earlier manual apply
+-- that was never recorded in supabase_migrations.
+CREATE TABLE IF NOT EXISTS blog_posts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   slug TEXT NOT NULL UNIQUE,
   title TEXT NOT NULL,
@@ -38,21 +41,24 @@ CREATE TABLE blog_posts (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX idx_blog_posts_status_published ON blog_posts (status, published_at DESC);
-CREATE INDEX idx_blog_posts_slug ON blog_posts (slug);
-CREATE INDEX idx_blog_posts_trade_slug ON blog_posts (trade_slug) WHERE trade_slug IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_blog_posts_status_published ON blog_posts (status, published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_slug ON blog_posts (slug);
+CREATE INDEX IF NOT EXISTS idx_blog_posts_trade_slug ON blog_posts (trade_slug) WHERE trade_slug IS NOT NULL;
 
+DROP TRIGGER IF EXISTS blog_posts_updated_at ON blog_posts;
 CREATE TRIGGER blog_posts_updated_at BEFORE UPDATE ON blog_posts
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 ALTER TABLE blog_posts ENABLE ROW LEVEL SECURITY;
 
 -- Anyone (including anonymous visitors) may read published posts.
+DROP POLICY IF EXISTS "blog_posts_public_read_published" ON blog_posts;
 CREATE POLICY "blog_posts_public_read_published" ON blog_posts
   FOR SELECT
   USING (status = 'published');
 
 -- Admins can read every post (drafts included).
+DROP POLICY IF EXISTS "blog_posts_admin_read_all" ON blog_posts;
 CREATE POLICY "blog_posts_admin_read_all" ON blog_posts
   FOR SELECT
   USING (
@@ -62,6 +68,7 @@ CREATE POLICY "blog_posts_admin_read_all" ON blog_posts
   );
 
 -- Admins can insert, update, and delete posts.
+DROP POLICY IF EXISTS "blog_posts_admin_insert" ON blog_posts;
 CREATE POLICY "blog_posts_admin_insert" ON blog_posts
   FOR INSERT
   WITH CHECK (
@@ -70,6 +77,7 @@ CREATE POLICY "blog_posts_admin_insert" ON blog_posts
     )
   );
 
+DROP POLICY IF EXISTS "blog_posts_admin_update" ON blog_posts;
 CREATE POLICY "blog_posts_admin_update" ON blog_posts
   FOR UPDATE
   USING (
@@ -78,6 +86,7 @@ CREATE POLICY "blog_posts_admin_update" ON blog_posts
     )
   );
 
+DROP POLICY IF EXISTS "blog_posts_admin_delete" ON blog_posts;
 CREATE POLICY "blog_posts_admin_delete" ON blog_posts
   FOR DELETE
   USING (
