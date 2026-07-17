@@ -23,7 +23,8 @@
         "GOOGLE_APPLICATION_CREDENTIALS": "C:\\Users\\rezah\\gcloud-config\\application_default_credentials.json",
         "GOOGLE_PROJECT_ID": "redseal-guide",
         "GOOGLE_CLOUD_PROJECT": "redseal-guide",
-        "GOOGLE_ADS_DEVELOPER_TOKEN": "${env:GOOGLE_ADS_DEVELOPER_TOKEN}"
+        "GOOGLE_ADS_DEVELOPER_TOKEN": "${env:GOOGLE_ADS_DEVELOPER_TOKEN}",
+        "GOOGLE_ADS_LOGIN_CUSTOMER_ID": "6079555378"
       }
     }
   }
