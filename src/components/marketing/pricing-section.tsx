@@ -18,6 +18,16 @@ import {
 } from "@/lib/stripe/plans";
 import { planCheckoutItems } from "@/lib/analytics/checkout-items";
 import { flushPendingAuthEvent, trackEvent } from "@/lib/analytics/track-event";
+import {
+  discountedPrice,
+  ensurePricingOfferStarted,
+  formatCadPrice,
+  formatOfferCountdown,
+  getPricingOfferState,
+  PRICING_OFFER_PERCENT,
+  readPricingOfferCookie,
+  type PricingOfferState,
+} from "@/lib/pricing-offer";
 import { TRADES } from "@/data/seed";
 import { cn } from "@/lib/utils";
 
@@ -47,12 +57,14 @@ const plans = [
     id: "monthly" as const,
     name: "Monthly",
     accent: "text-[#C0271E]",
+    listPrice: 59.99,
     price: "$59.99",
     per: "/ month",
     sub: "Flexible month-to-month",
     compareAt: null as string | null,
     save: null as string | null,
     equiv: null as string | null,
+    months: 1,
     cta: "Get Monthly",
     popular: false,
     dark: false,
@@ -61,12 +73,14 @@ const plans = [
     id: "quarterly" as const,
     name: "Exam Prep",
     accent: "text-white",
+    listPrice: 99.99,
     price: "$99.99",
     per: "/ 3 months",
     sub: "One exam cycle of access",
     compareAt: "$179.97",
     save: "Save 44%",
     equiv: "That's $33 / mo",
+    months: 3,
     cta: "Get Exam Prep",
     popular: true,
     dark: true,
@@ -75,17 +89,41 @@ const plans = [
     id: "annual" as const,
     name: "Annual",
     accent: "text-[#C0271E]",
+    listPrice: 199.99,
     price: "$199.99",
     per: "/ year",
     sub: "For long prep or multiple trades",
     compareAt: "$719.88",
     save: "Save 72%",
     equiv: "$17 / mo",
+    months: 12,
     cta: "Get Annual",
     popular: false,
     dark: false,
   },
 ];
+
+function planDisplay(plan: (typeof plans)[number], offerActive: boolean) {
+  if (!offerActive) {
+    return {
+      price: plan.price,
+      compareAt: plan.compareAt,
+      save: plan.save,
+      equiv: plan.equiv,
+    };
+  }
+  const sale = discountedPrice(plan.listPrice);
+  const perMonth = Math.round(sale / plan.months);
+  return {
+    price: formatCadPrice(sale),
+    compareAt: plan.price,
+    save: `${PRICING_OFFER_PERCENT}% off`,
+    equiv:
+      plan.months > 1
+        ? `That's $${perMonth} / mo`
+        : ("Limited offer" as string),
+  };
+}
 
 function PricingSectionInner({
   defaultTradeSlug = null,
@@ -100,6 +138,20 @@ function PricingSectionInner({
     null,
   );
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [offer, setOffer] = useState<PricingOfferState | null>(null);
+
+  useEffect(() => {
+    const state = ensurePricingOfferStarted();
+    setOffer(state);
+    if (!state.active) return;
+
+    const tick = window.setInterval(() => {
+      const next = getPricingOfferState(readPricingOfferCookie());
+      setOffer(next);
+      if (!next.active) window.clearInterval(tick);
+    }, 1000);
+    return () => window.clearInterval(tick);
+  }, []);
 
   const pathTradeSlug = pathname?.startsWith("/trades/")
     ? pathname.split("/")[2] || null
@@ -186,6 +238,25 @@ function PricingSectionInner({
               Start free, see how the lessons work, then upgrade only if the
               full practice library is right for you.
             </p>
+            {offer?.active && (
+              <div
+                className="pricing-badge-pulse mt-4 inline-flex max-w-full flex-col items-center gap-1 rounded-[14px] border border-[#F5C2C0] bg-gradient-to-r from-[#FFF5F5] to-[#FCEBEC] px-4 py-3 text-[#9F1D18] sm:mt-5 sm:px-5"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="flex flex-wrap items-center justify-center gap-1.5 text-[12px] font-extrabold uppercase tracking-wide sm:text-[13px]">
+                  <Tag className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {PRICING_OFFER_PERCENT}% off — ends in{" "}
+                  <span className="tabular-nums text-[#D8232A]">
+                    {formatOfferCountdown(offer.remainingMs)}
+                  </span>
+                </div>
+                <p className="text-[12px] font-semibold normal-case tracking-normal text-[#B6291F] sm:text-[13px]">
+                  Your personal deal lasts 24 hours. Get it soon before it
+                  disappears.
+                </p>
+              </div>
+            )}
             <div className="mt-4 inline-flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-full bg-[#FCEBEC] px-3 py-1.5 text-[11px] font-bold text-[#B6291F] sm:mt-5 sm:gap-2 sm:px-[15px] sm:py-[7px] sm:text-[13.5px]">
               <Tag className="h-3.5 w-3.5 sm:h-[15px] sm:w-[15px]" />
               Free to try · cancel anytime ·{" "}
@@ -211,118 +282,121 @@ function PricingSectionInner({
           </div>
 
           <div className="mt-8 grid items-stretch gap-4 sm:mt-12 sm:gap-5 md:grid-cols-3 md:items-end">
-            {plans.map((plan, index) => (
-              <div
-                key={plan.id}
-                className={cn(
-                  "pricing-reveal pricing-card relative flex flex-col rounded-[18px] p-5 sm:p-7",
-                  `pricing-reveal-delay-${index + 1}`,
-                  visible && "is-visible",
-                  plan.dark
-                    ? "pricing-card-popular z-[1] border-[1.5px] border-white/40 bg-gradient-to-br from-[#E0392F] to-[#C2151B] text-white md:-mb-2 md:min-h-[300px] md:scale-[1.03]"
-                    : "min-h-[260px] border border-[#E5E0D8] bg-white text-[#1F2A37] shadow-sm hover:border-[#C0271E]/35 hover:shadow-md",
-                )}
-              >
-                {plan.popular && (
-                  <div className="pricing-badge-pulse absolute right-3 top-3 rounded-[7px] bg-white px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#D8232A] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-[11px]">
-                    One exam cycle
-                  </div>
-                )}
+            {plans.map((plan, index) => {
+              const display = planDisplay(plan, Boolean(offer?.active));
+              return (
                 <div
+                  key={plan.id}
                   className={cn(
-                    "font-[family-name:var(--font-barlow-semi)] text-xs font-bold uppercase tracking-wide sm:text-sm",
-                    plan.accent,
-                    plan.popular && "pr-28",
+                    "pricing-reveal pricing-card relative flex flex-col rounded-[18px] p-5 sm:p-7",
+                    `pricing-reveal-delay-${index + 1}`,
+                    visible && "is-visible",
+                    plan.dark
+                      ? "pricing-card-popular z-[1] border-[1.5px] border-white/40 bg-gradient-to-br from-[#E0392F] to-[#C2151B] text-white md:-mb-2 md:min-h-[300px] md:scale-[1.03]"
+                      : "min-h-[260px] border border-[#E5E0D8] bg-white text-[#1F2A37] shadow-sm hover:border-[#C0271E]/35 hover:shadow-md",
                   )}
                 >
-                  {plan.name}
-                </div>
-                <div className="mt-3 flex min-h-[22px] items-center gap-2 sm:mt-4">
-                  {plan.compareAt && (
-                    <>
-                      <span
-                        className={cn(
-                          "text-sm font-semibold line-through sm:text-[15px]",
-                          plan.dark ? "text-white/60" : "text-[#94A3B8]",
-                        )}
-                      >
-                        {plan.compareAt}
-                      </span>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide sm:text-[11px]",
-                          plan.dark
-                            ? "bg-[#FFD84D] text-[#7C2D12]"
-                            : "border border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]",
-                        )}
-                      >
-                        {plan.save}
-                      </span>
-                    </>
+                  {plan.popular && (
+                    <div className="pricing-badge-pulse absolute right-3 top-3 rounded-[7px] bg-white px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#D8232A] sm:right-4 sm:top-4 sm:px-2.5 sm:py-1 sm:text-[11px]">
+                      One exam cycle
+                    </div>
                   )}
-                </div>
-                <div className="mt-1.5 flex items-baseline gap-1.5">
-                  <span
+                  <div
                     className={cn(
-                      "inline-flex items-start font-[family-name:var(--font-barlow-condensed)] font-bold leading-none",
-                      plan.dark ? "text-white" : "text-[#1F2A37]",
+                      "font-[family-name:var(--font-barlow-semi)] text-xs font-bold uppercase tracking-wide sm:text-sm",
+                      plan.accent,
+                      plan.popular && "pr-28",
                     )}
                   >
-                    <span className="text-[40px] sm:text-[50px]">
-                      {plan.price.split(".")[0]}
-                    </span>
-                    <span className="mt-1 text-[18px] leading-none sm:mt-1.5 sm:text-[22px]">
-                      .{plan.price.split(".")[1]}
-                    </span>
-                  </span>
-                  <span
-                    className={cn(
-                      "text-sm font-semibold sm:text-[15px]",
-                      plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]",
+                    {plan.name}
+                  </div>
+                  <div className="mt-3 flex min-h-[22px] items-center gap-2 sm:mt-4">
+                    {display.compareAt && (
+                      <>
+                        <span
+                          className={cn(
+                            "text-sm font-semibold line-through sm:text-[15px]",
+                            plan.dark ? "text-white/60" : "text-[#94A3B8]",
+                          )}
+                        >
+                          {display.compareAt}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide sm:text-[11px]",
+                            plan.dark
+                              ? "bg-[#FFD84D] text-[#7C2D12]"
+                              : "border border-[#A7F3D0] bg-[#ECFDF5] text-[#047857]",
+                          )}
+                        >
+                          {display.save}
+                        </span>
+                      </>
                     )}
-                  >
-                    CAD {plan.per}
-                  </span>
-                </div>
-                <div className="mt-2 min-h-[2.5rem] space-y-1.5">
-                  <p
-                    className={cn(
-                      "text-xs leading-snug sm:text-[13.5px]",
-                      plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]",
-                    )}
-                  >
-                    {plan.sub}
-                  </p>
-                  {plan.equiv && (
-                    <p
+                  </div>
+                  <div className="mt-1.5 flex items-baseline gap-1.5">
+                    <span
                       className={cn(
-                        "text-xs font-semibold sm:text-[13px]",
-                        plan.dark ? "text-white" : "text-[#059669]",
+                        "inline-flex items-start font-[family-name:var(--font-barlow-condensed)] font-bold leading-none",
+                        plan.dark ? "text-white" : "text-[#1F2A37]",
                       )}
                     >
-                      {plan.equiv}
+                      <span className="text-[40px] sm:text-[50px]">
+                        {display.price.split(".")[0]}
+                      </span>
+                      <span className="mt-1 text-[18px] leading-none sm:mt-1.5 sm:text-[22px]">
+                        .{display.price.split(".")[1]}
+                      </span>
+                    </span>
+                    <span
+                      className={cn(
+                        "text-sm font-semibold sm:text-[15px]",
+                        plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]",
+                      )}
+                    >
+                      CAD {plan.per}
+                    </span>
+                  </div>
+                  <div className="mt-2 min-h-[2.5rem] space-y-1.5">
+                    <p
+                      className={cn(
+                        "text-xs leading-snug sm:text-[13.5px]",
+                        plan.dark ? "text-[#FCE3E4]" : "text-[#94A3B8]",
+                      )}
+                    >
+                      {plan.sub}
                     </p>
-                  )}
-                </div>
-                <div className="mt-auto pt-6">
-                  <Button
-                    type="button"
-                    variant={plan.dark ? "white" : "secondary"}
-                    size="lg"
-                    className={cn(
-                      "h-11 w-full rounded-[12px] text-[14px] font-extrabold sm:h-[48px] sm:text-[15px]",
-                      plan.dark
-                        ? "shadow-[0_8px_20px_rgba(0,0,0,0.18)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
-                        : "bg-white",
+                    {display.equiv && (
+                      <p
+                        className={cn(
+                          "text-xs font-semibold sm:text-[13px]",
+                          plan.dark ? "text-white" : "text-[#059669]",
+                        )}
+                      >
+                        {display.equiv}
+                      </p>
                     )}
-                    onClick={() => openCheckout(plan.id)}
-                  >
-                    {plan.cta}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
+                  </div>
+                  <div className="mt-auto pt-6">
+                    <Button
+                      type="button"
+                      variant={plan.dark ? "white" : "secondary"}
+                      size="lg"
+                      className={cn(
+                        "h-11 w-full rounded-[12px] text-[14px] font-extrabold sm:h-[48px] sm:text-[15px]",
+                        plan.dark
+                          ? "shadow-[0_8px_20px_rgba(0,0,0,0.18)] hover:shadow-[0_10px_24px_rgba(0,0,0,0.22)]"
+                          : "bg-white",
+                      )}
+                      onClick={() => openCheckout(plan.id)}
+                    >
+                      {plan.cta}
+                      <ArrowRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <div

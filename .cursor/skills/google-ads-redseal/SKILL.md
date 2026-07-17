@@ -39,15 +39,21 @@ These are non-negotiable. Flag any live setup that violates them.
 
 Always query **customer_id `7710616309`**. Login customer is already set in `.cursor/mcp.json` (`GOOGLE_ADS_LOGIN_CUSTOMER_ID`).
 
-## Conversion (site + Ads)
+## Analytics (GA4) + Ads tags
+
+RedSeal uses its **own** GA4 stream and Ads tag — never CELPIP IDs.
 
 | Item                     | Value                                                                       |
 | ------------------------ | --------------------------------------------------------------------------- |
+| GA4 stream name          | `web redsealguide`                                                          |
+| GA4 stream URL           | `https://www.redsealguide.com/`                                             |
+| GA4 stream ID            | `15257285665`                                                               |
+| GA4 measurement ID       | `G-FM7SKL3XCY`                                                              |
 | Ads tag                  | `AW-18254357419`                                                            |
 | Site Subscribe label     | `AW-18254357419/FzzgCOWV2NEcEKvHrYBE` (fired from `track-purchase.ts`)      |
 | Intended bidding primary | **One** of: site Subscribe **or** GA4 `RedSeal (web) purchase` — never both |
 
-Repo sources: `src/lib/analytics/google-ads.ts`, `src/lib/analytics/track-purchase.ts` (Checkout Session, deduped). Click IDs via `src/lib/analytics/ad-click-ids.ts`.
+Repo sources: `src/lib/analytics/ids.ts`, `src/lib/analytics/track-purchase.ts` (Checkout Session, deduped). Click IDs via `src/lib/analytics/ad-click-ids.ts`.
 
 When auditing `conversion_action`: list all primaries. Multiple ENABLED purchase primaries (including GA4 page-load `checkout=success` clones) is a **P0 fix** — demote extras to secondary. Do not bid on vanity leads.
 

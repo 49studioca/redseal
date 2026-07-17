@@ -174,16 +174,18 @@ export function normalizeQuestionOptions(raw: unknown): QuestionOption[] {
 
   if (raw && typeof raw === "object") {
     const obj = raw as Record<string, unknown>;
-    return OPTION_KEYS.map((key) => {
+    const options: QuestionOption[] = [];
+    for (const key of OPTION_KEYS) {
       const value = obj[key] ?? obj[key.toLowerCase()];
       const text = optionTextFromUnknown(value);
-      if (!text) return null;
-      return {
+      if (!text) continue;
+      options.push({
         key,
         text,
         distractor_rationale: optionRationaleFromUnknown(value),
-      };
-    }).filter((option): option is QuestionOption => Boolean(option));
+      });
+    }
+    return options;
   }
 
   return [];

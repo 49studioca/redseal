@@ -7,11 +7,9 @@ import {
   Barlow_Semi_Condensed,
   IBM_Plex_Mono,
 } from "next/font/google";
-import { GOOGLE_ADS_ID } from "@/lib/analytics/google-ads";
+import { GA_MEASUREMENT_ID, GOOGLE_ADS_ID } from "@/lib/analytics/ids";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
-
-const GA_MEASUREMENT_ID = "G-FM7SKL3XCY";
 
 const barlow = Barlow({
   subsets: ["latin"],

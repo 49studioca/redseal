@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 import { z } from "zod";
 import { stripe } from "@/lib/stripe/config";
 import { getOrCreateStripeCustomer } from "@/lib/stripe/customers";
@@ -7,6 +8,11 @@ import {
   isSubscriptionPlanId,
   planHasStripeConfig,
 } from "@/lib/stripe/plans";
+import { resolvePricingOfferCouponId } from "@/lib/stripe/pricing-offer-coupon";
+import {
+  getPricingOfferState,
+  PRICING_OFFER_COOKIE,
+} from "@/lib/pricing-offer";
 import { createClient } from "@/lib/supabase/server";
 
 const bodySchema = z.object({
@@ -63,13 +69,23 @@ export async function POST(request: Request) {
     const origin =
       process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
 
+    const cookieStore = await cookies();
+    const offer = getPricingOfferState(
+      cookieStore.get(PRICING_OFFER_COOKIE)?.value,
+    );
+    const offerCouponId = offer.active
+      ? await resolvePricingOfferCouponId()
+      : null;
+
     const session = await stripe.checkout.sessions.create({
       ui_mode: "embedded_page",
       mode: "subscription",
       customer: customerId,
       client_reference_id: user.id,
       line_items: [{ price: plan.priceId!, quantity: 1 }],
-      allow_promotion_codes: true,
+      ...(offerCouponId
+        ? { discounts: [{ coupon: offerCouponId }] }
+        : { allow_promotion_codes: true }),
       // Keep card checkouts in the drawer; only redirect-based methods leave the page.
       redirect_on_completion: "if_required",
       return_url: `${origin}/dashboard?checkout=success&plan=${planId}&session_id={CHECKOUT_SESSION_ID}`,
@@ -77,11 +93,13 @@ export async function POST(request: Request) {
         metadata: {
           plan: planId,
           supabase_user_id: user.id,
+          ...(offerCouponId ? { pricing_offer: "30_percent_24h" } : {}),
         },
       },
       metadata: {
         plan: planId,
         supabase_user_id: user.id,
+        ...(offerCouponId ? { pricing_offer: "30_percent_24h" } : {}),
       },
     });
 

@@ -9,12 +9,16 @@
 
 ## Identity map
 
-| Role                       | Name          | ID (digits only)                      | Formatted    |
-| -------------------------- | ------------- | ------------------------------------- | ------------ |
-| Manager                    | 49 Studio     | `6079555378`                          | 607-955-5378 |
-| Client                     | RedSeal Guide | `7710616309`                          | 771-061-6309 |
-| Site Ads tag               | —             | `AW-18254357419`                      | —            |
-| Subscribe conversion label | Site `gtag`   | `AW-18254357419/FzzgCOWV2NEcEKvHrYBE` | —            |
+| Role                       | Name             | ID (digits only)                      | Formatted    |
+| -------------------------- | ---------------- | ------------------------------------- | ------------ |
+| Manager                    | 49 Studio        | `6079555378`                          | 607-955-5378 |
+| Client                     | RedSeal Guide    | `7710616309`                          | 771-061-6309 |
+| GA4 stream                 | web redsealguide | `15257285665`                         | —            |
+| GA4 measurement ID         | —                | `G-FM7SKL3XCY`                        | —            |
+| Site Ads tag               | —                | `AW-18254357419`                      | —            |
+| Subscribe conversion label | Site `gtag`      | `AW-18254357419/FzzgCOWV2NEcEKvHrYBE` | —            |
+
+GA4 stream URL: `https://www.redsealguide.com/`. Source of truth in code: `src/lib/analytics/ids.ts`.
 
 **Access pattern:** User OAuth is not directly on RedSeal Guide. Queries/mutations must use:
 
@@ -316,3 +320,4 @@ Then add one Changelog table row for the same date.
 | 2026-07-16 | Applied brand assets (BUSINESS_NAME + BUSINESS_LOGO `394316355480`), Display off, 17 negatives, paused Trades List sitelink; conversions still UI-only |
 | 2026-07-16 | User removed duplicate purchases in UI — only `RedSeal (web) purchase` (`7685187760`) ENABLED primary                                                  |
 | 2026-07-16 | Unique RSA descriptions (`817152074608`); +4 sitelinks (Pricing, 309A, 442A, Create Account); 6 ENABLED sitelinks total                                |
+| 2026-07-17 | Confirmed first-party GA4 `G-FM7SKL3XCY` / stream `15257285665` (`web redsealguide`) + Ads `AW-18254357419` in `src/lib/analytics/ids.ts`              |
