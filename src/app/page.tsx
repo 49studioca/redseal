@@ -1,14 +1,16 @@
 import {
   MarketingHeader,
-  HeroSection,
-  StatsBar,
-  HowItWorks,
-  LearningExperience,
-  TradesPreview,
-  TestimonialSection,
-  CtaBand,
   MarketingFooter,
 } from "@/components/marketing/sections";
+import {
+  CompactFinalCta,
+  CompactHowItWorks,
+  CompactProof,
+  CompactTrades,
+  ConversionHero,
+  FeatureBento,
+  TrustStrip,
+} from "@/components/marketing/conversion-home";
 import { PricingSection } from "@/components/marketing/pricing-section";
 import { FaqSection } from "@/components/marketing/faq-section";
 import { homepageSchema, jsonLd } from "@/lib/seo";
@@ -21,15 +23,17 @@ export default function HomePage() {
         dangerouslySetInnerHTML={{ __html: jsonLd(homepageSchema()) }}
       />
       <MarketingHeader />
-      <HeroSection />
-      <StatsBar />
-      <HowItWorks />
-      <LearningExperience />
-      <TradesPreview />
-      <TestimonialSection />
-      <PricingSection />
-      <FaqSection />
-      <CtaBand />
+      <main>
+        <ConversionHero />
+        <TrustStrip />
+        <CompactHowItWorks />
+        <FeatureBento />
+        <CompactTrades />
+        <CompactProof />
+        <PricingSection />
+        <FaqSection compact />
+        <CompactFinalCta />
+      </main>
       <MarketingFooter />
     </div>
   );

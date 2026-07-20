@@ -1,32 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import Script from "next/script";
-import {
-  Barlow,
-  Barlow_Condensed,
-  Barlow_Semi_Condensed,
-  IBM_Plex_Mono,
-} from "next/font/google";
+import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { GA_MEASUREMENT_ID, GOOGLE_ADS_ID } from "@/lib/analytics/ids";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/seo";
 import "./globals.css";
 
-const barlow = Barlow({
+const plusJakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
-  variable: "--font-barlow",
-});
-
-const barlowCondensed = Barlow_Condensed({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  variable: "--font-barlow-condensed",
-});
-
-const barlowSemi = Barlow_Semi_Condensed({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-barlow-semi",
+  variable: "--font-plus-jakarta",
 });
 
 const ibmMono = IBM_Plex_Mono({
@@ -104,7 +87,7 @@ export default function RootLayout({
   return (
     <html lang="en-CA">
       <body
-        className={`${barlow.variable} ${barlowCondensed.variable} ${barlowSemi.variable} ${ibmMono.variable} antialiased`}
+        className={`${plusJakarta.variable} ${ibmMono.variable} antialiased`}
       >
         {children}
         <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />

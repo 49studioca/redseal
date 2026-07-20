@@ -252,8 +252,7 @@ function PricingSectionInner({
                   </span>
                 </div>
                 <p className="text-[12px] font-semibold normal-case tracking-normal text-[#B6291F] sm:text-[13px]">
-                  Your personal deal lasts 24 hours. Get it soon before it
-                  disappears.
+                  Offer applies automatically at checkout.
                 </p>
               </div>
             )}

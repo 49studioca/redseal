@@ -46,8 +46,11 @@ const FAQ_DATA: { q: string; a: ReactNode }[] = [
   },
 ];
 
-export function FaqSection() {
+export function FaqSection({ compact = false }: { compact?: boolean } = {}) {
   const [openFaq, setOpenFaq] = useState(0);
+  const items = compact
+    ? FAQ_DATA.filter((_, index) => [0, 1, 2, 4, 5].includes(index))
+    : FAQ_DATA;
 
   return (
     <section id="faq" className="bg-white">
@@ -60,13 +63,15 @@ export function FaqSection() {
             Straight{" "}
             <em className="font-bold italic text-[#D8232A]">answers</em>
           </h2>
-          <p className="mx-auto mt-4 max-w-[480px] text-[15px] leading-relaxed text-[#64748B]">
-            Clear details about free access, billing, refunds, coverage, and
-            studying on the go.
-          </p>
+          {!compact && (
+            <p className="mx-auto mt-4 max-w-[480px] text-[15px] leading-relaxed text-[#64748B]">
+              Clear details about free access, billing, refunds, coverage, and
+              studying on the go.
+            </p>
+          )}
         </div>
         <div className="mt-10 flex flex-col gap-2.5 sm:mt-12">
-          {FAQ_DATA.map((item, i) => {
+          {items.map((item, i) => {
             const open = openFaq === i;
             return (
               <div
